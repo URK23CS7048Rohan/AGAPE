@@ -69,7 +69,8 @@
       ]
     ],
     "experiments": {
-      "typedRoutes": false
+      "typedRoutes": false,
+      "tsconfigPaths": true
     },
     "description": "Agape International Ministries"
   }
