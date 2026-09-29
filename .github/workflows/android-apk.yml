@@ -44,6 +44,9 @@ jobs:
           npm install --no-audit --no-fund
           npx expo install --fix
 
+      - name: Check the JavaScript bundle (fails fast on code errors)
+        run: npx expo export --platform android --output-dir /tmp/bundle-check
+
       - name: Generate native Android project
         run: npx expo prebuild --platform android --clean
 
