@@ -1,0 +1,76 @@
+{
+  "expo": {
+    "name": "Agape",
+    "slug": "agape-international",
+    "scheme": "agape",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/images/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "backgroundColor": "#F4EEE4",
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "church.agape.app",
+      "infoPlist": {
+        "NSFaceIDUsageDescription": "Sign in quickly and securely with Face ID.",
+        "NSLocationWhenInUseUsageDescription": "Your location is used to arrange rides to and from church.",
+        "NSLocationAlwaysAndWhenInUseUsageDescription": "Volunteer drivers share their location during a ride so members can see them arrive.",
+        "UIBackgroundModes": [
+          "location"
+        ]
+      }
+    },
+    "android": {
+      "package": "church.agape.app",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/images/adaptive-icon.png",
+        "backgroundColor": "#FFFFFF"
+      },
+      "edgeToEdgeEnabled": true,
+      "permissions": [
+        "ACCESS_FINE_LOCATION",
+        "ACCESS_COARSE_LOCATION",
+        "USE_BIOMETRIC"
+      ],
+      "config": {
+        "googleMaps": {
+          "apiKey": "REPLACE_WITH_GOOGLE_MAPS_ANDROID_KEY"
+        }
+      }
+    },
+    "web": {
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro"
+    },
+    "plugins": [
+      "expo-router",
+      "expo-font",
+      [
+        "expo-splash-screen",
+        {
+          "image": "./assets/images/splash-icon.png",
+          "imageWidth": 220,
+          "resizeMode": "contain",
+          "backgroundColor": "#FFFFFF"
+        }
+      ],
+      [
+        "expo-location",
+        {
+          "locationAlwaysAndWhenInUsePermission": "Volunteer drivers share their location during a ride so members can see them arrive."
+        }
+      ],
+      [
+        "expo-local-authentication",
+        {
+          "faceIDPermission": "Sign in quickly and securely with Face ID."
+        }
+      ]
+    ],
+    "experiments": {
+      "typedRoutes": false
+    },
+    "description": "Agape International Ministries"
+  }
+}
