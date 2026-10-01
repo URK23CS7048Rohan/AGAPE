@@ -1,6 +1,6 @@
 // End-to-end tests against a real local Supabase stack (`supabase start`).
 // Every flow the website, app and admin rely on is exercised with real accounts and RLS.
-import { test } from "node:test";
+import { test, after } from "node:test";
 import assert from "node:assert/strict";
 import fs from "node:fs";
 import { createClient } from "@supabase/supabase-js";
@@ -37,12 +37,21 @@ async function member(key, name, role) {
 }
 function channel(c, name, table, filter, onRow) {
   return new Promise((resolve, reject) => {
+    setTimeout(() => reject(new Error(`realtime subscribe timed out (${name})`)), 15000);
     const ch = c.channel(name).on("postgres_changes", { event: "INSERT", schema: "public", table, ...(filter ? { filter } : {}) }, (p) => onRow(p.new));
     ch.subscribe((s) => { if (s === "SUBSCRIBED") resolve(ch); else if (s === "CHANNEL_ERROR" || s === "TIMED_OUT") reject(new Error(`realtime ${s}`)); });
   });
 }
 
 let ann, bob, sam, eve;   // member, volunteer driver, staff, second member
+// close realtime sockets so the test process can exit
+after(async () => {
+  for (const u of [ann, bob, sam, eve]) {
+    if (!u) continue;
+    await u.c.removeAllChannels().catch(() => {});
+    u.c.realtime.disconnect();
+  }
+});
 
 test("accounts: sign-up creates a profile, member number and family chat", async () => {
   ann = await member("ann", "Ann Mathews");

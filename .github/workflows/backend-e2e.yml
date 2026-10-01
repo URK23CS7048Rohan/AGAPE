@@ -3,6 +3,9 @@
 # sign-in codes by e-mail, prayer wall, rides with live location, chat, giving checkout, push, admin rights.
 name: Backend tests
 
+permissions:
+  contents: write
+
 on:
   workflow_dispatch:
   push:
@@ -60,12 +63,27 @@ jobs:
         env:
           FUNCTIONS: "1"
           PUSH_LOG: /tmp/pushes.jsonl
-        run: MAIL_URL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}" npm test
-
-      - name: Logs on failure
-        if: failure()
         run: |
+          set -o pipefail
+          MAIL_URL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}" npm test 2>&1 | tee /tmp/test-output.txt
+
+      - name: Collect logs
+        if: always()
+        run: |
+          exec > /tmp/ci-logs.txt 2>&1
           echo "---- functions"; tail -n 120 /tmp/functions.log || true
           echo "---- mock expo"; cat /tmp/mock-expo.log /tmp/pushes.jsonl || true
           echo "---- pg_net"; psql "$DB_URL" -c "select id, status_code, error_msg, left(content::text, 200) from net._http_response order by id desc limit 10;" || true
           docker ps --format '{{.Names}}'
+          echo "---- realtime"; docker logs supabase_realtime_agape 2>&1 | tail -n 40 || true
+          echo "---- auth"; docker logs supabase_auth_agape 2>&1 | tail -n 40 || true
+
+      - name: Publish results to the ci-backend-results branch
+        if: always()
+        working-directory: ${{ runner.temp }}
+        run: |
+          mkdir out && cd out && git init -q -b ci-backend-results
+          cp /tmp/test-output.txt /tmp/ci-logs.txt . 2>/dev/null || true
+          echo "${{ job.status }} ${{ github.sha }}" > status.txt
+          git add -A && git -c user.name=ci -c user.email=ci@example.com commit -qm "results ${{ github.sha }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" ci-backend-results

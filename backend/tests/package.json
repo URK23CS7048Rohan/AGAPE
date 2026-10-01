@@ -2,6 +2,6 @@
   "name": "agape-backend-tests",
   "private": true,
   "type": "module",
-  "scripts": { "test": "node --test --test-concurrency=1 --test-reporter=spec" },
+  "scripts": { "test": "node --test --test-concurrency=1 --test-timeout=90000 --test-reporter=spec" },
   "dependencies": { "@supabase/supabase-js": "^2.57.0" }
 }
