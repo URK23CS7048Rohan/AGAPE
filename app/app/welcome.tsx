@@ -58,7 +58,7 @@ export default function Welcome() {
           <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.mint, alignItems: "center", justifyContent: "center" }}><Icon name="car-side" size={15} color="#fff" /></View>
           <Body size={13} weight="semi">{fmt(stats.rides)} rides to church</Body>
         </Animated.View>
-        <Animated.View entering={FadeInDown.delay(1100).springify()} style={{ position: "absolute", right: 20, bottom: 10, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", paddingLeft: 6, paddingRight: 14, height: 40, borderRadius: R.pill }}>
+        <Animated.View entering={FadeInDown.delay(1100).springify()} style={{ position: "absolute", left: 44, top: insets.top + 80, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", paddingLeft: 6, paddingRight: 14, height: 40, borderRadius: R.pill }}>
           <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.rose, alignItems: "center", justifyContent: "center" }}><Icon name="hands-pray" size={15} color="#fff" /></View>
           <Body size={13} weight="semi">{fmt(stats.prayers)} prayers</Body>
         </Animated.View>
