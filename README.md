@@ -138,7 +138,7 @@ Accounts to create (all under the church's name and billing):
 3. **Giving — Tap Payments** (tap.company, supports KNET). `supabase secrets set TAP_SECRET_KEY=sk_live_…` (test with `sk_test_…` first). Optional: `TAP_SOURCE=src_kw.knet` to open KNET directly. Never set `PAYMENTS_TEST_MODE` in production.
 4. **AI assistant:** `supabase secrets set ANTHROPIC_API_KEY=…` (daily limit per member: `DAILY_LIMIT=50`).
 5. **Sign in with Google / Apple:** Supabase → Auth → Providers. Google: OAuth client from Google Cloud. Apple: Services ID + key from the Apple Developer account (also enables native sign-in on iPhone).
-6. **Maps need no key.** The ride map (app and website) uses free OpenStreetMap vector tiles from OpenFreeMap, styled like Google Maps, and free road routing from the public OSRM server. Phones that can't draw vector maps automatically get a "lite" raster map (Leaflet + CARTO Voyager tiles, free for non-commercial use). If the church ever outgrows the free router, set `EXPO_PUBLIC_ROUTER_URL` to its own OSRM/Valhalla server.
+6. **Maps need no key.** The ride map (app and website) uses free OpenStreetMap vector tiles from OpenFreeMap, styled like Google Maps, and free road routing from the public OSRM server. Phones that can't draw vector maps automatically get a "lite" map (Leaflet + standard OpenStreetMap tiles). If the church ever outgrows the free router, set `EXPO_PUBLIC_ROUTER_URL` to its own OSRM/Valhalla server.
 7. **Connect the front-ends:**
    * Website: `website/assets/js/config.js` → Supabase URL + anon key. Deploy the `website/` folder to Cloudflare Pages / Netlify.
    * App: `app/.env` (or GitHub secrets for the APK workflow) → `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_SITE_URL`.

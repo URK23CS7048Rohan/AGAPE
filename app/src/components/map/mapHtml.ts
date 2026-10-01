@@ -16,6 +16,8 @@ export function mapHtml(initial: { lat: number; lng: number; zoom?: number }) {
 <script src="${MAPLIBRE}.js"></script>
 <style>
   html,body,#map{margin:0;height:100%;width:100%;background:#F2EFE9;overflow:hidden;font-family:Roboto,-apple-system,"Segoe UI",Helvetica,Arial,sans-serif;-webkit-tap-highlight-color:transparent}
+  .osm{filter:saturate(.8) brightness(1.04) contrast(.96)}
+  .leaflet-container{background:#F2EFE9;font-family:inherit}
   .maplibregl-ctrl-attrib{font-size:10px!important;background:rgba(255,255,255,.75)!important}
   .maplibregl-ctrl-bottom-left,.maplibregl-ctrl-bottom-right{bottom:var(--pb,0px)}
   .maplibregl-ctrl-top-left,.maplibregl-ctrl-top-right{top:var(--pt,0px)}
@@ -208,7 +210,7 @@ export function mapHtml(initial: { lat: number; lng: number; zoom?: number }) {
     sc.onload=function(){
       var L=window.L, map=L.map("map",{zoomControl:false,attributionControl:true,zoomSnap:0.25,center:[INITIAL.lat,INITIAL.lng],zoom:INITIAL.zoom});
       map.attributionControl.setPrefix(false);
-      L.tileLayer("https://{s}.basemaps.cartocdn.com/rastertiles/voyager/{z}/{x}/{y}{r}.png",{subdomains:"abcd",maxZoom:20,detectRetina:true,attribution:"© OpenStreetMap © CARTO"}).addTo(map);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:19,attribution:"© OpenStreetMap",className:"osm"}).addTo(map);
       var markers={}, line=null, casing=null, last={fitKey:null,centerKey:null}, pad={top:0,bottom:0,left:0,right:0};
       var OFF={you:"-50%,-50%",pickup:"-50%,-50%",car:"-50%,-50%",church:"0,-100%",person:"-50%,-100%"};
       function icon(m){var w=document.createElement("div");w.style.transform="translate("+(OFF[m.kind]||"-50%,-50%")+")";w.style.width="max-content";var e=el(m);w.appendChild(e);return {wrap:w,inner:e,icon:L.divIcon({html:w,className:"",iconSize:[0,0],iconAnchor:[0,0]})};}
