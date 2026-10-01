@@ -642,7 +642,8 @@
       <h2 class="h2" data-split>You don't have to <em>carry it alone.</em></h2>
       <p class="section-sub">Post a request, openly or anonymously, and let the family stand with you. Tap “Praying” to let someone know they're not alone.</p>
       <form class="pform js-pform">
-        <textarea rows="3" maxlength="180" placeholder="What can we pray with you about?" required></textarea>
+        <textarea rows="3" maxlength="300" placeholder="What can we pray with you about?" required></textarea>
+        <input class="pform__name" type="text" maxlength="60" placeholder="Your first name" hidden />
         <div class="pform__row">
           <label class="toggle"><input type="checkbox" checked /><span></span>Post anonymously</label>
           <button class="btn btn--rose" type="submit" data-magnetic><span>Share request</span><i><svg class="ic"><use href="#i-send"/></svg></i></button>
@@ -669,7 +670,6 @@
     <div class="give__grid">
       <div class="camps"></div>
       <form class="gbox js-give" onsubmit="return false">
-        <div class="gbox__seg"><button type="button" class="is-on" data-freq="once">One-time</button><button type="button" data-freq="monthly">Monthly</button><span class="gbox__seg-pill"></span></div>
         <label class="gbox__label">Choose an amount</label>
         <div class="gbox__amts">
           <button type="button" data-a="5">5</button><button type="button" data-a="10">10</button><button type="button" class="is-on" data-a="25">25</button><button type="button" data-a="50">50</button><button type="button" data-a="100">100</button>
@@ -678,7 +678,7 @@
         <label class="gbox__label">Give to</label>
         <div class="gbox__funds"></div>
         <button class="btn btn--brand btn--block" type="submit" data-magnetic><span class="js-give-label">Give KWD 25</span><i><svg class="ic"><use href="#i-heart"/></svg></i></button>
-        <p class="gbox__note"><svg class="ic"><use href="#i-shield-check"/></svg>Secure checkout · Apple Pay · Google Pay · KNET</p>
+        <p class="gbox__note"><svg class="ic"><use href="#i-shield-check"/></svg>Secure checkout · KNET · Visa · Mastercard · Apple Pay</p>
       </form>
     </div>
   </div>
@@ -796,10 +796,10 @@
     <div class="vcard" data-cursor="Hello">
       <div class="vcard__top"><img class="logo__img" src="assets/img/logo-mark.png" alt="" /><span>Welcome card</span></div>
       <h3>Hi, I'm new here <em>👋</em></h3>
-      <form class="vform" onsubmit="this.classList.add('is-sent');return false">
-        <input type="text" placeholder="Your first name" required />
-        <input type="tel" placeholder="Phone or WhatsApp" required />
-        <div class="vform__row"><label class="toggle toggle--ink"><input type="checkbox" /><span></span>I'd like a ride</label><label class="toggle toggle--ink"><input type="checkbox" /><span></span>Bringing kids</label></div>
+      <form class="vform js-vform">
+        <input type="text" name="name" placeholder="Your first name" maxlength="80" required />
+        <input type="tel" name="phone" placeholder="Phone or WhatsApp" maxlength="40" required />
+        <div class="vform__row"><label class="toggle toggle--ink"><input type="checkbox" name="ride" /><span></span>I'd like a ride</label><label class="toggle toggle--ink"><input type="checkbox" name="kids" /><span></span>Bringing kids</label></div>
         <button class="btn btn--ink btn--block" type="submit"><span>Text me the details</span><i><svg class="ic"><use href="#i-send"/></svg></i></button>
         <p class="vform__ok"><svg class="ic"><use href="#i-check"/></svg> You're on the list. See you Sunday!</p>
       </form>

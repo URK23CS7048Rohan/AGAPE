@@ -193,7 +193,7 @@
       parent.postMessage({ type: "agape-preview-ready" }, "*");
       setTimeout(() => { if (!done) { done = true; window.AgapeStore.load().then(start); } }, 2000);
     } else {
-      window.AgapeStore.load().then(start).catch(() => start(window.AgapeStore.defaults()));
+      window.AgapeStore.loadPublic().then(start).catch(() => start(window.AgapeStore.defaults()));
     }
   }
 })();

@@ -62,7 +62,7 @@ export default function ChatScreen() {
       (mem.data || []).forEach((m: any) => { names.current[m.user_id] = m.profiles?.full_name || "Member"; });
       const others = (mem.data || []).filter((m: any) => m.user_id !== me);
       const name = c.data.name || others.map((m: any) => names.current[m.user_id]).join(", ") || "Chat";
-      setMeta({ name, kind: c.data.kind, topic: c.data.topic_key, color: c.data.color || colorFor(name), sub: c.data.kind === "direct" ? "Direct message" : `${(mem.data || []).length} members` });
+      setMeta({ name, kind: c.data.kind, topic: c.data.topic_key, color: c.data.color || colorFor(name), sub: c.data.kind === "direct" ? "Direct message" : `${(mem.data || []).length} member${(mem.data || []).length === 1 ? "" : "s"}` });
       setMsgs((hist.data || []).reverse().map(toMsg));
       markRead(id);
     })();

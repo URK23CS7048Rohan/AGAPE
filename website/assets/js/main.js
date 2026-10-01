@@ -1019,12 +1019,24 @@ void main(){
       ["Anonymous", "Healing from a long illness. Some days are hard.", 49, "#FFC23D"],
     ];
     const PAPER = ["#FFE680", "#FFC2D8", "#BDF3DC", "#D9CCFF", "#FFD2B8", "#C7E9FF"];
+    const INK = ["#FF3D7F", "#6E4BFF", "#2ED3A0", "#FFC23D", "#FF5A1F", "#4CC3FF"];
+    const STORE = window.AgapeStore || {};
+    const LIVE = !!STORE.live;
+    const escH = (t) => String(t ?? "").replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    // live: the real, approved requests from the database (via the boot loader); demo: sample requests
+    if (LIVE && Array.isArray(SITE._wall)) {
+      reqs.length = 0;
+      SITE._wall.forEach((p, i) => reqs.push([p.anonymous ? "Anonymous" : p.author_name || "Member", escH(p.body), p.pray_count, INK[i % INK.length], p.id, p.answered]));
+    }
+    let prayedIds = [];
+    try { prayedIds = JSON.parse(localStorage.getItem("agape-prayed") || "[]"); } catch (e) {}
     const board = $(".pnotes");
-    const note = ([who, txt, n, c], i, isNew) => {
+    const note = ([who, txt, n, c, id, answered], i, isNew) => {
       const el = document.createElement("article");
       el.className = "pnote" + (isNew ? " is-new" : "");
       el.style.setProperty("--paper", PAPER[i % PAPER.length]);
-      el.innerHTML = `<span class="pnote__tape"></span><div class="pnote__who"><span style="--c:${c}">${who[0]}</span>${who}</div><p>${txt}</p><button class="pray-btn" data-n="${n}"><svg class="ic"><use href="#i-hand-heart"/></svg><span>Praying · ${n}</span></button>`;
+      const mine = id && prayedIds.includes(id);
+      el.innerHTML = `<span class="pnote__tape"></span><div class="pnote__who"><span style="--c:${c}">${escH(who[0])}</span>${escH(who)}${answered ? ' <em class="pnote__ok">Answered</em>' : ""}</div><p>${txt}</p>${isNew && LIVE ? '<small class="pnote__pending">Waiting for a pastor to add it to the wall</small>' : `<button class="pray-btn${mine ? " is-on" : ""}" data-n="${n}"${id ? ` data-id="${id}"` : ""}><svg class="ic"><use href="#i-hand-heart"/></svg><span>${mine ? "You're praying" : "Praying"} · ${n}</span></button>`}`;
       return el;
     };
     const notes = [];
@@ -1075,9 +1087,22 @@ void main(){
     board.addEventListener("click", (e) => {
       const b = e.target.closest(".pray-btn");
       if (!b) return;
-      const on = b.classList.toggle("is-on");
-      const n = parseInt(b.dataset.n) + (on ? 1 : 0);
-      $("span", b).textContent = on ? `You're praying · ${n}` : `Praying · ${n}`;
+      if (LIVE && b.dataset.id) {
+        // once per request per browser; the count is stored in the database
+        if (b.classList.contains("is-on")) return;
+        b.classList.add("is-on");
+        const n = parseInt(b.dataset.n) + 1;
+        $("span", b).textContent = `You're praying · ${n}`;
+        prayedIds.push(b.dataset.id);
+        try { localStorage.setItem("agape-prayed", JSON.stringify(prayedIds.slice(-300))); } catch (err) {}
+        STORE.prayAnon(b.dataset.id).then((c) => { if (typeof c === "number") { b.dataset.n = c - 1; $("span", b).textContent = `You're praying · ${c}`; } }).catch(() => {});
+      } else {
+        const on = b.classList.toggle("is-on");
+        const n = parseInt(b.dataset.n) + (on ? 1 : 0);
+        $("span", b).textContent = on ? `You're praying · ${n}` : `Praying · ${n}`;
+        if (!on) return;
+      }
+      const on = true;
       if (on) for (let i = 0; i < 10; i++) {
         const d = document.createElement("i"); d.className = "burst"; b.appendChild(d);
         const a = (i / 10) * Math.PI * 2;
@@ -1085,19 +1110,30 @@ void main(){
       }
       gsap.fromTo(b, { scale: 0.9 }, { scale: 1, duration: 0.5, ease: "back.out(3)" });
     });
-    $(".js-pform").addEventListener("submit", (e) => {
+    const pform = $(".js-pform");
+    const nameIn = $(".pform__name", pform), anonIn = $('input[type="checkbox"]', pform);
+    const syncName = () => { if (nameIn) nameIn.hidden = anonIn.checked; };
+    anonIn.addEventListener("change", syncName); syncName();
+    pform.addEventListener("submit", async (e) => {
       e.preventDefault();
-      const ta = $("textarea", e.target), anon = $("input", e.target).checked;
+      const ta = $("textarea", e.target), anon = anonIn.checked;
       const txt = ta.value.trim(); if (!txt) return;
-      const el = note([anon ? "Anonymous" : "You", txt.replace(/</g, "&lt;"), 1, "#FF3D7F"], Math.floor(Math.random() * 6), true);
+      const who = anon ? "Anonymous" : (nameIn && nameIn.value.trim()) || "You";
+      const btn = $("button[type=submit] span", e.target), orig = btn.textContent;
+      if (LIVE) {
+        btn.textContent = "Sending…";
+        try { await STORE.postPrayer(txt, anon, anon ? null : who); }
+        catch (err) { btn.textContent = "Couldn't send. Try again"; setTimeout(() => (btn.textContent = orig), 3000); return; }
+      }
+      const el = note([who, escH(txt), 0, "#FF3D7F"], Math.floor(Math.random() * 6), true);
       board.appendChild(el); notes.push(el);
       const W = board.clientWidth;
       gsap.set(el, { x: W / 2 - el.offsetWidth / 2, y: 20, zIndex: 999 });
       gsap.from(el, { y: -400, rotation: -30, duration: 1.2, ease: "bounce.out" });
       makeDrag(el);
       ta.value = "";
-      const btn = $("button[type=submit] span", e.target), orig = btn.textContent;
-      btn.textContent = "Posted. We're praying with you"; setTimeout(() => (btn.textContent = orig), 2600);
+      btn.textContent = LIVE ? "Received. We're praying with you" : "Posted. We're praying with you";
+      setTimeout(() => (btn.textContent = orig), 3200);
     });
   })();
 
@@ -1114,20 +1150,74 @@ void main(){
     const seg = $(".gbox__seg"), input = $(".gbox__custom input"), label = $(".js-give-label");
     let freq = "once";
     const upd = () => { const a = parseFloat(input.value) || 0; label.textContent = `Give ${CONFIG.currency} ${a || "—"}${freq === "monthly" ? " / month" : ""}`; };
-    $$("button", seg).forEach((b) => b.addEventListener("click", () => { freq = b.dataset.freq; $$("button", seg).forEach((x) => x.classList.toggle("is-on", x === b)); seg.classList.toggle("is-monthly", freq === "monthly"); upd(); }));
+    if (seg) $$("button", seg).forEach((b) => b.addEventListener("click", () => { freq = b.dataset.freq; $$("button", seg).forEach((x) => x.classList.toggle("is-on", x === b)); seg.classList.toggle("is-monthly", freq === "monthly"); upd(); }));
     $$(".gbox__amts button").forEach((b) => b.addEventListener("click", () => { $$(".gbox__amts button").forEach((x) => x.classList.toggle("is-on", x === b)); input.value = b.dataset.a; upd(); gsap.fromTo(input, { scale: 1.1 }, { scale: 1, duration: 0.4, ease: "back.out(3)" }); }));
     input.addEventListener("input", () => { $$(".gbox__amts button").forEach((x) => x.classList.toggle("is-on", x.dataset.a === input.value)); upd(); });
     $$(".gbox__funds button").forEach((b) => b.addEventListener("click", () => $$(".gbox__funds button").forEach((x) => x.classList.toggle("is-on", x === b))));
     const cv = document.createElement("canvas"); cv.className = "confetti"; form.style.position = "sticky"; form.appendChild(cv);
     const boom = confetti(cv);
-    form.addEventListener("submit", (e) => {
-      e.preventDefault();
+    const STORE = window.AgapeStore || {};
+    const note = $(".gbox__note");
+    const say = (html) => { if (note) note.innerHTML = html; };
+    const thanks = () => {
       const r = form.getBoundingClientRect();
       boom(r.width / 2, r.height - 60, 90, 11);
       const old = label.textContent; label.textContent = "Thank you! ♥";
       setTimeout(() => (label.textContent = old), 2400);
+    };
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      if (!STORE.live) { thanks(); return; }
+      const amount = Math.round((parseFloat(input.value) || 0) * 1000) / 1000;
+      if (amount < 1) { say("Please choose an amount of at least 1."); return; }
+      const fund = ($(".gbox__funds .is-on") || {}).textContent || "Tithe";
+      const camp = (SITE.campaigns || []).find((c) => `${c.title} ${c.accent}`.trim() === fund.trim());
+      label.textContent = "Opening secure payment…";
+      try {
+        const out = await STORE.checkout({
+          amount, currency: CONFIG.currency, fund: fund.trim(), frequency: "once",
+          campaign_key: camp ? window.AgapeKeys.campaignKey(camp) : undefined, campaign_title: camp ? fund.trim() : undefined,
+          return_url: location.origin + location.pathname + "#give",
+        });
+        location.href = out.url;
+      } catch (err) { upd(); say(String(err.message || err)); }
     });
+    // back from the payment page: ?donation=<id>
+    const back = new URLSearchParams(location.search).get("donation");
+    if (back && STORE.live) {
+      say("Checking your payment…");
+      let tries = 0;
+      const check = () => STORE.donationStatus(back).then((d) => {
+        if (d.status === "succeeded") { say(`Received with thanks: ${d.currency} ${Number(d.amount).toFixed(3).replace(/\.?0+$/, "")} to ${d.campaign || d.fund}. 💛`); setTimeout(thanks, 600); }
+        else if (d.status === "failed") say("The payment didn't go through, and nothing was charged. You can try again.");
+        else if (++tries < 8) setTimeout(check, 1500);
+        else say("We're confirming your payment with the bank. Thank you!");
+      }).catch(() => say("Thank you! We'll confirm your gift by e-mail."));
+      check();
+      history.replaceState(null, "", location.pathname + "#give");
+    }
     upd();
+  })();
+
+  /* =======================================================
+     WELCOME CARD (first-time visitors) → visitor_cards
+     ======================================================= */
+  (() => {
+    const f = $(".js-vform");
+    if (!f) return;
+    f.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const S = window.AgapeStore || {};
+      const btn = $("button[type=submit] span", f), orig = btn.textContent;
+      if (S.live) {
+        btn.textContent = "Sending…";
+        try {
+          await S.visitorCard({ name: f.name.value.trim(), phone: f.phone.value.trim(), needs_ride: f.ride.checked, message: f.kids.checked ? "Bringing kids" : null });
+        } catch (err) { btn.textContent = "Couldn't send. Try again"; setTimeout(() => (btn.textContent = orig), 3000); return; }
+        btn.textContent = orig;
+      }
+      f.classList.add("is-sent");
+    });
   })();
 
   /* =======================================================

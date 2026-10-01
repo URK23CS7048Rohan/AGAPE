@@ -71,10 +71,20 @@ jobs:
           sleep 3
           BASE=http://localhost:3000 MAIL_URL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}" OUT=screenshots-live node tools/e2e-live.mjs
 
+      - name: Website + admin journey
+        if: always()
+        run: |
+          mkdir -p /tmp/site && cp -r website/. /tmp/site/
+          printf 'window.AGAPE_CONFIG = { supabaseUrl: "%s", supabaseAnonKey: "%s", mediaBucket: "media" };\n' "$API_URL" "$ANON_KEY" > /tmp/site/assets/js/config.js
+          (cd /tmp/site && nohup python3 -m http.server 8080 > /tmp/site.log 2>&1 &)
+          sleep 2
+          cd app && SITE=http://localhost:8080 OUT=screenshots-site node tools/site-e2e.mjs
+
       - name: Publish screenshots + report to the app-shots-live branch
         if: always()
         run: |
-          mkdir -p /tmp/out && cp app/screenshots-live/* /tmp/out/ 2>/dev/null || true
+          mkdir -p /tmp/out/site && cp app/screenshots-live/* /tmp/out/ 2>/dev/null || true
+          cp app/screenshots-site/* /tmp/out/site/ 2>/dev/null || true
           cp /tmp/tsc.txt /tmp/out/tsc.txt 2>/dev/null || true
           tail -n 80 /tmp/functions.log > /tmp/out/functions.log 2>/dev/null || true
           tail -n 80 /tmp/export.txt > /tmp/out/export.txt 2>/dev/null || true

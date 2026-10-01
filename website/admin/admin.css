@@ -294,3 +294,4 @@ em{font-family:var(--f-serif);font-style:italic;font-weight:400;color:var(--bran
 .app.has-preview .top__actions .btn--ghost span{display:none}
 .app.has-preview .top__actions .btn--ghost{padding:0 12px}
 .app.has-preview .dirty{font-size:0;gap:0}
+.item__body .field .imgpick--wide{max-width:420px}

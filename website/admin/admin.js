@@ -243,12 +243,18 @@
       v.innerHTML = `
         <div class="hello"><img src="${esc(src(C.hero.slides[0]?.image))}" alt="" /><div><span class="eyebrow" style="color:rgba(255,255,255,.75)">${esc(C.church.name)}</span><h2>Good ${h < 12 ? "morning" : h < 17 ? "afternoon" : "evening"}, <em>${esc((S.session()?.user?.email || "friend").split("@")[0])}.</em></h2><p>Everything on the website and in the app is managed here: photos, promotions, events, giving, prayer, rides and members.</p></div></div>
         <div class="stats">
-          <div class="stat"><small>Members</small><b>${fmt(st.members)}</b><i>+18 this month</i></div>
+          <div class="stat"><small>Members</small><b>${fmt(st.members)}</b><i>+${fmt(st.new_members)} this month</i></div>
+          <div class="stat"><small>Volunteers</small><b>${fmt(st.volunteers)}</b><i>drivers & teams</i></div>
           <div class="stat"><small>Active learners</small><b>${fmt(st.active_learners)}</b><i>last 30 days</i></div>
-          <div class="stat"><small>Sermon views</small><b>${fmt(st.total_views)}</b><i>all time</i></div>
-          <div class="stat"><small>Rides completed</small><b>${fmt(st.rides_completed)}</b><i>ride ministry</i></div>
-          <div class="stat"><small>Giving this month</small><b>${esc(C.church.currency)} ${fmt(st.giving_this_month)}</b><i>all funds</i></div>
+          <div class="stat"><small>Rides completed</small><b>${fmt(st.rides_completed)}</b><i>${fmt(st.rides_open)} waiting now</i></div>
+          <div class="stat"><small>Giving this month</small><b>${esc(C.church.currency)} ${fmt(st.giving_this_month)}</b><i>confirmed gifts</i></div>
         </div>
+        ${(st.prayers_pending || st.visitors_new || st.care_open || st.applications_pending) ? `<div class="quick" style="margin-bottom:16px">
+          ${st.prayers_pending ? `<a href="#prayer"><span class="qi" style="background:var(--rose)">${ic("hand-heart")}</span><b>${fmt(st.prayers_pending)} prayer${st.prayers_pending > 1 ? "s" : ""} to review</b><small>From the website</small></a>` : ""}
+          ${st.visitors_new ? `<a href="#visitors"><span class="qi" style="background:var(--brand)">${ic("hand-helping")}</span><b>${fmt(st.visitors_new)} new visitor${st.visitors_new > 1 ? "s" : ""}</b><small>Welcome cards to follow up</small></a>` : ""}
+          ${st.care_open ? `<a href="#care"><span class="qi" style="background:var(--violet)">${ic("shield-check")}</span><b>${fmt(st.care_open)} care request${st.care_open > 1 ? "s" : ""}</b><small>Confidential</small></a>` : ""}
+          ${st.applications_pending ? `<a href="#volunteers"><span class="qi" style="background:var(--mint)">${ic("users")}</span><b>${fmt(st.applications_pending)} volunteer application${st.applications_pending > 1 ? "s" : ""}</b><small>Waiting for approval</small></a>` : ""}
+        </div>` : ""}
         <div class="quick">
           <a href="#images"><span class="qi" style="background:var(--brand)">${ic("image")}</span><b>Change photos</b><small>Every image on the site, in one place</small></a>
           <a href="#promos"><span class="qi" style="background:var(--rose)">${ic("megaphone")}</span><b>Promotions</b><small>${C.promos.length} cards in the carousel</small></a>
@@ -444,6 +450,8 @@
         { k: "email", label: "Email" }, { k: "instagram", label: "Instagram link" },
         { k: "facebook", label: "Facebook link" }, { k: "currency", label: "Currency", ph: "KWD" },
         { k: "tzOffsetHours", label: "Time zone (hours from UTC)", type: "number", hint: "Kuwait = 3. Used by the live countdown." },
+        { k: "lat", label: "Church latitude", type: "number", ph: "29.3375", hint: "For the ride map in the app. In Google Maps, right-click the church → copy the numbers." },
+        { k: "lng", label: "Church longitude", type: "number", ph: "48.0747" },
       ], C.church)));
       v.appendChild(card("Service times", "Shown in the “Plan a visit” section and used for the live countdown.", listEditor({
         items: C.services, addLabel: "Add a service",
@@ -465,12 +473,14 @@
     /* ---------------------------------------------------------- PRAYER */
     prayer: { title: "Prayer wall", crumb: "Community", icon: "hand-heart", group: "Community", async render(v) {
       let rows = await S.list("prayer_requests").catch((e) => (toast(e.message, true), []));
-      let filter = "all";
-      v.innerHTML = intro("", "Requests posted from the app and website. Hide anything inappropriate, and mark prayers as answered to celebrate them.", `<div class="seg" id="pf"><button class="is-on" data-f="all">All</button><button data-f="open">Open</button><button data-f="answered">Answered</button><button data-f="hidden">Hidden</button></div>`);
+      const review = (r) => r.hidden && r.source === "web";
+      let filter = rows.some(review) ? "review" : "all";
+      v.innerHTML = intro("", "Requests from the app appear straight away. Requests from website visitors wait here until you approve them. Hide anything inappropriate, and mark prayers as answered to celebrate them.", `<div class="seg" id="pf"><button data-f="review">To review${rows.filter(review).length ? ` (${rows.filter(review).length})` : ""}</button><button data-f="all">All</button><button data-f="open">Open</button><button data-f="answered">Answered</button><button data-f="hidden">Hidden</button></div>`);
+      $$("#pf button").forEach((x) => x.classList.toggle("is-on", x.dataset.f === filter));
       const c = document.createElement("section"); c.className = "card"; v.appendChild(c);
       const paint = () => {
-        const list = rows.filter((r) => filter === "all" || (filter === "hidden" ? r.hidden : filter === "answered" ? r.answered && !r.hidden : !r.answered && !r.hidden));
-        c.innerHTML = list.length ? `<table class="table"><thead><tr><th>Request</th><th>From</th><th>Praying</th><th>Status</th><th></th></tr></thead><tbody>${list.map((r) => `<tr data-id="${esc(r.id)}"><td style="max-width:420px">${esc(r.body)}</td><td><div class="who"><span class="avatar">${esc((r.author || "A")[0])}</span>${esc(r.author || "Member")}</div></td><td><b>${fmt(r.pray_count)}</b></td><td><span class="badge ${r.hidden ? "badge--hidden" : r.answered ? "badge--answered" : "badge--open"}">${r.hidden ? "Hidden" : r.answered ? "Answered" : "Open"}</span></td><td><div class="row-actions"><button class="btn btn--ghost btn--sm" data-a="ans">${r.answered ? "Mark open" : "Answered"}</button><button class="icon-btn" data-a="hide" title="${r.hidden ? "Show" : "Hide"}">${ic(r.hidden ? "eye" : "eye-off")}</button><button class="icon-btn is-danger" data-a="del" title="Delete">${ic("trash")}</button></div></td></tr>`).join("")}</tbody></table>` : `<div class="empty">Nothing here.</div>`;
+        const list = rows.filter((r) => filter === "all" || (filter === "review" ? review(r) : filter === "hidden" ? r.hidden && !review(r) : filter === "answered" ? r.answered && !r.hidden : !r.answered && !r.hidden));
+        c.innerHTML = list.length ? `<table class="table"><thead><tr><th>Request</th><th>From</th><th>Praying</th><th>Status</th><th></th></tr></thead><tbody>${list.map((r) => `<tr data-id="${esc(r.id)}"><td style="max-width:420px">${esc(r.body)}</td><td><div class="who"><span class="avatar">${esc((r.author || "A")[0])}</span>${esc(r.author || "Member")}</div></td><td><b>${fmt(r.pray_count)}</b></td><td><span class="badge ${review(r) ? "badge--requested" : r.hidden ? "badge--hidden" : r.answered ? "badge--answered" : "badge--open"}">${review(r) ? "Awaiting review" : r.hidden ? "Hidden" : r.answered ? "Answered" : "Open"}</span></td><td><div class="row-actions">${review(r) ? `<button class="btn btn--brand btn--sm" data-a="hide"><span>Approve</span></button>` : `<button class="btn btn--ghost btn--sm" data-a="ans">${r.answered ? "Mark open" : "Answered"}</button>`}<button class="icon-btn" data-a="hide" title="${r.hidden ? "Show" : "Hide"}">${ic(r.hidden ? "eye" : "eye-off")}</button><button class="icon-btn is-danger" data-a="del" title="Delete">${ic("trash")}</button></div></td></tr>`).join("")}</tbody></table>` : `<div class="empty">Nothing here.</div>`;
       };
       paint();
       $("#pf").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; filter = b.dataset.f; $$("#pf button").forEach((x) => x.classList.toggle("is-on", x === b)); paint(); });
@@ -479,7 +489,7 @@
         const id = b.closest("tr").dataset.id; const r = rows.find((x) => String(x.id) === id);
         try {
           if (b.dataset.a === "ans") { await S.update("prayer_requests", r.id, { answered: !r.answered }); r.answered = !r.answered; toast(r.answered ? "Marked as answered 🙏" : "Marked open"); }
-          if (b.dataset.a === "hide") { await S.update("prayer_requests", r.id, { hidden: !r.hidden }); r.hidden = !r.hidden; toast(r.hidden ? "Hidden from the wall" : "Visible again"); }
+          if (b.dataset.a === "hide") { const was = review(r); await S.update("prayer_requests", r.id, { hidden: !r.hidden }); r.hidden = !r.hidden; if (was) r.source = "web-approved"; toast(r.hidden ? "Hidden from the wall" : was ? "Approved: it's on the wall 🙏" : "Visible again"); }
           if (b.dataset.a === "del") { if (!confirm("Delete this request permanently?")) return; await S.remove("prayer_requests", r.id); rows = rows.filter((x) => x !== r); toast("Deleted"); }
         } catch (err) { toast(err.message, true); }
         paint();
@@ -544,6 +554,9 @@
       });
     } },
   };
+
+  // database-backed views (sermons, courses, games, visitors, care, volunteers, giving)
+  if (window.AgapeAdminRecords) Object.assign(VIEWS, window.AgapeAdminRecords({ S, $, $$, esc, ic, fmt, toast, intro, imgPicker, src, PALETTE, currency: () => (C && C.church.currency) || "KWD" }));
 
   /* ================= navigation ================= */
   function buildNav() {

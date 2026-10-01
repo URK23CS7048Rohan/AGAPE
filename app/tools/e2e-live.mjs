@@ -142,12 +142,15 @@ await step("games: score reaches the leaderboard", async () => {
   await go("/games");
   await click("Trivia", { exact: true });
   await page.waitForTimeout(1200);
-  // answer: try each option until one scores
-  for (const letter of ["A", "B", "C", "D"]) {
-    const got = (await admin.from("game_scores").select("id").eq("user_id", me)).data?.length;
-    if (got) break;
-    await page.getByText(letter, { exact: true }).first().click().catch(() => {});
+  // read the question on screen and tap the right answer (from the database)
+  const { data: qs } = await admin.from("questions").select("prompt, options, answer");
+  for (let k = 0; k < 3; k++) {
+    const shown = await page.evaluate(() => document.body.innerText);
+    const q = qs.find((x) => Array.isArray(x.options) && typeof x.answer === "number" && shown.includes(x.prompt));
+    if (!q) { await page.waitForTimeout(1500); continue; }
+    await page.getByText(q.options[q.answer], { exact: true }).first().click();
     await page.waitForTimeout(1800);
+    if ((await admin.from("game_scores").select("id").eq("user_id", me)).data?.length) break;
   }
   await waitFor(async () => (await admin.from("game_scores").select("id").eq("user_id", me)).data?.length, 12000, "score saved");
   await page.waitForTimeout(2500);
