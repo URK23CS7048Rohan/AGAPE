@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useMemo, useRef, useState } from "react";
 import { Dimensions, Share, View } from "react-native";
 import Animated, { Extrapolation, SharedValue, interpolate, runOnJS, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { Image } from "expo-image";
@@ -91,6 +91,10 @@ export function VerseDeck({ verses }: { verses: Verse[] }) {
   const today = useMemo(() => (list.length ? dayOfYear() % list.length : 0), [list.length]);
   const x = useSharedValue(today * SNAP);
   const [idx, setIdx] = useState(today);
+  // contentOffset isn't honoured everywhere (Android/web), so jump to today's verse once laid out
+  const sv = useRef<any>(null);
+  const placed = useRef(false);
+  const place = () => { if (placed.current || !sv.current) return; placed.current = true; const node = sv.current.scrollTo ? sv.current : sv.current.getNode?.(); requestAnimationFrame(() => node?.scrollTo?.({ x: today * SNAP, y: 0, animated: false })); };
   const onScroll = useAnimatedScrollHandler((e) => {
     x.value = e.contentOffset.x;
     const k = Math.round(e.contentOffset.x / SNAP);
@@ -100,6 +104,8 @@ export function VerseDeck({ verses }: { verses: Verse[] }) {
   return (
     <View>
       <Animated.ScrollView
+        ref={sv}
+        onContentSizeChange={place}
         horizontal
         showsHorizontalScrollIndicator={false}
         snapToInterval={SNAP}
