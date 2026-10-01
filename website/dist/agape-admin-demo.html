@@ -1081,7 +1081,7 @@ window.AgapeAdminRecords = function (h) {
       const ss = section("Series", "Sermon series group messages by book or topic on the Watch tab.");
       v.appendChild(ss);
       $(".card__body", ss).appendChild(records({
-        table: "series", rows: series, addLabel: "Add a series", title: (r) => `${r.title || ""}${r.accent || ""}`, sub: (r) => `${r.book || ""} · ${r.speaker || ""}`, thumb: (r) => r.cover_url,
+        table: "series", rows: series, addLabel: "Add a series", title: (r) => `${r.title || ""} ${r.accent || ""}`.trim(), sub: (r) => `${r.book || ""} · ${r.speaker || ""}`, thumb: (r) => r.cover_url,
         template: { title: "New", accent: " series", book: "", speaker: "", color: "#FF5A1F", position: series.length + 1, cover_url: "" },
         defs: [
           { k: "title", label: "Title (bold)" }, { k: "accent", label: "Accent (italic)" }, { k: "book", label: "Book or topic", ph: "Romans" }, { k: "speaker", label: "Speaker / subtitle" },
