@@ -9,6 +9,9 @@ on:
   push:
     branches: [app-screenshots]
 
+permissions:
+  contents: write
+
 jobs:
   web:
     runs-on: ubuntu-latest
@@ -40,6 +43,12 @@ jobs:
           name: app-screenshots-phone
           path: app/screenshots/*.png
           if-no-files-found: error
+      - name: Also publish the images to the "app-shots-web" branch
+        run: |
+          mkdir -p /tmp/out && cp screenshots/*.png /tmp/out/ && cd /tmp/out
+          git init -q && git checkout -q -b app-shots-web && git add . 
+          git -c user.name="github-actions" -c user.email="actions@github.com" commit -qm "App screenshots (web build)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" app-shots-web
 
   android:
     runs-on: ubuntu-latest
@@ -87,3 +96,9 @@ jobs:
         with:
           name: app-screenshots-android
           path: android-shots/*.png
+      - name: Also publish the images to the "app-shots-android" branch
+        run: |
+          mkdir -p /tmp/out && cp android-shots/*.png /tmp/out/ && cd /tmp/out
+          git init -q && git checkout -q -b app-shots-android && git add .
+          git -c user.name="github-actions" -c user.email="actions@github.com" commit -qm "App screenshots (Android emulator)"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" app-shots-android
