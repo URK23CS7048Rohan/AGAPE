@@ -223,7 +223,7 @@ export default function Rides() {
       fitKey = pickMode ? "" : `${ride?.id}:${phase}`;
     } else {
       route = { coords: phase === "enroute" ? remaining({ coords: demoCoords, minutes: 0, km: 0, real: true }, demoCar) ?? demoCoords : demoCoords };
-      fit = demoCoords.map(([lng, lat]) => ({ lat, lng }));
+      fit = [...demoCoords.map(([lng, lat]) => ({ lat, lng })), churchPt];
       fitKey = `demo:${demoCoords.length}`;
     }
   } else {
