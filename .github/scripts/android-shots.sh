@@ -20,15 +20,23 @@ for m in re.finditer(r'<node [^>]*>', xml):
 else: print('not found',want)
 PY
 }
+# the emulator's own launcher sometimes throws an "isn't responding" box on slow CI machines — hide/dismiss it
+adb shell settings put global hide_error_dialogs 1
+dismiss() { adb shell am broadcast -a android.intent.action.CLOSE_SYSTEM_DIALOGS >/dev/null 2>&1; tap "Wait" >/dev/null 2>&1; }
+sleep 20; dismiss
 adb shell am start -n church.agape.app/.MainActivity
-shot 00-welcome 35
+sleep 30; dismiss
+shot 00-welcome 2
 tap "Continue with Apple"
-shot 01-home 8
+sleep 6; dismiss
+shot 01-home 2
 for i in 1 2 3 4 5 6; do adb shell input swipe 540 1900 540 750 450; shot "01-home-$i" 3; done
-for t in Watch Grow Family Me; do tap "$t"; shot "tab-$t" 6; adb shell input swipe 540 1900 540 900 450; shot "tab-$t-2" 3; done
+for t in Watch Grow Family Me; do dismiss; tap "$t"; shot "tab-$t" 6; adb shell input swipe 540 1900 540 900 450; shot "tab-$t-2" 3; done
 for r in prayer give games events rides assistant; do
+  dismiss
   adb shell am start -W -a android.intent.action.VIEW -d "agape://$r" church.agape.app
-  shot "$r" 8
+  sleep 6; dismiss
+  shot "$r" 2
   adb shell input swipe 540 1900 540 900 450
   shot "$r-2" 3
 done
