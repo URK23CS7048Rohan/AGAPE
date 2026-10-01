@@ -1,0 +1,71 @@
+# Runs the whole backend (Postgres, Auth, Realtime, Storage, Edge Functions) on a GitHub machine
+# with the Supabase CLI, applies the migrations + seed, and tests every feature with real accounts:
+# sign-in codes by e-mail, prayer wall, rides with live location, chat, giving checkout, push, admin rights.
+name: Backend tests
+
+on:
+  workflow_dispatch:
+  push:
+    paths: ["backend/**", ".github/workflows/backend-e2e.yml"]
+  pull_request:
+    paths: ["backend/**"]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Start Supabase (applies migrations + seed)
+        run: supabase start -x vector,logflare,studio,imgproxy
+
+      - name: Read local keys
+        run: |
+          supabase status -o env | sed -E 's/^([A-Z_]+)="?([^"]*)"?$/\1=\2/' >> "$GITHUB_ENV"
+          supabase status -o env | cut -d= -f1
+
+      - name: Lint the database
+        run: supabase db lint --level error || true
+
+      - name: Serve Edge Functions (test payment mode, fake Expo push service)
+        run: |
+          nohup node tests/mock-expo.mjs /tmp/pushes.jsonl > /tmp/mock-expo.log 2>&1 &
+          printf 'PAYMENTS_TEST_MODE=1\nEXPO_PUSH_URL=http://host.docker.internal:9999/push\n' > /tmp/functions.env
+          nohup supabase functions serve --env-file /tmp/functions.env > /tmp/functions.log 2>&1 &
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/functions/v1/payment-webhook" -H 'Content-Type: application/json' -d '{}')
+            echo "functions: $code"; [ "$code" = "400" ] && break; sleep 2
+          done
+          psql "$DB_URL" -v ON_ERROR_STOP=1 -c "select vault.create_secret('http://supabase_kong_agape:8000', 'project_url');" \
+                                            -c "select vault.create_secret('$SERVICE_ROLE_KEY', 'service_role_key');"
+
+      - name: Install test runner
+        working-directory: backend/tests
+        run: npm install --no-audit --no-fund
+
+      - name: End-to-end tests
+        working-directory: backend/tests
+        env:
+          FUNCTIONS: "1"
+          PUSH_LOG: /tmp/pushes.jsonl
+        run: MAIL_URL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}" npm test
+
+      - name: Logs on failure
+        if: failure()
+        run: |
+          echo "---- functions"; tail -n 120 /tmp/functions.log || true
+          echo "---- mock expo"; cat /tmp/mock-expo.log /tmp/pushes.jsonl || true
+          echo "---- pg_net"; psql "$DB_URL" -c "select id, status_code, error_msg, left(content::text, 200) from net._http_response order by id desc limit 10;" || true
+          docker ps --format '{{.Names}}'

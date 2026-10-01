@@ -1,0 +1,76 @@
+# Local development + CI config for the Supabase CLI (`supabase start` inside /backend).
+# The hosted project is configured in the dashboard — see README → "Go live".
+project_id = "agape"
+
+[api]
+enabled = true
+port = 54321
+schemas = ["public", "graphql_public"]
+extra_search_path = ["public", "extensions"]
+max_rows = 1000
+
+[db]
+port = 54322
+
+[db.seed]
+enabled = true
+sql_paths = ["./seed.sql"]
+
+[realtime]
+enabled = true
+
+[studio]
+enabled = true
+port = 54323
+
+[inbucket]
+enabled = true
+port = 54324
+
+[storage]
+enabled = true
+file_size_limit = "50MiB"
+
+[storage.buckets.media]
+public = true
+file_size_limit = "20MiB"
+allowed_mime_types = ["image/png", "image/jpeg", "image/webp", "image/gif", "application/pdf"]
+
+[auth]
+enabled = true
+site_url = "http://127.0.0.1:8080"
+additional_redirect_urls = ["agape://auth-callback", "agape://**", "exp://**", "http://localhost:8081/**", "http://127.0.0.1:8080/**"]
+jwt_expiry = 3600
+enable_refresh_token_rotation = true
+enable_signup = true
+
+[auth.email]
+enable_signup = true
+double_confirm_changes = true
+enable_confirmations = false
+otp_length = 6
+otp_expiry = 3600
+
+[auth.email.template.magic_link]
+subject = "Your Agape sign-in code"
+content_path = "./supabase/templates/magic_link.html"
+
+[auth.email.template.confirmation]
+subject = "Welcome to Agape · your sign-in code"
+content_path = "./supabase/templates/confirmation.html"
+
+[edge_runtime]
+enabled = true
+
+[functions.ask-agape]
+verify_jwt = true
+
+[functions.push]
+verify_jwt = true
+
+# Visitors can give from the website without an account, and Tap calls the webhook.
+[functions.create-checkout]
+verify_jwt = false
+
+[functions.payment-webhook]
+verify_jwt = false

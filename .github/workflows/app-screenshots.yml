@@ -8,6 +8,7 @@ on:
   workflow_dispatch:
   push:
     branches: [app-screenshots]
+    paths: ["app/**", ".github/workflows/app-screenshots.yml", ".github/scripts/**"]
 
 permissions:
   contents: write
