@@ -35,8 +35,9 @@ Deno.serve(async (req) => {
     }).select().single();
     if (error) throw error;
 
-    const sep = returnUrl.includes("?") ? "&" : "?";
-    const back = `${returnUrl}${sep}donation=${d.id}`;
+    // add ?donation=<id> before any #fragment
+    const [base, frag] = returnUrl.split("#");
+    const back = `${base}${base.includes("?") ? "&" : "?"}donation=${d.id}${frag !== undefined ? `#${frag}` : ""}`;
 
     if (Deno.env.get("PAYMENTS_TEST_MODE") === "1") {
       await db.from("donations").update({ provider: "test", checkout_url: back }).eq("id", d.id);

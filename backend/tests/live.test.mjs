@@ -148,6 +148,7 @@ test("prayer: website visitors post requests that wait for review", async () => 
   const pending = ok(await sam.c.from("prayer_requests").select("id, pray_count, hidden, source").eq("body", `Guest request ${stamp}`).single());
   assert.equal(pending.hidden, true); assert.equal(pending.pray_count, 0); assert.equal(pending.source, "web");
   guestPrayerId = pending.id;
+  ok(await sam.c.from("prayer_requests").select("id, guest_name, profiles!prayer_requests_user_id_fkey(full_name)").limit(5), "admin moderation query");
   ok(await sam.c.from("prayer_requests").update({ hidden: false }).eq("id", guestPrayerId), "staff approves");
   const w2 = ok(await anon.from("prayer_wall").select("id, author_name").eq("id", guestPrayerId).single());
   assert.equal(w2.author_name, "Grace V.");
@@ -322,6 +323,8 @@ test("functions: giving checkout → webhook → campaign total and thank-you", 
   assert.equal(bad.status, 400);
   const guest = await (await fetch(`${URL_}/functions/v1/create-checkout`, { method: "POST", headers: { "Content-Type": "application/json", apikey: ANON }, body: JSON.stringify({ amount: 10, name: "Website Guest", email: "g@example.com", campaign_key: "building-fund", return_url: "http://127.0.0.1:8080/" }) })).json();
   assert.ok(guest.donation_id, JSON.stringify(guest));
+  const hashed = await (await fetch(`${URL_}/functions/v1/create-checkout`, { method: "POST", headers: { "Content-Type": "application/json", apikey: ANON }, body: JSON.stringify({ amount: 5, return_url: "http://127.0.0.1:8080/#give" }) })).json();
+  assert.match(hashed.url, /^http:\/\/127\.0\.0\.1:8080\/\?donation=[0-9a-f-]+#give$/, "donation id goes before the #fragment");
 
   const w = await fetch(`${URL_}/functions/v1/payment-webhook`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ test_donation_id: out.donation_id }) });
   assert.equal((await w.json()).status, "succeeded");

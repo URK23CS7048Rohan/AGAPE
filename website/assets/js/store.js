@@ -256,7 +256,7 @@
     async list(table) {
       if (!LIVE) return demoTable(table);
       const q = {
-        prayer_requests: "prayer_requests?select=id,body,anonymous,pray_count,answered,hidden,source,guest_name,created_at,profiles(full_name)&order=created_at.desc&limit=300",
+        prayer_requests: "prayer_requests?select=id,body,anonymous,pray_count,answered,hidden,source,guest_name,created_at,profiles!prayer_requests_user_id_fkey(full_name)&order=created_at.desc&limit=300",
         rides: "rides?select=id,pickup_label,requested_for,seats,status,member:profiles!rides_member_id_fkey(full_name),volunteer:profiles!rides_volunteer_id_fkey(full_name)&order=created_at.desc&limit=200",
         profiles: "profiles?select=id,full_name,email,phone,role,member_no,created_at&order=created_at.desc&limit=1000",
         announcements: "announcements?select=id,title,body,created_at&order=created_at.desc&limit=100",
