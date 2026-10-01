@@ -41,6 +41,7 @@
         if (casing) return set(id, "line-color", hw ? "#1F2835" : "#212A37");
         return set(id, "line-color", hw ? "#746855" : "#38414E");
       }
+      if (t === "symbol" && /shield/.test(low)) { try { map.setLayoutProperty(id, "visibility", "none"); } catch (e) {} return; }
       if (t === "symbol") {
         const water = /water|ocean|sea|lake|river|marine/.test(low), road = sl === "transportation_name", poi = sl === "poi", place = sl === "place";
         set(id, "text-color", water ? "#515C6D" : road ? (/motorway|trunk/.test(low) ? "#F3D19C" : "#9CA5B3") : poi ? "#D59563" : place ? "#D59563" : "#9CA5B3");

@@ -83,6 +83,7 @@ export function mapHtml(initial: { lat: number; lng: number; zoom?: number }) {
         if(casing) return set(id,"line-color",hw?"#E3A62F":major?"#D6D2CB":"#DFDBD5");
         return set(id,"line-color",hw?"#FBD36B":major?"#FFFFFF":"#FFFFFF");
       }
+      if(t==="symbol"&&/shield/.test(low)){lay(id,"visibility","none");return;}
       if(t==="symbol"){
         var place=sl==="place", water=/water|ocean|sea|lake|river|marine/.test(low), road=sl==="transportation_name", poi=sl==="poi";
         set(id,"text-color",water?"#3E76C6":road?"#5F6368":poi?"#6B6F76":place?"#3C4043":"#5F6368");

@@ -784,7 +784,7 @@ void main(){
         label: (ch.short || "Agape") + (ch.short && ch.short !== "Agape" ? "" : " International"),
         onProgress: progress,
         padding: () => (innerWidth > 900
-          ? { top: 140, bottom: 170, left: Math.round(innerWidth * 0.52), right: 70 }
+          ? { top: 140, bottom: 190, left: Math.round(innerWidth * 0.52), right: 190 }
           : { top: Math.round(innerHeight * 0.5), bottom: 150, left: 30, right: 30 }),
       }).then((r) => {
         sketch.stop(); cv.style.display = "none"; card.classList.add("is-real");
