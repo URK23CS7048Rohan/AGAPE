@@ -229,6 +229,7 @@
     { group: "Life at Agape gallery", items: C.gallery.map((g, i) => ({ label: g.caption || `Photo ${i + 1}`, get: () => g.image, set: (v) => (g.image = v) })) },
     { group: "Events", items: C.events.map((e) => ({ label: e.title, get: () => e.image, set: (v) => (e.image = v) })) },
     { group: "Ministries", items: C.ministries.map((m) => ({ label: m.name, get: () => m.image, set: (v) => (m.image = v) })) },
+    { group: "Bible verse backgrounds", items: (C.verses || []).map((x) => ({ label: x.ref, get: () => x.image, set: (v) => (x.image = v) })) },
     { group: "Giving campaigns", items: C.campaigns.map((c) => ({ label: `${c.title} ${c.accent}`, get: () => c.image, set: (v) => (c.image = v) })) },
   ];
 
@@ -283,16 +284,16 @@
 
     /* ---------------------------------------------------------- HERO */
     hero: { title: "Homepage hero", crumb: "Website", icon: "sparkles", group: "Website", render(v) {
-      v.innerHTML = intro("", "The first thing people see. The headline cycles through your words, and the photos play as a slideshow that expands to full screen as visitors scroll.");
+      v.innerHTML = intro("", "The first thing people see: a full-screen photo slideshow that ripples under the cursor, with a giant headline whose last word cycles through your words.");
       v.appendChild(card("Headline", "“Love that” + a cycling word, e.g. “shows up.”, “prays.”", fieldsGrid([
         { k: "kicker", label: "Small label above the headline" },
         { k: "line1", label: "First line" },
         { k: "words", label: "Cycling words (press Enter after each)", type: "tags", wide: true },
         { k: "lead", label: "Intro paragraph", type: "textarea", wide: true },
-        { k: "revealTitle", label: "Full-screen message (after scrolling)" },
+        { k: "revealTitle", label: "Message in the bottom bar" },
         { k: "revealAccent", label: "…italic accent word" },
       ], C.hero)));
-      v.appendChild(card("Slideshow photos", "Drag to reorder. Landscape photos work best (at least 1600px wide).", listEditor({
+      v.appendChild(card("Hero slideshow", "Full-screen photos that crossfade with a liquid transition every few seconds. Drag to reorder. Wide, landscape photos look best.", listEditor({
         items: C.hero.slides, image: "image", imageShape: "imgpick--wide", max: 10, addLabel: "Add a slide",
         title: (s) => s.caption, sub: () => "Hero slide", template: { image: "", caption: "New slide" },
         fields: [{ k: "caption", label: "Caption shown on the photo", wide: true }],
@@ -404,6 +405,18 @@
         title: (t) => t.name, sub: (t) => t.quote, thumbColor: (t) => t.accent,
         template: { quote: "Share what God has done…", name: "Name", role: "Member", color: "#FFE3D6", accent: "#FF5A1F" },
         fields: [{ k: "quote", label: "Testimony", type: "textarea", wide: true }, { k: "name", label: "Name" }, { k: "role", label: "Subtitle", ph: "Member since 2024" }, { k: "color", label: "Card colour", type: "color", soft: true }, { k: "accent", label: "Avatar colour", type: "color" }],
+      }));
+    } },
+
+    /* ---------------------------------------------------------- BIBLE VERSES */
+    verses: { title: "Bible verses", crumb: "Website", icon: "book-open", group: "Website", render(v) {
+      if (!Array.isArray(C.verses)) C.verses = [];
+      v.innerHTML = intro("", "The Scripture carousel on the website and the verse deck in the app. One verse is picked as “Verse of the day” each day, and visitors can tap through the rest. Use a public-domain translation (KJV, WEB) or one you have permission to quote.");
+      v.appendChild(listEditor({
+        items: C.verses, image: "image", imageShape: "imgpick--wide", addLabel: "Add a verse",
+        title: (x) => `${x.ref || "New verse"}${x.translation ? " · " + x.translation : ""}`, sub: (x) => x.text,
+        template: { text: "Your word is a lamp to my feet, and a light for my path.", ref: "Psalm 119:105", translation: "WEB", theme: "Guidance", image: "" },
+        fields: [{ k: "text", label: "Verse", type: "textarea", wide: true }, { k: "ref", label: "Reference", ph: "John 3:16" }, { k: "translation", label: "Translation", ph: "KJV, WEB, NIV…" }, { k: "theme", label: "Theme (small label)", ph: "Hope" }],
       }));
     } },
 

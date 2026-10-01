@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { Dimensions, ScrollView, Share, StyleSheet, View } from "react-native";
+import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { Extrapolation, FadeInDown, FadeInRight, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,10 +9,12 @@ import { setStatusBarStyle } from "expo-status-bar";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG, R, shadow } from "@/theme";
 import { Avatar, Body, Button, Display, Icon, IconButton, Label, LiveBadge, LiveDot, Press, Ring, SectionTitle, Serif } from "@/components/ui";
-import { PromoCarousel } from "@/components/PromoCarousel";
+import { PromoDeck } from "@/components/PromoDeck";
+import { WeekStrip } from "@/components/WeekStrip";
 import { HeroStage, HERO_H } from "@/components/HeroStage";
 import { useSiteContent } from "@/lib/content";
-import { COURSES, VERSES } from "@/data/mock";
+import { COURSES } from "@/data/mock";
+import { VerseDeck } from "@/components/VerseDeck";
 import { useStore } from "@/lib/store";
 
 const { width: SW } = Dimensions.get("window");
@@ -36,7 +38,6 @@ export default function Home() {
   const site = useSiteContent();
   const miniHeader = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [HERO_H - 160, HERO_H - 90], [0, 1], Extrapolation.CLAMP), transform: [{ translateY: interpolate(y.value, [HERO_H - 160, HERO_H - 90], [-10, 0], Extrapolation.CLAMP) }] }));
   useFocusEffect(React.useCallback(() => { setStatusBarStyle("light"); return () => setStatusBarStyle("dark"); }, []));
-  const verse = VERSES[new Date().getDate() % VERSES.length];
   const course = COURSES[0];
   const done = progress[course.id] ?? 0;
 
@@ -61,19 +62,19 @@ export default function Home() {
 
         {/* Promotions */}
         <SectionTitle eyebrow="Happening at Agape" title="Don't miss" accent="what's next." />
-        <PromoCarousel promos={site.promos} />
+        <PromoDeck promos={site.promos} />
 
-        {/* Verse of the day */}
-        <Animated.View entering={FadeInDown.delay(100)} style={{ marginHorizontal: 16, marginTop: 34 }}>
-          <View style={{ backgroundColor: C.sun, borderRadius: R.xl, borderBottomLeftRadius: 10, padding: 22 }}>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <Label color={C.ink}>Verse of the day</Label>
-              <IconButton name="share-2" size={40} bg={C.ink} color={C.sun} onPress={() => Share.share({ message: `“${verse.text}” — ${verse.ref}\n\nShared from the Agape app` })} />
-            </View>
-            <Serif size={34} color={C.ink} style={{ marginTop: 10, lineHeight: 36 }}>“{verse.text}”</Serif>
-            <Body size={14} weight="semi" style={{ marginTop: 10 }}>{verse.ref}</Body>
-          </View>
-        </Animated.View>
+        {/* A week at Agape */}
+        <View style={{ marginTop: 38 }}>
+          <SectionTitle eyebrow="Everything in one place" title="Every day" accent="of the week." />
+          <WeekStrip />
+        </View>
+
+        {/* Scripture — swipeable verse deck (edited in the web admin) */}
+        <View style={{ marginTop: 34 }}>
+          <SectionTitle eyebrow="Scripture for today" title="Word" accent="for the day" />
+          <VerseDeck verses={site.verses} />
+        </View>
 
         {/* Continue learning */}
         <View style={{ marginTop: 34 }}>

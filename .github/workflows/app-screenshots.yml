@@ -1,0 +1,89 @@
+# Screenshots of the app, without a phone.
+#  • "web" job: builds the app for the browser and photographs every screen at iPhone size (≈5 min).
+#  • "android" job: builds the real APK, runs it in an Android emulator and screenshots it (≈25 min).
+# Run it from the Actions tab ("App screenshots" → Run workflow); download the images from the run's Artifacts.
+name: App screenshots
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [app-screenshots]
+
+jobs:
+  web:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: app
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Install dependencies
+        run: |
+          npm install --no-audit --no-fund
+          npx expo install --fix
+          npx expo install @expo/metro-runtime
+      - name: Build the web version
+        run: npx expo export --platform web --output-dir dist-web
+      - name: Serve it and take screenshots
+        run: |
+          npx --yes serve@14 -s dist-web -l 3000 > /tmp/serve.log 2>&1 &
+          npm install --no-save --no-audit --no-fund playwright@1
+          npx playwright install --with-deps chromium
+          sleep 3
+          node tools/shots.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-screenshots-phone
+          path: app/screenshots/*.png
+          if-no-files-found: error
+
+  android:
+    runs-on: ubuntu-latest
+    timeout-minutes: 75
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/setup-java@v4
+        with:
+          distribution: zulu
+          java-version: 17
+      - name: Install dependencies
+        working-directory: app
+        run: |
+          npm install --no-audit --no-fund
+          npx expo install --fix
+      - name: Generate native Android project
+        working-directory: app
+        run: npx expo prebuild --platform android --clean
+      - uses: gradle/actions/setup-gradle@v4
+      - name: Build release APK for the emulator (x86_64)
+        working-directory: app/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleRelease --no-daemon -PreactNativeArchitectures=x86_64
+      - name: Enable KVM
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Run in emulator and screenshot
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 34
+          target: google_apis
+          arch: x86_64
+          profile: pixel_7
+          disable-animations: false
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim
+          script: bash .github/scripts/android-shots.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: app-screenshots-android
+          path: android-shots/*.png

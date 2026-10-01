@@ -116,91 +116,264 @@ window.AgapeBoot = (SITE) => {
   }
 
   /* =======================================================
-     LOADER + HERO (cinematic expanding stage)
+     HERO v4 — WebGL poster: liquid cursor lens, RGB split,
+     noise-displacement slideshow, variable-font proximity type
      ======================================================= */
-  const media = $(".js-hero-media");
-  const heroImgs = $$(".hero2__slides img");
-  const capEl = $(".js-hero-caption");
-  const dotEls = $$(".js-hero-dots i");
+  const heroEl = $(".hx");
+  const hxImgs = $$(".js-hero-slides img");
+  const slideCaps = hxImgs.map((im) => im.dataset.caption || im.alt || "");
+  const HX = { idx: 0, n: Math.max(1, hxImgs.length), gl: null, timer: null, prog: 0 };
+  const hxIdxEl = $(".js-hx-idx"), hxTotEl = $(".js-hx-total");
+  if (hxTotEl) hxTotEl.textContent = String(HX.n).padStart(2, "0");
+
+  // thumbnails
+  const thumbsWrap = $(".js-hx-thumbs");
+  if (thumbsWrap && hxImgs.length > 1) {
+    thumbsWrap.innerHTML = `<span class="hx__cap js-hx-cap"></span>` + hxImgs.map((im, i) => `<button class="hxt" data-i="${i}" aria-label="Show photo ${i + 1}"><img src="${im.getAttribute("src")}" alt="" /><span class="hxt__bar"><i></i></span></button>`).join("");
+  }
+  const thumbs = $$(".hxt");
+  const capEl = $(".js-hx-cap");
+
+  const hxShow = (i) => {
+    HX.idx = i;
+    if (hxIdxEl) hxIdxEl.textContent = String(i + 1).padStart(2, "0");
+    thumbs.forEach((t, k) => t.classList.toggle("is-on", k === i));
+    if (capEl) capEl.textContent = slideCaps[i] || "";
+    if (!HX.gl) hxImgs.forEach((im, k) => im.classList.toggle("is-on", k === i));
+  };
+  const SLIDE_MS = 6500;
+  let slideT0 = performance.now(), slidePaused = false, heroVis = true;
+  const nextSlide = (to) => {
+    const target = to == null ? (HX.idx + 1) % HX.n : to;
+    if (target === HX.idx) return;
+    if (HX.gl) HX.gl.go(target); else hxShow(target);
+    hxShow(target);
+    slideT0 = performance.now();
+  };
+  thumbs.forEach((t) => t.addEventListener("click", () => nextSlide(+t.dataset.i)));
+  gsap.ticker.add(() => {
+    if (HX.n < 2 || !heroVis || document.hidden || slidePaused) { slideT0 += gsap.ticker.deltaRatio() * 16.67; return; }
+    const p = Math.min(1, (performance.now() - slideT0) / SLIDE_MS);
+    heroEl.style.setProperty("--hxp", p.toFixed(3));
+    const bar = thumbs[HX.idx] && thumbs[HX.idx].querySelector("i");
+    if (bar) bar.style.transform = `scaleX(${p})`;
+    thumbs.forEach((t, k) => { if (k !== HX.idx) t.querySelector("i").style.transform = "scaleX(0)"; });
+    if (p >= 1) nextSlide();
+  });
+  watch(heroEl, (v) => (heroVis = v));
+
+  // ---------- WebGL ----------
+  const startHeroGL = () => {
+    const cv = $(".hx__gl");
+    if (!cv || reduce || !hxImgs.length) return null;
+    const gl = cv.getContext("webgl", { antialias: false, alpha: false, premultipliedAlpha: false, powerPreference: "high-performance" });
+    if (!gl) return null;
+    const vs = "attribute vec2 p;varying vec2 vUv;void main(){vUv=p*.5+.5;gl_Position=vec4(p,0.,1.);}";
+    const fs = `precision highp float;
+varying vec2 vUv;
+uniform sampler2D uA,uB;
+uniform vec2 uR,uSA,uSB,uM;
+uniform float uP,uT,uV,uH,uZ;
+vec2 cover(vec2 uv,vec2 img){float rs=uR.x/uR.y,ri=img.x/img.y;vec2 s=rs<ri?vec2(rs/ri,1.):vec2(1.,ri/rs);return clamp((uv-.5)*s+.5,.001,.999);}
+float h(vec2 p){return fract(sin(dot(p,vec2(127.1,311.7)))*43758.5453);}
+float n(vec2 p){vec2 i=floor(p),f=fract(p);vec2 u=f*f*(3.-2.*f);return mix(mix(h(i),h(i+vec2(1,0)),u.x),mix(h(i+vec2(0,1)),h(i+vec2(1,1)),u.x),u.y);}
+float fbm(vec2 p){float v=0.,a=.5;for(int i=0;i<4;i++){v+=a*n(p);p*=2.03;a*=.5;}return v;}
+vec3 samp(sampler2D t,vec2 uv,vec2 sz,vec2 s){return vec3(texture2D(t,cover(uv+s,sz)).r,texture2D(t,cover(uv,sz)).g,texture2D(t,cover(uv-s,sz)).b);}
+void main(){
+  vec2 uv=vUv;
+  vec2 asp=vec2(uR.x/uR.y,1.);
+  vec2 d=(uv-uM)*asp;
+  float dist=length(d);
+  vec2 dir=dist>1e-4?d/dist:vec2(0.);
+  float lens=exp(-dist*dist*22.)*uH;
+  float ring=sin(dist*34.-uT*5.5)*exp(-dist*6.)*uV;
+  vec2 off=dir/asp*(-lens*.028+ring*.012);
+  vec2 liquid=vec2(fbm(uv*2.2+uT*.05),fbm(uv*2.2-uT*.045+7.3))-.5;
+  off+=liquid*.012;
+  vec2 z=(uv-.5)/uZ+.5+off;
+  vec2 rgb=dir/asp*(lens*.003+uV*.009)*(1.-exp(-dist*9.))+vec2(.0012,0.)*uV;
+  float nn=fbm(uv*3.1+1.7);
+  float m=smoothstep(nn-.18,nn+.18,uP*1.36-.18);
+  vec2 za=z+liquid*uP*.35+vec2(0.,uP*.05);
+  vec2 zb=z-liquid*(1.-uP)*.35-vec2(0.,(1.-uP)*.05);
+  vec3 ca=samp(uA,za,uSA,rgb);
+  vec3 cb=samp(uB,zb,uSB,rgb);
+  vec3 c=mix(ca,cb,m);
+  float seam=smoothstep(.0,.5,m)*smoothstep(1.,.5,m);
+  c+=vec3(1.,.42,.18)*seam*.55*step(.001,uP)*step(uP,.999);
+  c=mix(c,c*vec3(1.06,.98,.94),.6);
+  c=(c-.5)*1.06+.5;
+  c+=vec3(1.,.55,.3)*lens*.06;
+  float vig=smoothstep(1.25,.35,length((uv-.5)*vec2(1.1,1.3)));
+  c*=mix(.72,1.,vig);
+  c+=(h(gl_FragCoord.xy+fract(uT)*91.)-.5)*.035;
+  gl_FragColor=vec4(c,1.);
+}`;
+    const sh = (t, src) => { const o = gl.createShader(t); gl.shaderSource(o, src); gl.compileShader(o); if (!gl.getShaderParameter(o, gl.COMPILE_STATUS)) { console.warn(gl.getShaderInfoLog(o)); return null; } return o; };
+    const v = sh(gl.VERTEX_SHADER, vs), f = sh(gl.FRAGMENT_SHADER, fs);
+    if (!v || !f) return null;
+    const pr = gl.createProgram(); gl.attachShader(pr, v); gl.attachShader(pr, f); gl.linkProgram(pr);
+    if (!gl.getProgramParameter(pr, gl.LINK_STATUS)) return null;
+    gl.useProgram(pr);
+    const buf = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, buf);
+    gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 3, -1, -1, 3]), gl.STATIC_DRAW);
+    const loc = gl.getAttribLocation(pr, "p"); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+    const U = {}; ["uA", "uB", "uR", "uSA", "uSB", "uM", "uP", "uT", "uV", "uH", "uZ"].forEach((k) => (U[k] = gl.getUniformLocation(pr, k)));
+    gl.uniform1i(U.uA, 0); gl.uniform1i(U.uB, 1);
+    const tex = hxImgs.map(() => ({ t: gl.createTexture(), w: 1, h: 1, ok: false }));
+    const upload = (i) => {
+      const im = hxImgs[i], T = tex[i];
+      if (!im.complete || !im.naturalWidth) return false;
+      gl.bindTexture(gl.TEXTURE_2D, T.t);
+      gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+      try { gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, im); } catch (e) { return false; }
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+      gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+      T.w = im.naturalWidth; T.h = im.naturalHeight; T.ok = true;
+      return true;
+    };
+    hxImgs.forEach((im, i) => { im.decoding = "sync"; if (!upload(i)) { im.addEventListener("load", () => upload(i), { once: true }); } });
+    const DPR = Math.min(devicePixelRatio || 1, innerWidth < 900 ? 1.25 : 1.5);
+    const size = () => { cv.width = Math.max(2, Math.round(cv.clientWidth * DPR)); cv.height = Math.max(2, Math.round(cv.clientHeight * DPR)); gl.viewport(0, 0, cv.width, cv.height); };
+    size(); addEventListener("resize", size);
+    const st = { a: 0, b: 0, p: 0, mx: 0.5, my: 0.45, tx: 0.5, ty: 0.45, vel: 0, hov: 0, thov: 0, zoom: 1.08, scroll: 0 };
+    let lx = 0, ly = 0, lt = performance.now();
+    heroEl.addEventListener("pointermove", (e) => {
+      const r = cv.getBoundingClientRect();
+      st.tx = (e.clientX - r.left) / r.width; st.ty = 1 - (e.clientY - r.top) / r.height;
+      const now = performance.now(), dt = Math.max(8, now - lt);
+      const sp = Math.hypot(e.clientX - lx, e.clientY - ly) / dt;
+      st.vel = Math.min(1, st.vel + sp * 0.12); lx = e.clientX; ly = e.clientY; lt = now;
+      st.thov = 1;
+    });
+    heroEl.addEventListener("pointerleave", () => (st.thov = 0));
+    heroEl.addEventListener("pointerdown", (e) => { const r = cv.getBoundingClientRect(); st.tx = st.mx = (e.clientX - r.left) / r.width; st.ty = st.my = 1 - (e.clientY - r.top) / r.height; st.vel = 1; });
+    const go = (to) => {
+      if (!tex[to] || !tex[to].ok) upload(to);
+      gsap.killTweensOf(st, "p");
+      if (st.p > 0) { st.a = st.b; }
+      st.b = to; st.p = 0;
+      gsap.to(st, { p: 1, duration: 1.9, ease: "power2.inOut", onComplete: () => { st.a = st.b; st.p = 0; } });
+    };
+    const t0 = performance.now();
+    const loop = (now) => {
+      requestAnimationFrame(loop);
+      if (!heroVis || document.hidden) return;
+      st.mx += (st.tx - st.mx) * 0.08; st.my += (st.ty - st.my) * 0.08;
+      st.hov += (st.thov - st.hov) * 0.05; st.vel *= 0.955;
+      const A = tex[st.a], B = tex[st.b];
+      if (!A.ok) return;
+      gl.activeTexture(gl.TEXTURE0); gl.bindTexture(gl.TEXTURE_2D, A.t);
+      gl.activeTexture(gl.TEXTURE1); gl.bindTexture(gl.TEXTURE_2D, (B.ok ? B : A).t);
+      gl.uniform2f(U.uR, cv.width, cv.height);
+      gl.uniform2f(U.uSA, A.w, A.h); gl.uniform2f(U.uSB, (B.ok ? B : A).w, (B.ok ? B : A).h);
+      gl.uniform2f(U.uM, st.mx, st.my);
+      gl.uniform1f(U.uP, B.ok ? st.p : 0);
+      gl.uniform1f(U.uT, (now - t0) / 1000);
+      gl.uniform1f(U.uV, st.vel);
+      gl.uniform1f(U.uH, st.hov);
+      gl.uniform1f(U.uZ, st.zoom + Math.sin((now - t0) / 9000) * 0.02 - st.scroll * 0.06);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      if (!heroEl.classList.contains("gl-on")) heroEl.classList.add("gl-on");
+    };
+    requestAnimationFrame(loop);
+    return { go, st };
+  };
+  HX.gl = startHeroGL();
+  hxShow(0);
+
+  // ---------- variable-font proximity headline ----------
+  const l1 = $(".hx__l1");
+  let proxLetters = [];
+  if (l1) {
+    const txt = l1.textContent;
+    l1.setAttribute("aria-label", txt);
+    l1.innerHTML = [...txt].map((c) => `<span class="pl-mask" aria-hidden="true"><span class="pl">${c === " " ? "&nbsp;" : c}</span></span>`).join("");
+    proxLetters = $$(".pl", l1).map((el) => ({ el, w: 75, g: 800, y: 0 }));
+    let px = -9999, py = -9999, active = false;
+    if (!isTouch) {
+      heroEl.addEventListener("pointermove", (e) => { px = e.clientX; py = e.clientY; active = true; });
+      heroEl.addEventListener("pointerleave", () => { active = false; });
+    }
+    const t0 = performance.now();
+    gsap.ticker.add(() => {
+      if (!heroVis || reduce) return;
+      const fs = parseFloat(getComputedStyle(l1).fontSize) || 100;
+      const R = fs * 1.6;
+      const now = (performance.now() - t0) / 1000;
+      proxLetters.forEach((L, i) => {
+        let k = 0;
+        if (active) {
+          const r = L.el.getBoundingClientRect();
+          const d = Math.hypot(px - (r.left + r.width / 2), py - (r.top + r.height / 2));
+          k = Math.max(0, 1 - d / R); k = k * k * (3 - 2 * k);
+        } else if (isTouch) {
+          k = Math.max(0, Math.sin(now * 1.6 - i * 0.55)) ** 3 * 0.8;
+        }
+        const tw = 75 + k * 25, tg = 800 - k * 0 , ty = k * 0.05;
+        L.w += (tw - L.w) * 0.14; L.g += (tg - L.g) * 0.14; L.y += (ty - L.y) * 0.14;
+        L.el.style.setProperty("--w", L.w.toFixed(2)); L.el.style.setProperty("--y", L.y.toFixed(3));
+      });
+    });
+  }
+
+  // ---------- rotating word ----------
   const wordEl = $(".js-hero-word");
   let WORDS = ["shows up."];
   try { WORDS = JSON.parse(wordEl.dataset.words || "[]").filter(Boolean); if (!WORDS.length) WORDS = ["shows up."]; } catch (e) {}
-  const desktopHero = () => isDesktop() && !reduce;
-  const splitWord = (w) => { wordEl.innerHTML = [...w].map((c) => `<span class="ch">${c === " " ? "&nbsp;" : c.replace(/</g, "&lt;")}</span>`).join(""); return $$(".ch", wordEl); };
-  let chars = splitWord(WORDS[0]);
-
-  // slideshow with Ken Burns
-  let si = -1;
-  const showSlide = (i) => {
-    const prev = heroImgs[si], next = heroImgs[i];
-    if (!next || prev === next) return;
-    si = i;
-    heroImgs.forEach((im) => (im.style.zIndex = im === next ? 2 : im === prev ? 1 : 0));
-    if (prev) gsap.to(prev, { opacity: 0, duration: 1.3, delay: 0.2, ease: "power2.inOut" });
-    gsap.fromTo(next, { opacity: prev ? 0 : 1 }, { opacity: 1, duration: prev ? 1.3 : 0, ease: "power2.inOut" });
-    gsap.fromTo(next, { scale: 1.16 }, { scale: 1, duration: 7, ease: "none" });
-    if (capEl) capEl.textContent = next.dataset.caption || "";
-    dotEls.forEach((d, j) => d.classList.toggle("is-on", j === i));
-  };
-  showSlide(0);
-  if (heroImgs.length > 1) setInterval(() => { if (!document.hidden) showSlide((si + 1) % heroImgs.length); }, 4800);
-
-  // cycling headline word
   let wi = 0;
   const cycleWord = () => {
     wi = (wi + 1) % WORDS.length;
-    gsap.to(chars, {
-      yPercent: -80, opacity: 0, rotate: -6, duration: 0.42, stagger: 0.022, ease: "power3.in",
-      onComplete: () => {
-        chars = splitWord(WORDS[wi]);
-        gsap.fromTo(chars, { yPercent: 80, opacity: 0, rotate: 6 }, { yPercent: 0, opacity: 1, rotate: 0, duration: 0.85, stagger: 0.035, ease: "expo.out" });
-      },
-    });
+    gsap.to(wordEl, { yPercent: -40, opacity: 0, filter: "blur(12px)", duration: 0.45, ease: "power2.in", onComplete: () => {
+      wordEl.textContent = WORDS[wi];
+      gsap.fromTo(wordEl, { yPercent: 50, opacity: 0, filter: "blur(12px)", rotate: 3 }, { yPercent: 0, opacity: 1, filter: "blur(0px)", rotate: 0, duration: 0.9, ease: "expo.out" });
+    } });
   };
 
-  // subtle parallax on the photos
-  if (!isTouch && !reduce && media) {
-    const sx = gsap.quickTo(".hero2__slides", "x", { duration: 1.2, ease: "power3" });
-    const sy = gsap.quickTo(".hero2__slides", "y", { duration: 1.2, ease: "power3" });
-    gsap.set(".hero2__slides", { scale: 1.06 });
-    $(".hero2").addEventListener("mousemove", (e) => { sx((e.clientX / innerWidth - 0.5) * -26); sy((e.clientY / innerHeight - 0.5) * -18); });
+  // seal text follows the announcement
+  const sealT = $(".js-seal-text");
+  if (sealT && SITE.announcement && SITE.announcement.title) {
+    const base = `${SITE.announcement.title} · ${SITE.announcement.cta || "Watch now"} · `.toUpperCase();
+    let t = base; while ((t + base).length <= 44) t += base;
+    sealT.textContent = t;
   }
 
-  // intro states
-  const cardClip = innerWidth <= 1100 ? "inset(26% 26% 20% 26% round 36px)" : "inset(24% 31% 17% 31% round 40px)";
-  gsap.set(".hero2__kicker, .hero2__l1", { yPercent: 50, opacity: 0 });
-  gsap.set(chars, { yPercent: 80, opacity: 0 });
-  gsap.set(".hero2__side, .hero2__caption, .hero2__scroll", { opacity: 0, y: 30 });
-  if (desktopHero()) gsap.set(media, { clipPath: "inset(50% 50% 50% 50% round 40px)" });
-  else gsap.set(media, { opacity: 0, y: 40 });
+  // ---------- nav hover highlight ----------
+  const nl = $(".nav__links");
+  if (nl && !isTouch) {
+    const hl = document.createElement("span"); hl.className = "nav__hl"; nl.prepend(hl);
+    $$("a", nl).forEach((a) => a.addEventListener("mouseenter", () => { hl.style.width = a.offsetWidth + "px"; hl.style.transform = `translateX(${a.offsetLeft}px)`; hl.style.opacity = 1; }));
+    nl.addEventListener("mouseleave", () => (hl.style.opacity = 0));
+  }
 
-  let heroScrolled = false;
-  const heroScroll = () => {
-    if (WORDS.length > 1 && !reduce) setInterval(() => { if (!document.hidden) cycleWord(); }, 2800);
-    if (heroScrolled || !desktopHero()) return;
-    heroScrolled = true;
-    const reveal = $(".hero2__reveal");
-    gsap.timeline({
-      scrollTrigger: { trigger: ".hero2", start: "top top", end: "+=120%", pin: true, scrub: 0.8, anticipatePin: 1, onUpdate: (st) => reveal.classList.toggle("is-on", st.progress > 0.7) },
-    })
-      .fromTo(media, { clipPath: cardClip }, { clipPath: "inset(0% 0% 0% 0% round 0px)", ease: "power2.inOut", duration: 1, immediateRender: false }, 0)
-      .to(".hero2__line--1", { xPercent: -30, opacity: 0, ease: "power2.in", duration: 0.55 }, 0)
-      .to(".hero2__line--2", { xPercent: 30, opacity: 0, ease: "power2.in", duration: 0.55 }, 0)
-      .to(".hero2__side--left", { x: -90, opacity: 0, duration: 0.45 }, 0)
-      .to(".hero2__side--right", { x: 90, opacity: 0, duration: 0.45 }, 0)
-      .to(".hero2__caption, .hero2__scroll", { opacity: 0, duration: 0.25 }, 0)
-      .fromTo(".hero2__reveal", { opacity: 0, y: 80 }, { opacity: 1, y: 0, duration: 0.4 }, 0.6);
-    ScrollTrigger.refresh();
-  };
-
+  // ---------- intro + scroll ----------
+  const HX_IN = "inset(14% 10% 20% 10% round 48px)", HX_FULL = "inset(0% 0% 0% 0% round 0px)";
+  gsap.set(".hx__media", { scale: 1.12 });
+  gsap.set(".hx .pl", { yPercent: 110 });
+  gsap.set(".hx__word, .hx__kicker, .hx__lead, .hx__ctas > *, .hx__top > *, .hx__seal, .hx__thumbs, .hx__foot", { opacity: 0, y: 30 });
+  gsap.set(".hx__word", { filter: "blur(14px)" });
   const heroIntro = () => {
-    const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: heroScroll });
-    if (desktopHero()) tl.to(media, { clipPath: cardClip, duration: 1.7, ease: "expo.inOut" }, 0);
-    else tl.to(media, { opacity: 1, y: 0, duration: 1.2 }, 0.1);
-    tl.to(".hero2__kicker", { yPercent: 0, opacity: 1, duration: 1 }, 0.35)
-      .to(".hero2__l1", { yPercent: 0, opacity: 1, duration: 1.3 }, 0.45)
-      .to(chars, { yPercent: 0, opacity: 1, duration: 1.1, stagger: 0.045 }, 0.75)
-      .to(".hero2__side, .hero2__caption, .hero2__scroll", { opacity: 1, y: 0, duration: 1, stagger: 0.1 }, 1);
+    const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: () => { if (WORDS.length > 1 && !reduce) setInterval(() => !document.hidden && heroVis && cycleWord(), 3000); } });
+    tl.fromTo(".hx__media", { clipPath: HX_IN }, { clipPath: HX_FULL, scale: 1, duration: 1.8, ease: "expo.inOut", immediateRender: true }, 0)
+      .to(".hx .pl", { yPercent: 0, duration: 1.3, stagger: 0.045 }, 0.75)
+      .to(".hx__word", { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4 }, 1.05)
+      .to(".hx__kicker, .hx__lead", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 1.1)
+      .to(".hx__ctas > *", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 1.2)
+      .to(".hx__top > *, .hx__seal, .hx__thumbs", { opacity: 1, y: 0, duration: 1.2, stagger: 0.06 }, 1.25)
+      .to(".hx__foot", { opacity: 1, y: 0, duration: 1.1 }, 1.4)
+      .add(() => heroEl.classList.add("is-in"), 2.2)
+      .add(() => $$(".hx [data-count]").forEach((el) => {
+        const target = parseFloat(el.dataset.count) || 0, suf = el.dataset.suffix || "", o = { v: 0 };
+        gsap.to(o, { v: target, duration: 2.2, ease: "power3.out", onUpdate: () => (el.textContent = fmt(o.v) + suf) });
+      }), 1.4);
+    if (!reduce) {
+      gsap.timeline({ scrollTrigger: { trigger: heroEl, start: "top top", end: "bottom top", scrub: true } })
+        .fromTo(".hx__media", { clipPath: HX_FULL }, { clipPath: "inset(6% 4% 16% 4% round 44px)", ease: "none", immediateRender: false }, 0)
+        .to(".hx__main", { yPercent: -35, ease: "none" }, 0)
+        .to(".hx__seal", { rotate: 180, yPercent: -80, ease: "none" }, 0)
+        .to(".hx__foot, .hx__top, .hx__thumbs", { opacity: 0, ease: "none" }, 0);
+      if (HX.gl) ScrollTrigger.create({ trigger: heroEl, start: "top top", end: "bottom top", onUpdate: (s) => (HX.gl.st.scroll = s.progress) });
+    }
     return tl;
   };
 
@@ -210,24 +383,23 @@ window.AgapeBoot = (SITE) => {
     const letters = $$(".loader__word span");
     const done = () => { document.body.classList.remove("is-loading"); ScrollTrigger.refresh(); };
     if (reduce) { loader.remove(); done(); heroIntro().progress(1); return; }
-    if (window.AGAPE_PREVIEW || /[?&]preview=1/.test(location.search)) { loader.remove(); done(); heroIntro(); return; }
+    if (window.AGAPE_PREVIEW || /[?&]preview=1/.test(location.search)) { loader.remove(); done(); heroIntro().progress(1); return; }
     const c = { v: 0 };
-    const fontsReady = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 2200))]);
-    const firstImg = heroImgs[0] && !heroImgs[0].complete ? new Promise((r) => { heroImgs[0].onload = heroImgs[0].onerror = r; setTimeout(r, 2500); }) : Promise.resolve();
+    const fontsReady = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 1600))]);
+    const firstImg = hxImgs[0] ? new Promise((r) => (hxImgs[0].complete ? r() : (hxImgs[0].onload = hxImgs[0].onerror = r))) : Promise.resolve();
     const tl = gsap.timeline();
-    tl.to(letters, { yPercent: 0, y: 0, opacity: 1, duration: 1, stagger: 0.06, ease: "expo.out" })
-      .to(".loader__meaning", { opacity: 1, duration: 0.6 }, 0.4)
-      .to(c, { v: 100, duration: 1.5, ease: "power2.inOut", onUpdate: () => (count.textContent = String(Math.round(c.v)).padStart(3, "0")) }, 0);
-    Promise.all([fontsReady, firstImg, new Promise((r) => tl.eventCallback("onComplete", r))]).then(() => {
-      gsap.timeline({ onComplete: () => { loader.remove(); } })
-        .to(letters, { yPercent: -110, opacity: 0, duration: 0.6, stagger: 0.03, ease: "power3.in" })
+    tl.to(letters, { yPercent: 0, y: 0, opacity: 1, duration: 0.8, stagger: 0.05, ease: "expo.out" })
+      .to(".loader__meaning", { opacity: 1, duration: 0.5 }, 0.3)
+      .to(c, { v: 100, duration: 1.1, ease: "power2.inOut", onUpdate: () => (count.textContent = String(Math.round(c.v)).padStart(3, "0")) }, 0);
+    Promise.all([fontsReady, Promise.race([firstImg, new Promise((r) => setTimeout(r, 2500))]), new Promise((r) => tl.eventCallback("onComplete", r))]).then(() => {
+      gsap.timeline({ onComplete: () => loader.remove() })
+        .to(letters, { yPercent: -110, opacity: 0, duration: 0.5, stagger: 0.03, ease: "power3.in" })
         .to(".loader__meaning, .loader__count", { opacity: 0, duration: 0.3 }, 0)
-        .to(loader, { clipPath: "inset(0 0 100% 0 round 0 0 48px 48px)", duration: 1, ease: "expo.inOut" }, 0.35)
-        .add(() => { done(); heroIntro(); }, 0.75);
+        .to(loader, { opacity: 0, duration: 0.7, ease: "power2.inOut" }, 0.3)
+        .add(() => { done(); heroIntro(); }, 0.35);
     });
   };
   gsap.set(".loader__word span", { yPercent: 110 });
-  gsap.set(".loader", { clipPath: "inset(0 0 0% 0 round 0 0 0px 0px)" });
   runLoader();
 
   /* =======================================================
@@ -249,15 +421,19 @@ window.AgapeBoot = (SITE) => {
   (document.fonts ? document.fonts.ready : Promise.resolve()).then(splitReveal);
 
   // generic reveals
-  const revealSel = ".ytcard, .player, .chat, .countdown, .step__tags, .map-card, .vm, .board, .ai__chat, .pform, .camp, .gbox, .erow, .vcard, .time, .acc__item, .store, .section-sub, .rides__stats, .ride-steps, .ticks";
+  const revealSel = ".step__tags, .map-card, .vm, .board, .ai__chat, .pform, .camp, .gbox, .erow, .vcard, .time, .acc__item, .store, .section-sub, .rides__stats, .ride-steps, .ticks";
   $$(revealSel).forEach((el) => el.classList.add("reveal"));
-  ScrollTrigger.batch(".reveal", {
-    start: "top 90%", once: true,
-    onEnter: (batch) => gsap.to(batch, { opacity: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.08, overwrite: true }),
-  });
+  // IntersectionObserver-based (independent of ScrollTrigger refresh order / pin spacing)
+  const revealIO = new IntersectionObserver((ents) => {
+    const vis = ents.filter((e) => e.isIntersecting).map((e) => e.target);
+    vis.forEach((el) => revealIO.unobserve(el));
+    if (vis.length) gsap.to(vis, { opacity: 1, y: 0, duration: 1.1, ease: "expo.out", stagger: 0.08, overwrite: true });
+  }, { rootMargin: "0px 0px -6% 0px" });
+  $$(".reveal").forEach((el) => revealIO.observe(el));
 
   // counters
   $$("[data-count]").forEach((el) => {
+    if (el.closest(".hx")) return;
     const target = parseFloat(el.dataset.count), dec = parseInt(el.dataset.dec || 0), suf = el.dataset.suffix || "";
     const o = { v: 0 };
     ScrollTrigger.create({
@@ -338,7 +514,7 @@ window.AgapeBoot = (SITE) => {
      LIVE: viewers, chat, hearts, countdown
      ======================================================= */
   (() => {
-    const live = $(".live");
+    const live = $("#watch");
     let on = false;
     watch(live, (v) => (on = v));
     // viewers
@@ -413,10 +589,11 @@ window.AgapeBoot = (SITE) => {
         if (!best || t < best.t) best = { t, sv };
       });
       const r = Math.max(0, best.t - now);
-      d.textContent = pad2(Math.floor(r / 864e5));
-      h.textContent = pad2(Math.floor((r % 864e5) / 36e5));
-      m.textContent = pad2(Math.floor((r % 36e5) / 6e4));
-      s.textContent = pad2(Math.floor((r % 6e4) / 1e3));
+      const flip = (el, v) => { if (el.textContent === v) return; el.textContent = v; if (on && !reduce) gsap.fromTo(el, { yPercent: -45, opacity: 0, rotateX: 70 }, { yPercent: 0, opacity: 1, rotateX: 0, duration: 0.55, ease: "back.out(2)" }); };
+      flip(d, pad2(Math.floor(r / 864e5)));
+      flip(h, pad2(Math.floor((r % 864e5) / 36e5)));
+      flip(m, pad2(Math.floor((r % 36e5) / 6e4)));
+      flip(s, pad2(Math.floor((r % 6e4) / 1e3)));
       lbl.textContent = best.sv.label;
       const hd = $(".js-h-d");
       if (hd) {
@@ -428,32 +605,7 @@ window.AgapeBoot = (SITE) => {
     tick(); setInterval(tick, 1000);
   })();
 
-  /* =======================================================
-     SERIES — horizontal pinned scroll
-     ======================================================= */
   const mm = gsap.matchMedia();
-  mm.add("(min-width: 901px)", () => {
-    const track = $(".series__track");
-    const amount = () => Math.max(0, track.scrollWidth - document.documentElement.clientWidth);
-    const tween = gsap.to(track, {
-      x: () => -amount(), ease: "none",
-      scrollTrigger: { trigger: ".series", start: "top top", end: () => "+=" + amount(), pin: true, scrub: 1, invalidateOnRefresh: true, anticipatePin: 1 },
-    });
-    $$(".scard", track).forEach((card) => {
-      const img = $(".scard__img img", card);
-      if (img) gsap.fromTo(img, { xPercent: -6 }, { xPercent: 6, ease: "none", scrollTrigger: { trigger: card, containerAnimation: tween, start: "left right", end: "right left", scrub: true } });
-      gsap.from(card, { rotate: 4, y: 60, ease: "none", scrollTrigger: { trigger: card, containerAnimation: tween, start: "left 110%", end: "left 60%", scrub: true } });
-    });
-    return () => gsap.set(track, { clearProps: "x" });
-  });
-  $$(".fchip").forEach((chip) => chip.addEventListener("click", () => {
-    $$(".fchip").forEach((c) => c.classList.toggle("is-on", c === chip));
-    const q = chip.textContent.trim().toLowerCase();
-    $$(".scard:not(.scard--more)").forEach((c) => {
-      const match = q === "all" || c.textContent.toLowerCase().includes(q);
-      gsap.to(c, { opacity: match ? 1 : 0.18, scale: match ? 1 : 0.94, duration: 0.6, ease: "expo.out" });
-    });
-  }));
 
   /* =======================================================
      MAP RENDERER (procedural "dark mode" city + live route)
@@ -609,7 +761,7 @@ window.AgapeBoot = (SITE) => {
     const steps = $$(".ride-steps li"), eta = $(".js-eta");
     let lastStep = -1, lastEta = "";
     makeMap(cv, {
-      seed: 11, region: [0.1, 0.2, 0.9, 0.78],
+      seed: 11, region: innerWidth > 900 ? [0.54, 0.18, 0.93, 0.8] : [0.12, 0.5, 0.9, 0.9], water: innerWidth > 900 ? "tr" : "top",
       onProgress: (p) => {
         const s = p < 0.08 ? 0 : p < 0.2 ? 1 : p < 0.99 ? 2 : 3;
         if (s !== lastStep) { steps.forEach((li, i) => li.classList.toggle("is-on", i <= s)); lastStep = s; }
@@ -757,7 +909,7 @@ window.AgapeBoot = (SITE) => {
       rEl.textContent = v.r;
       const opts = [...v.a, ...v.x].sort(() => Math.random() - 0.5);
       oEl.innerHTML = opts.map((w) => `<button type="button">${w}</button>`).join("");
-      hint.textContent = "Tap the missing words in order."; hint.classList.remove("is-win");
+      hint.textContent = "Drag the words into the gaps, or tap them in order."; hint.classList.remove("is-win");
       prog.style.width = (vi / verses.length) * 100 + "%";
       gsap.from(vEl, { opacity: 0, y: 20, duration: 0.6, ease: "expo.out" });
       gsap.from($$("button", oEl), { opacity: 0, y: 16, scale: 0.9, duration: 0.5, stagger: 0.05, ease: "back.out(2)" });
@@ -793,7 +945,6 @@ window.AgapeBoot = (SITE) => {
       }
     });
     load();
-    gsap.to(".gs", { y: -14, rotate: "+=4", duration: 2.4, ease: "sine.inOut", yoyo: true, repeat: -1, stagger: 0.4 });
   })();
 
   /* =======================================================
@@ -867,22 +1018,61 @@ window.AgapeBoot = (SITE) => {
       ["Grace L.", "Our small group is starting a food drive. Pray it reaches the families who need it most.", 33, "#4CC3FF"],
       ["Anonymous", "Healing from a long illness. Some days are hard.", 49, "#FFC23D"],
     ];
-    const card = ([who, txt, n, c], isNew) => `<article class="pcard ${isNew ? "is-new" : ""}"><div class="pcard__who"><span style="--c:${c}">${who[0]}</span>${who}</div><p>${txt}</p><button class="pray-btn" data-n="${n}"><svg class="ic"><use href="#i-hand-heart"/></svg><span>Praying · ${n}</span></button></article>`;
-    const cols = $$(".pcol");
-    cols.forEach((col, ci) => {
-      const mine = reqs.filter((_, i) => i % 3 === ci);
-      const html = mine.map((r) => card(r)).join("");
-      col.innerHTML = html + html;
-      if (!reduce) {
-        const dur = parseFloat(col.dataset.dur || 40);
-        const rev = col.classList.contains("pcol--rev");
-        const tw = gsap.fromTo(col, { yPercent: rev ? -50 : 0 }, { yPercent: rev ? 0 : -50, duration: dur, ease: "none", repeat: -1 });
-        col.addEventListener("mouseenter", () => gsap.to(tw, { timeScale: 0.15, duration: 0.6 }));
-        col.addEventListener("mouseleave", () => gsap.to(tw, { timeScale: 1, duration: 0.6 }));
-        watch(col, (v) => (v ? tw.play() : tw.pause()));
-      }
-    });
-    $(".prayer__wall").addEventListener("click", (e) => {
+    const PAPER = ["#FFE680", "#FFC2D8", "#BDF3DC", "#D9CCFF", "#FFD2B8", "#C7E9FF"];
+    const board = $(".pnotes");
+    const note = ([who, txt, n, c], i, isNew) => {
+      const el = document.createElement("article");
+      el.className = "pnote" + (isNew ? " is-new" : "");
+      el.style.setProperty("--paper", PAPER[i % PAPER.length]);
+      el.innerHTML = `<span class="pnote__tape"></span><div class="pnote__who"><span style="--c:${c}">${who[0]}</span>${who}</div><p>${txt}</p><button class="pray-btn" data-n="${n}"><svg class="ic"><use href="#i-hand-heart"/></svg><span>Praying · ${n}</span></button>`;
+      return el;
+    };
+    const notes = [];
+    const place = () => {
+      const W = board.clientWidth, H = board.clientHeight, mob = innerWidth < 700;
+      const cols = mob ? 2 : 3, rows = Math.ceil(notes.length / cols);
+      notes.forEach((el, i) => {
+        const nw = el.offsetWidth, nh = el.offsetHeight;
+        const c = i % cols, r = Math.floor(i / cols);
+        const cx = ((c + 0.5) / cols) * W, cy = ((r + 0.5) / rows) * H;
+        const x = Math.max(0, Math.min(W - nw, cx - nw / 2 + (Math.random() - 0.5) * (W / cols) * 0.35));
+        const y = Math.max(0, Math.min(H - nh, cy - nh / 2 + (Math.random() - 0.5) * (H / rows) * 0.5));
+        el._pos = { x, y, r: (Math.random() - 0.5) * 16 };
+        gsap.set(el, { x, y, rotation: el._pos.r });
+      });
+    };
+    const makeDrag = (el) => {
+      if (!window.Draggable) return;
+      let lastX = 0;
+      Draggable.create(el, {
+        type: "x,y", bounds: board, inertia: true, edgeResistance: 0.75, zIndexBoost: true, throwResistance: 1800,
+        onPress() { lastX = this.x; gsap.to(el, { scale: 1.06, boxShadow: "0 40px 70px -20px rgba(0,0,0,.6)", duration: 0.25 }); },
+        onDrag() { const v = this.x - lastX; lastX = this.x; gsap.to(el, { rotation: Math.max(-22, Math.min(22, v * 1.6)), duration: 0.4, overwrite: "auto" }); },
+        onRelease() { gsap.to(el, { scale: 1, boxShadow: "0 18px 40px -18px rgba(0,0,0,.55)", duration: 0.5 }); },
+        onThrowComplete() { gsap.to(el, { rotation: (Math.random() - 0.5) * 12, duration: 0.8, ease: "elastic.out(1,0.5)" }); },
+      });
+    };
+    const count = innerWidth < 700 ? 7 : 9;
+    reqs.slice(0, count).forEach((r, i) => { const el = note(r, i); board.appendChild(el); notes.push(el); });
+    gsap.registerPlugin(Draggable, InertiaPlugin);
+    let dropped = reduce;
+    const init = () => {
+      place(); notes.forEach(makeDrag);
+      if (!dropped) gsap.set(notes, { opacity: 0 });
+    };
+    requestAnimationFrame(init);
+    let rt; addEventListener("resize", () => { clearTimeout(rt); rt = setTimeout(place, 200); });
+    // notes fall onto the board the first time it scrolls into view
+    const dropIO = new IntersectionObserver((ents) => {
+      if (dropped || !ents.some((e) => e.isIntersecting)) return;
+      dropped = true; dropIO.disconnect();
+      notes.forEach((el, i) => {
+        const p = el._pos || { x: 0, y: 0, r: 0 };
+        gsap.fromTo(el, { opacity: 0, y: p.y - 520, rotation: (Math.random() - 0.5) * 70 }, { opacity: 1, y: p.y, rotation: p.r, duration: 1.3, ease: "bounce.out", delay: Math.random() * 0.6 });
+      });
+    }, { rootMargin: "0px 0px -25% 0px" });
+    dropIO.observe(board);
+    board.addEventListener("click", (e) => {
       const b = e.target.closest(".pray-btn");
       if (!b) return;
       const on = b.classList.toggle("is-on");
@@ -899,11 +1089,12 @@ window.AgapeBoot = (SITE) => {
       e.preventDefault();
       const ta = $("textarea", e.target), anon = $("input", e.target).checked;
       const txt = ta.value.trim(); if (!txt) return;
-      const el = document.createElement("div");
-      el.innerHTML = card([anon ? "Anonymous" : "You", txt.replace(/</g, "&lt;"), 1, "#FF3D7F"], true);
-      const c = el.firstElementChild;
-      cols[0].prepend(c);
-      gsap.from(c, { scale: 0.7, opacity: 0, duration: 0.8, ease: "back.out(1.8)" });
+      const el = note([anon ? "Anonymous" : "You", txt.replace(/</g, "&lt;"), 1, "#FF3D7F"], Math.floor(Math.random() * 6), true);
+      board.appendChild(el); notes.push(el);
+      const W = board.clientWidth;
+      gsap.set(el, { x: W / 2 - el.offsetWidth / 2, y: 20, zIndex: 999 });
+      gsap.from(el, { y: -400, rotation: -30, duration: 1.2, ease: "bounce.out" });
+      makeDrag(el);
       ta.value = "";
       const btn = $("button[type=submit] span", e.target), orig = btn.textContent;
       btn.textContent = "Posted. We're praying with you"; setTimeout(() => (btn.textContent = orig), 2600);
@@ -958,19 +1149,111 @@ window.AgapeBoot = (SITE) => {
   })();
 
   /* =======================================================
-     VERSE — word-by-word scrub + share card
+     VERSES — auto-playing scripture carousel + share card
      ======================================================= */
   (() => {
-    const q = $(".js-verse-q");
-    (document.fonts ? document.fonts.ready : Promise.resolve()).then(() => {
-      const sp = SplitText.create(q, { type: "words", wordsClass: "word" });
-      gsap.to(sp.words, { opacity: 1, stagger: 0.12, ease: "none", scrollTrigger: { trigger: ".verse", start: "top 65%", end: "center 45%", scrub: true } });
-    });
-    gsap.fromTo(".verse__bg", { yPercent: -8 }, { yPercent: 8, ease: "none", scrollTrigger: { trigger: ".verse", start: "top bottom", end: "bottom top", scrub: true } });
+    const sec = $("#verse");
+    const V = ((SITE && SITE.verses) || []).filter((v) => v && v.text);
+    if (!sec || !V.length) return;
+    const q = $(".js-verse-q"), bgs = $$(".js-vbg img"), chips = $$(".vchip"), rail = $(".verse__rail");
+    const refEl = $(".js-vref"), trEl = $(".js-vtr"), themeEl = $(".js-vtheme"), numEl = $(".js-vnum"), labelEl = $(".js-vlabel");
+    const playBtn = $(".js-vplay");
+    const DUR = 9;
+    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const now = new Date();
+    const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
+    const today = doy % V.length;
+    let cur = -1, timer = null, inView = false, userPaused = false, hover = false, token = 0;
 
+    const sizeClass = (t) => (t.length > 115 ? "is-long" : t.length > 70 ? "is-mid" : "is-short");
+    const words = (t) => `“${t}”`.split(/\s+/).map((w) => `<span class="vw"><span>${w.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</span></span>`).join(" ");
+    const pad = (n) => String(n + 1).padStart(2, "0");
+
+    const tick = () => {
+      if (timer) timer.kill();
+      const fill = chips[cur] && $(".vchip__fill", chips[cur]);
+      if (!fill) return;
+      timer = gsap.fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: DUR, ease: "none", paused: true, onComplete: () => go(cur + 1, 1) });
+      sync();
+    };
+    const sync = () => {
+      const run = inView && !userPaused && !hover && !document.hidden;
+      if (timer) run ? timer.play() : timer.pause();
+      sec.classList.toggle("is-paused", userPaused);
+      playBtn.setAttribute("aria-label", userPaused ? "Play" : "Pause");
+    };
+
+    function go(i, dir = 1, instant = false) {
+      i = (i + V.length) % V.length;
+      if (i === cur) return;
+      const v = V[i], my = ++token;
+      const prev = cur; cur = i;
+      // preload next background
+      [i, (i + 1) % V.length].forEach((k) => bgs[k] && bgs[k].setAttribute("loading", "eager"));
+      bgs.forEach((im, k) => im.classList.toggle("is-on", k === i));
+      if (prev > -1 && bgs[prev]) bgs[prev].classList.add("was-on"), setTimeout(() => bgs[prev] && bgs[prev].classList.remove("was-on"), 1600);
+      chips.forEach((c, k) => { c.classList.toggle("is-on", k === i); c.setAttribute("aria-selected", k === i); if (k !== i) gsap.set($(".vchip__fill", c), { scaleX: k < i ? 1 : 0 }); });
+      if (chips[i] && rail) {
+        const c = chips[i];
+        rail.scrollTo({ left: c.offsetLeft - rail.clientWidth / 2 + c.offsetWidth / 2, behavior: instant ? "auto" : "smooth" });
+      }
+      numEl.textContent = pad(i);
+      labelEl.textContent = i === today ? "Verse of the day" : "Scripture for you";
+      const swapMeta = () => { refEl.textContent = v.ref; trEl.textContent = v.translation || ""; themeEl.textContent = v.theme || ""; };
+      const enter = () => {
+        if (my !== token) return;
+        q.className = `verse__q js-verse-q ${sizeClass(v.text)}`;
+        q.innerHTML = words(v.text);
+        swapMeta();
+        if (reduce || instant) { gsap.set(q.querySelectorAll(".vw > span"), { clearProps: "all" }); return; }
+        gsap.fromTo(q.querySelectorAll(".vw > span"), { yPercent: 35 * dir, opacity: 0, filter: "blur(12px)" },
+          { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 1.1, stagger: 0.045, ease: "expo.out" });
+        gsap.fromTo([".verse__ref", ".verse__theme"], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08, delay: 0.25, ease: "power3.out" });
+      };
+      const old = q.querySelectorAll(".vw > span");
+      if (instant || reduce || !old.length) enter();
+      else gsap.to(old, { yPercent: -30 * dir, opacity: 0, filter: "blur(10px)", duration: 0.42, stagger: 0.012, ease: "power2.in", onComplete: enter });
+      tick();
+    }
+
+    // controls
+    $(".js-vnext").addEventListener("click", () => go(cur + 1, 1));
+    $(".js-vprev").addEventListener("click", () => go(cur - 1, -1));
+    playBtn.addEventListener("click", () => { userPaused = !userPaused; sync(); });
+    chips.forEach((c, k) => c.addEventListener("click", () => go(k, k >= cur ? 1 : -1)));
+    const inner = $(".verse__inner");
+    inner.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { hover = true; sync(); } });
+    inner.addEventListener("pointerleave", () => { hover = false; sync(); });
+    addEventListener("keydown", (e) => {
+      if (!inView || /input|textarea|select/i.test(document.activeElement.tagName)) return;
+      if (e.key === "ArrowRight") go(cur + 1, 1);
+      else if (e.key === "ArrowLeft") go(cur - 1, -1);
+    });
+    // swipe (not on the chip rail — it scrolls sideways)
+    let sx = 0, sy = 0, st = 0;
+    sec.addEventListener("pointerdown", (e) => { if (e.target.closest(".verse__rail, button, a")) { st = 0; return; } sx = e.clientX; sy = e.clientY; st = 1; });
+    sec.addEventListener("pointerup", (e) => {
+      if (!st) return; st = 0;
+      const dx = e.clientX - sx, dy = e.clientY - sy;
+      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) go(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
+    });
+    document.addEventListener("visibilitychange", sync);
+    ScrollTrigger.create({ trigger: sec, start: "top 70%", end: "bottom 30%", onToggle: (self) => { inView = self.isActive; sync(); } });
+
+    gsap.fromTo(".verse__bg", { yPercent: -6 }, { yPercent: 6, ease: "none", scrollTrigger: { trigger: ".verse", start: "top bottom", end: "bottom top", scrub: true } });
+    go(today, 1, true);
+    // first reveal when scrolled into view
+    if (!reduce) {
+      gsap.set(q.querySelectorAll(".vw > span"), { yPercent: 35, opacity: 0, filter: "blur(12px)" });
+      ScrollTrigger.create({ trigger: sec, start: "top 60%", once: true, onEnter: () => {
+        gsap.to(q.querySelectorAll(".vw > span"), { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 1.2, stagger: 0.05, ease: "expo.out" });
+      } });
+    }
+
+    /* share card — always the verse currently on screen */
     const modal = $(".share-modal"), cv = $(".share-canvas"), ctx = cv.getContext("2d");
     const draw = () => {
-      const bg = $(".verse__bg img");
+      const v = V[cur], bg = bgs[cur];
       const W = 1080, H = 1350;
       ctx.fillStyle = "#0F0B12"; ctx.fillRect(0, 0, W, H);
       try {
@@ -980,28 +1263,37 @@ window.AgapeBoot = (SITE) => {
         ctx.drawImage(bg, sx, sy, sw, sh, 0, 0, W, H);
       } catch (e) {}
       const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "rgba(15,11,18,.35)"); g.addColorStop(1, "rgba(15,11,18,.9)");
+      g.addColorStop(0, "rgba(15,11,18,.4)"); g.addColorStop(1, "rgba(15,11,18,.92)");
       ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#FFC23D"; ctx.font = "500 30px 'Geist Mono', monospace"; ctx.fillText("VERSE OF THE DAY", 90, 150);
-      ctx.fillStyle = "#fff"; ctx.font = "italic 96px 'Instrument Serif', serif";
-      const words = q.textContent.split(" "); let line = "", y = 560;
+      ctx.fillStyle = "#FFC23D"; ctx.font = "500 30px 'Geist Mono', monospace";
+      ctx.fillText((cur === today ? "VERSE OF THE DAY" : (v.theme || "SCRIPTURE")).toUpperCase(), 90, 150);
+      const size = v.text.length > 115 ? 72 : v.text.length > 70 ? 84 : 100, lh = size * 1.08;
+      ctx.fillStyle = "#fff"; ctx.font = `italic ${size}px 'Instrument Serif', serif`;
+      let line = "";
       const lines = [];
-      words.forEach((w) => { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > 880) { lines.push(line); line = w; } else line = t; });
+      `“${v.text}”`.split(" ").forEach((w) => { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > 900) { lines.push(line); line = w; } else line = t; });
       lines.push(line);
-      y = H / 2 - (lines.length * 104) / 2 + 40;
-      lines.forEach((l) => { ctx.fillText(l, 90, y); y += 104; });
-      ctx.font = "500 34px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(255,255,255,.8)"; ctx.fillText("MATTHEW 11:28", 90, y + 40);
+      let y = H / 2 - (lines.length * lh) / 2 + 40;
+      lines.forEach((l) => { ctx.fillText(l, 90, y); y += lh; });
+      ctx.font = "500 34px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(255,255,255,.85)";
+      ctx.fillText(`${v.ref.toUpperCase()}${v.translation ? "  ·  " + v.translation.toUpperCase() : ""}`, 90, y + 40);
       const logo = $(".footer .logo__img");
-      try { if (logo && logo.naturalWidth) { const lh = 84, lw = (logo.naturalWidth / logo.naturalHeight) * lh; ctx.drawImage(logo, 90, H - 168, lw, lh); } } catch (e) {}
+      try { if (logo && logo.naturalWidth) { const lh2 = 84, lw = (logo.naturalWidth / logo.naturalHeight) * lh2; ctx.drawImage(logo, 90, H - 168, lw, lh2); } } catch (e) {}
       ctx.fillStyle = "#fff"; ctx.font = "800 40px Bricolage, sans-serif"; ctx.fillText("Agape", 178, H - 124);
       ctx.font = "500 18px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.fillText("INTERNATIONAL MINISTRIES", 180, H - 94);
     };
-    $(".js-share").addEventListener("click", () => { draw(); modal.classList.add("is-open"); smoother && smoother.paused(true); });
-    const close = () => { modal.classList.remove("is-open"); smoother && smoother.paused(false); };
+    let wasPaused = false;
+    $(".js-share").addEventListener("click", () => {
+      wasPaused = userPaused; userPaused = true; sync();
+      const bg = bgs[cur];
+      const open = () => { draw(); modal.classList.add("is-open"); smoother && smoother.paused(true); };
+      bg && !bg.complete ? (bg.addEventListener("load", open, { once: true }), bg.addEventListener("error", open, { once: true })) : open();
+    });
+    const close = () => { modal.classList.remove("is-open"); smoother && smoother.paused(false); userPaused = wasPaused; sync(); };
     $(".js-close").addEventListener("click", close);
     modal.addEventListener("click", (e) => e.target === modal && close());
     $(".js-dl").addEventListener("click", () => {
-      try { const a = document.createElement("a"); a.download = "agape-verse.png"; a.href = cv.toDataURL("image/png"); a.click(); }
+      try { const a = document.createElement("a"); a.download = `agape-${V[cur].ref.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`; a.href = cv.toDataURL("image/png"); a.click(); }
       catch (e) { alert("Open the site from a web server to download the card."); }
     });
   })();
@@ -1026,5 +1318,8 @@ window.AgapeBoot = (SITE) => {
   gsap.to(".mini-phone--r", { y: -70, ease: "none", scrollTrigger: { trigger: ".download", start: "top bottom", end: "bottom top", scrub: true } });
   gsap.to(".footer__word span", { backgroundSize: "100% 100%", ease: "none", scrollTrigger: { trigger: ".footer", start: "top 75%", end: "bottom bottom", scrub: true } });
 
+  try { window.AgapeV3 && window.AgapeV3(SITE); } catch (e) { console.warn("[agape v3]", e); }
+  try { window.AgapeV4 && window.AgapeV4(SITE); } catch (e) { console.warn("[agape v4]", e); }
   addEventListener("load", () => ScrollTrigger.refresh());
+  setTimeout(() => ScrollTrigger.refresh(), 1200);
 };

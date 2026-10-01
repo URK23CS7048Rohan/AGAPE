@@ -33,12 +33,20 @@ export const CHURCH = {
 
 export const USER = { name: "Sarah Mathews", first: "Sarah", role: "Member", group: "Youth Group", memberId: "AGP-24-0187", since: "2024" };
 
-export const VERSES = [
-  { text: "Be still, and know that I am God.", ref: "Psalm 46:10" },
-  { text: "Come to me, all you who are weary and burdened, and I will give you rest.", ref: "Matthew 11:28" },
-  { text: "The Lord is my shepherd; I shall not want.", ref: "Psalm 23:1" },
-  { text: "Your word is a lamp to my feet and a light to my path.", ref: "Psalm 119:105" },
-  { text: "Love is patient, love is kind.", ref: "1 Corinthians 13:4" },
+export type Verse = { text: string; ref: string; translation?: string; theme?: string; image?: any };
+export const VERSES: Verse[] = [
+  { text: "Come to me, all you who labor and are heavily burdened, and I will give you rest.", ref: "Matthew 11:28", translation: "WEB", theme: "Rest", image: IMG.openArms },
+  { text: "For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.", ref: "John 3:16", translation: "WEB", theme: "Love", image: IMG.crossDusk },
+  { text: "Don't you be afraid, for I am with you. Don't be dismayed, for I am your God. I will strengthen you.", ref: "Isaiah 41:10", translation: "WEB", theme: "Courage", image: IMG.handSunset },
+  { text: "Be still, and know that I am God.", ref: "Psalm 46:10", translation: "KJV", theme: "Peace", image: IMG.dove },
+  { text: "Trust in the LORD with all thine heart; and lean not unto thine own understanding.", ref: "Proverbs 3:5", translation: "KJV", theme: "Trust", image: IMG.womanPraying },
+  { text: "I can do all things through Christ, who strengthens me.", ref: "Philippians 4:13", translation: "WEB", theme: "Strength", image: IMG.mountainPeaks },
+  { text: "But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles.", ref: "Isaiah 40:31", translation: "KJV", theme: "Hope", image: IMG.alps },
+  { text: "Thy word is a lamp unto my feet, and a light unto my path.", ref: "Psalm 119:105", translation: "KJV", theme: "Guidance", image: IMG.candleHands },
+  { text: "We know that all things work together for good for those who love God, for those who are called according to his purpose.", ref: "Romans 8:28", translation: "WEB", theme: "Purpose", image: IMG.sunrise },
+  { text: "Love is patient and is kind; love doesn't envy. Love doesn't brag, is not proud.", ref: "1 Corinthians 13:4", translation: "WEB", theme: "Love", image: IMG.womanForest },
+  { text: "The LORD is my shepherd; I shall not want.", ref: "Psalm 23:1", translation: "KJV", theme: "Provision", image: IMG.crossMountain },
+  { text: "This is the day which the LORD hath made; we will rejoice and be glad in it.", ref: "Psalm 118:24", translation: "KJV", theme: "Joy", image: IMG.crossHill },
 ];
 
 export const PROMOS: Promo[] = [

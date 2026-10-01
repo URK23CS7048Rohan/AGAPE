@@ -18,11 +18,28 @@ agape/
 * The church's own photos are the `agape-*.jpg` files. The remaining stock images are only used for atmosphere (sermon series art, giving campaigns, the Bible games and AI demos).
 * YouTube: channel **Agape International Media** (`UCjly5vzmBLYGHaj-H4jefng`). The website player and the app's Watch screen embed the channel's latest uploads (playlist `UU…`), and the live stream when the church is broadcasting. To pin one video in the app, set `EXPO_PUBLIC_YOUTUBE_VIDEO_ID`.
 
+## Design system (v4: motion & poster)
+The site is a sequence of full-screen, colour-blocked scenes. The page colour changes as you scroll, and almost every section reacts to your cursor, your finger or the scroll wheel. It's all plain CSS and JS with GSAP (no framework):
+* **Hero:** a WebGL photo stage. Each photo bends like liquid under the cursor with an RGB split, and slides change through a noise-displacement wipe. The giant headline uses variable-font proximity: letters stretch as the cursor gets near. It also has a spinning seal badge, thumbnail progress, and a zoom-in reveal that shrinks into a card as you scroll away.
+* **Promotions:** poster cards stack on top of each other as you scroll, pinned, with a 3D tilt and glare. Each card has an arch photo, a spinning sticker seal and a giant outlined number. The content comes from the admin's Promotions list.
+* **A week at Agape:** a pinned horizontal scroll through seven colour panels (Sun to Sat). Photos sit in arch, circle, leaf and morphing-blob shapes with parallax, alongside live widgets (viewers, prayer count, course ring, AI typing, ride ETA).
+* **Watch:** the player grows from a small card to full-bleed cinema as you scroll, with live chat bubbles and hearts floating over the video. A flip-digit countdown to the next service sits beneath it.
+* **Sermon library:** a draggable 3D cylinder with inertia. The filter chips spin to the chosen book.
+* **Rides:** a full-bleed live map with a cursor light and floating ETA and driver cards.
+* **Bible games:** a gold page where you drag word tiles into the blanks (tapping still works). The stickers can be thrown around.
+* **Prayer wall:** paper notes that drop onto the board. You can pick them up and throw them, with inertia and tilt. New requests fall in from the top.
+* **Giving:** campaign "jars" fill with liquid to their percentage and slosh when you move the cursor over them.
+* **Gallery:** a cursor image trail of your photos. On touch screens it auto-plays and answers taps.
+* **Also:** letter-roll hover on buttons, a light nav on light pages, scroll-velocity skew, the Scripture carousel, the dotted globe and the 3D testimonies wall.
+* Files: `assets/css/style.css` (base), `v3.css`, `v4.css` (this layer); `assets/js/main.js` (hero, sections), `v3.js` (globe, spotlight), `v4.js` (colour flow and the section engines).
+
+**App:** it uses the same visual language. The Home hero has a poster headline and a spinning seal. Promotions are a Tinder-style swipe deck of posters, and "Every day of the week" is a set of snap-scrolling colour panels. The Prayer wall lets you swipe paper notes right to pray. On the Give screen, campaign jars fill with animated liquid and slosh when tapped. The shared pieces live in `app/src/components/Motion.tsx` (Seal, SwipeDeck, Jar), `PromoDeck.tsx` and `WeekStrip.tsx`.
+
 ## Admin panel (`website/admin/`)
 Staff manage everything from one place, without touching code:
 * **All images:** every photo on the site, grouped by section. Click, drag or paste to replace a photo. Uploads are resized automatically.
 * **Homepage hero:** headline, cycling words, intro text and the slideshow photos (drag to reorder).
-* **Promotions, Events, Ministries, Giving campaigns, Testimonies:** add, edit, duplicate, reorder and delete, with photo and colour pickers.
+* **Promotions, Events, Ministries, Giving campaigns, Testimonies, Bible verses:** add, edit, duplicate, reorder and delete, with photo and colour pickers.
 * **Photo gallery:** drop in many photos at once, write captions on the cards, drag to reorder.
 * **Watch & YouTube, Church info:** channel, player artwork, announcement bar, contact details, service times (these drive the live countdowns) and the counter numbers.
 * **Community:** moderate the prayer wall (answered, hide, delete), manage ride requests and drivers, change member roles (member, volunteer, staff), and post announcements to the app.

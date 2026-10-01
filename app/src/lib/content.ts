@@ -6,7 +6,7 @@
 import { useEffect, useState } from "react";
 import { C, IMG } from "@/theme";
 import { supabase } from "./supabase";
-import { EVENTS, GROUPS, PROMOS, Promo } from "@/data/mock";
+import { EVENTS, GROUPS, PROMOS, Promo, VERSES, Verse } from "@/data/mock";
 
 const BUNDLED: Record<string, any> = {
   "assets/img/agape-families.jpg": require("../../assets/images/agape-families.jpg"),
@@ -19,6 +19,17 @@ const BUNDLED: Record<string, any> = {
   "assets/img/agape-squad-band.jpg": require("../../assets/images/agape-squad-band.jpg"),
   "assets/img/agape-squad-healer.jpg": require("../../assets/images/agape-squad-healer.jpg"),
   "assets/img/alps.jpg": require("../../assets/images/alps.jpg"),
+  "assets/img/mountain-open-arms.jpg": require("../../assets/images/mountain-open-arms.jpg"),
+  "assets/img/cross-dusk.jpg": require("../../assets/images/cross-dusk.jpg"),
+  "assets/img/hand-sunset.jpg": require("../../assets/images/hand-sunset.jpg"),
+  "assets/img/dove.jpg": require("../../assets/images/dove.jpg"),
+  "assets/img/woman-praying.jpg": require("../../assets/images/woman-praying.jpg"),
+  "assets/img/mountain-peaks.jpg": require("../../assets/images/mountain-peaks.jpg"),
+  "assets/img/candle-hands.jpg": require("../../assets/images/candle-hands.jpg"),
+  "assets/img/sunrise-silhouettes.jpg": require("../../assets/images/sunrise-silhouettes.jpg"),
+  "assets/img/woman-forest.jpg": require("../../assets/images/woman-forest.jpg"),
+  "assets/img/cross-mountain.jpg": require("../../assets/images/cross-mountain.jpg"),
+  "assets/img/cross-hill-sunset.jpg": require("../../assets/images/cross-hill-sunset.jpg"),
   "assets/img/bricks.jpg": require("../../assets/images/bricks.jpg"),
   "assets/img/hands-together.jpg": require("../../assets/images/hands-together.jpg"),
   "assets/img/phone-hand.jpg": require("../../assets/images/phone-hand.jpg"),
@@ -37,7 +48,7 @@ export function imageSource(p?: string, fallback: any = IMG.homeWorship) {
 export type HeroContent = { kicker: string; line1: string; words: string[]; slides: { image: any; caption: string }[] };
 export type EventItem = (typeof EVENTS)[number];
 export type GroupItem = (typeof GROUPS)[number];
-export type AppContent = { hero: HeroContent; promos: Promo[]; events: EventItem[]; groups: GroupItem[]; announcement?: { title: string; text: string; link: string }; gallery: { image: any; caption: string }[] };
+export type AppContent = { hero: HeroContent; promos: Promo[]; events: EventItem[]; groups: GroupItem[]; announcement?: { title: string; text: string; link: string }; gallery: { image: any; caption: string }[]; verses: Verse[] };
 
 const DEFAULT: AppContent = {
   hero: {
@@ -56,6 +67,7 @@ const DEFAULT: AppContent = {
   events: EVENTS,
   groups: GROUPS,
   gallery: [],
+  verses: VERSES,
 };
 
 const route = (link?: string) => {
@@ -98,6 +110,12 @@ export function mapSite(d: any): AppContent {
     out.groups = d.ministries.map((m: any, i: number) => ({ id: `g${i}`, name: m.name || "", meets: m.chip || "", members: 0, color: m.color || C.flame, image: imageSource(m.image) }));
   }
   if (Array.isArray(d.gallery)) out.gallery = d.gallery.map((g: any) => ({ image: imageSource(g.image), caption: g.caption || "" }));
+  if (Array.isArray(d.verses) && d.verses.some((v: any) => v && v.text)) {
+    out.verses = d.verses.filter((v: any) => v && v.text).map((v: any, i: number) => ({
+      text: String(v.text), ref: v.ref || "", translation: v.translation || "", theme: v.theme || "",
+      image: imageSource(v.image, VERSES[i % VERSES.length].image),
+    }));
+  }
   if (d.announcement) out.announcement = d.announcement;
   return out;
 }

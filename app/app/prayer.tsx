@@ -6,6 +6,7 @@ import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
 import { Avatar, BackHeader, Body, Button, Display, Icon, Label, Press, Serif } from "@/components/ui";
 import { Prayer } from "@/data/mock";
+import { SwipeDeck } from "@/components/Motion";
 import { fetchPrayers, postPrayer, prayFor } from "@/lib/api";
 import { useStore } from "@/lib/store";
 
@@ -14,6 +15,35 @@ function Heart({ a }: { a: number }) {
   useEffect(() => { t.value = withTiming(1, { duration: 700 }); }, []);
   const st = useAnimatedStyle(() => ({ opacity: 1 - t.value, transform: [{ translateX: Math.cos(a) * 30 * t.value }, { translateY: Math.sin(a) * 24 * t.value - 10 * t.value }, { scale: 1 - t.value * 0.6 }] }));
   return <Animated.View pointerEvents="none" style={[{ position: "absolute", left: 16, top: 10, width: 6, height: 6, borderRadius: 3, backgroundColor: C.rose }, st]} />;
+}
+
+const PAPER = ["#FFE680", "#FFC2D8", "#BDF3DC", "#D9CCFF", "#FFD2B8", "#C7E9FF"];
+
+/** A paper note in the swipe stack: fling right to pray, left to skip. */
+function DeckNote({ p, i, top, tx }: { p: Prayer; i: number; top: boolean; tx: any }) {
+  const pray = useAnimatedStyle(() => ({ opacity: top ? Math.max(0, Math.min(1, tx.value / 120)) : 0, transform: [{ rotate: "-12deg" }, { scale: 0.8 + Math.max(0, Math.min(1, tx.value / 120)) * 0.2 }] }));
+  const skip = useAnimatedStyle(() => ({ opacity: top ? Math.max(0, Math.min(1, -tx.value / 120)) : 0, transform: [{ rotate: "12deg" }] }));
+  return (
+    <View style={{ flex: 1, backgroundColor: PAPER[i % PAPER.length], borderRadius: 8, borderBottomRightRadius: 34, padding: 22, paddingTop: 30, shadowColor: "#000", shadowOpacity: 0.35, shadowRadius: 20, shadowOffset: { width: 0, height: 16 }, elevation: 12 }}>
+      <View style={{ position: "absolute", top: -10, alignSelf: "center", width: 90, height: 24, backgroundColor: "rgba(255,255,255,0.55)", transform: [{ rotate: "-3deg" }] }} />
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+        <Avatar name={p.who} color={p.color} size={32} />
+        <Body size={14} weight="semi" color="rgba(15,11,18,0.7)" style={{ flex: 1 }}>{p.who}</Body>
+        <Label size={10} color="rgba(15,11,18,0.5)">{p.count} praying</Label>
+      </View>
+      <Serif size={30} color={C.ink} style={{ marginTop: 18, lineHeight: 34 }}>{p.text}</Serif>
+      <View style={{ position: "absolute", left: 22, right: 22, bottom: 20, flexDirection: "row", justifyContent: "space-between" }}>
+        <Label size={10} color="rgba(15,11,18,0.45)">← Next</Label>
+        <Label size={10} color="rgba(15,11,18,0.45)">Pray →</Label>
+      </View>
+      <Animated.View style={[{ position: "absolute", left: 20, top: 60, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, borderWidth: 3, borderColor: C.rose }, pray]}>
+        <Display size={30} color={C.rose} style={{ textTransform: "uppercase" }}>Praying ♥</Display>
+      </Animated.View>
+      <Animated.View style={[{ position: "absolute", right: 20, top: 60, paddingHorizontal: 14, paddingVertical: 8, borderRadius: 14, borderWidth: 3, borderColor: "rgba(15,11,18,0.5)" }, skip]}>
+        <Display size={30} color="rgba(15,11,18,0.55)" style={{ textTransform: "uppercase" }}>Next</Display>
+      </Animated.View>
+    </View>
+  );
 }
 
 function PrayerCard({ p, i }: { p: Prayer; i: number }) {
@@ -28,15 +58,15 @@ function PrayerCard({ p, i }: { p: Prayer; i: number }) {
     s.value = withSequence(withSpring(0.88, { damping: 10, stiffness: 400 }), withSpring(1, { damping: 8 }));
   };
   return (
-    <Animated.View entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(16)} layout={LinearTransition.springify()} style={{ backgroundColor: p.answered ? "rgba(255,194,61,0.14)" : "rgba(255,255,255,0.07)", borderRadius: R.lg, padding: 18, borderWidth: 1, borderColor: p.answered ? "rgba(255,194,61,0.4)" : "rgba(255,255,255,0.08)" }}>
+    <Animated.View entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(16)} layout={LinearTransition.springify()} style={{ backgroundColor: PAPER[i % PAPER.length], borderRadius: 6, borderBottomRightRadius: 26, padding: 18, transform: [{ rotate: `${(i % 3 - 1) * 1.2}deg` }] }}>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
         <Avatar name={p.who} color={p.color} size={30} />
-        <Body size={13.5} color={C.creamMuted} style={{ flex: 1 }}>{p.who}</Body>
+        <Body size={13.5} weight="semi" color="rgba(15,11,18,0.65)" style={{ flex: 1 }}>{p.who}</Body>
         {p.answered ? <View style={{ backgroundColor: C.sun, paddingHorizontal: 10, height: 24, borderRadius: R.pill, justifyContent: "center" }}><Body size={11} weight="bold">Answered</Body></View> : null}
       </View>
-      <Body size={16} color={C.cream} style={{ marginTop: 10, lineHeight: 23 }}>{p.text}</Body>
+      <Serif size={22} color={C.ink} style={{ marginTop: 10, lineHeight: 26 }}>{p.text}</Serif>
       <Animated.View style={[{ alignSelf: "flex-start", marginTop: 14 }, st]}>
-        <Press onPress={tap} haptic={false} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, height: 40, borderRadius: R.pill, backgroundColor: on ? C.rose : "rgba(255,255,255,0.1)" }}>
+        <Press onPress={tap} haptic={false} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, height: 40, borderRadius: R.pill, backgroundColor: on ? C.rose : C.ink }}>
           <Icon name="hands-pray" size={17} color="#fff" />
           <Body size={13.5} weight="semi" color="#fff">{on ? `You're praying · ${p.count + 1}` : `Praying · ${p.count}`}</Body>
         </Press>
@@ -51,6 +81,8 @@ export default function PrayerWall() {
   const [text, setText] = useState("");
   const [anon, setAnon] = useState(true);
   const [posted, setPosted] = useState(false);
+  const [prayed, setPrayed] = useState(0);
+  const { praying, togglePraying } = useStore();
   useEffect(() => { fetchPrayers().then(setList); }, []);
 
   const post = async () => {
@@ -90,7 +122,18 @@ export default function PrayerWall() {
             <Body weight="semi">Posted. The family is praying with you.</Body>
           </Animated.View>
         ) : null}
-        <Label color={C.creamMuted} style={{ marginTop: 8 }}>18,432 prayers prayed this year</Label>
+        <Label color={C.creamMuted} style={{ marginTop: 8, marginBottom: 22 }}>Pray through the wall · swipe right to pray</Label>
+        {list.length ? (
+          <SwipeDeck
+            items={list}
+            height={340}
+            keyOf={(p) => p.id}
+            onSwipe={(p, dir) => { if (dir === 1 && !praying.has(p.id)) { togglePraying(p.id); prayFor(p.id); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); setPrayed((n) => n + 1); } }}
+            render={(p, top, tx) => <DeckNote p={p} i={list.indexOf(p)} top={top} tx={tx} />}
+          />
+        ) : null}
+        {prayed ? <Animated.View entering={ZoomIn.springify()} style={{ alignSelf: "center", marginTop: 14, paddingHorizontal: 16, height: 38, borderRadius: R.pill, backgroundColor: C.rose, flexDirection: "row", alignItems: "center", gap: 8 }}><Icon name="hands-pray" size={16} color="#fff" /><Body size={13.5} weight="semi" color="#fff">You've prayed for {prayed} {prayed === 1 ? "person" : "people"} today</Body></Animated.View> : null}
+        <Label color={C.creamMuted} style={{ marginTop: 26 }}>18,432 prayers prayed this year</Label>
         {list.map((p, i) => <PrayerCard key={p.id} p={p} i={i} />)}
       </ScrollView>
     </KeyboardAvoidingView>

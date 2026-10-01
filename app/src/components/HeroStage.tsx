@@ -8,6 +8,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG, R } from "@/theme";
 import { Body, Button, Display, Icon, IconButton, Label, LiveDot, Press } from "./ui";
+import { Seal } from "./Motion";
 import { HeroContent } from "@/lib/content";
 import { nextService } from "@/lib/time";
 import { USER } from "@/data/mock";
@@ -127,6 +128,17 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
         </Press>
       </Animated.View>
 
+      {/* spinning seal → watch */}
+      <Animated.View entering={FadeIn.delay(900).duration(700)} style={{ position: "absolute", right: 14, top: insets.top + 74 }}>
+        <Press onPress={() => router.push("/watch")} scaleTo={0.9}>
+          <Seal text="Prayer & Worship · Watch live" size={104} color="#fff">
+            <LinearGradient colors={[C.sun, C.flame, C.rose]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" }}>
+              <Icon name="play" size={18} color="#fff" />
+            </LinearGradient>
+          </Seal>
+        </Press>
+      </Animated.View>
+
       {/* copy */}
       <Animated.View style={[{ position: "absolute", left: 20, right: 20, bottom: 26 }, textFade]}>
         <Animated.View entering={FadeInDown.delay(150).duration(700)} style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, height: 30, borderRadius: R.pill, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}>
@@ -134,7 +146,7 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
           <Body size={12} weight="semi" color="#fff">{hero.kicker}</Body>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(250).duration(800)}>
-          <Display size={76} color="#fff" style={{ lineHeight: 74, marginTop: 12 }}>{hero.line1}</Display>
+          <Display size={84} color="#fff" style={{ lineHeight: 78, marginTop: 14, textTransform: "uppercase", letterSpacing: -2.5 }} numberOfLines={1}>{hero.line1}</Display>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(400).duration(800)}>
           <CyclingWord words={hero.words} />

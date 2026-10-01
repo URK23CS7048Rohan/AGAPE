@@ -82,6 +82,7 @@ export const IMG = {
   friendsTeal: require("../assets/images/friends-teal.jpg"),
   candleHands: require("../assets/images/candle-hands.jpg"),
   crossDusk: require("../assets/images/cross-dusk.jpg"),
+  crossHill: require("../assets/images/cross-hill-sunset.jpg"),
   womanPraying: require("../assets/images/woman-praying.jpg"),
   concertLights: require("../assets/images/concert-lights.jpg"),
   neonCross: require("../assets/images/neon-cross.jpg"),

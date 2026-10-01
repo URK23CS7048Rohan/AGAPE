@@ -91,4 +91,18 @@ window.AGAPE_DEFAULT = {
     { quote: "I came as a first-time visitor and left with a welcome card, a coffee, and five new numbers in my phone.", name: "Kevin O.", role: "First visit, 2025", color: "#FFE3D6", accent: "#FF5A1F" },
     { quote: "Our home prayer meeting started with four people. Now it's twenty, and we RSVP through the app.", name: "Nisha & Sam", role: "Host family", color: "#E6DEFF", accent: "#6E4BFF" },
   ],
+  verses: [
+    { text: "Come to me, all you who labor and are heavily burdened, and I will give you rest.", ref: "Matthew 11:28", translation: "WEB", theme: "Rest", image: "assets/img/mountain-open-arms.jpg" },
+    { text: "For God so loved the world, that he gave his one and only Son, that whoever believes in him should not perish, but have eternal life.", ref: "John 3:16", translation: "WEB", theme: "Love", image: "assets/img/cross-dusk.jpg" },
+    { text: "Don't you be afraid, for I am with you. Don't be dismayed, for I am your God. I will strengthen you.", ref: "Isaiah 41:10", translation: "WEB", theme: "Courage", image: "assets/img/hand-sunset.jpg" },
+    { text: "Be still, and know that I am God.", ref: "Psalm 46:10", translation: "KJV", theme: "Peace", image: "assets/img/dove.jpg" },
+    { text: "Trust in the LORD with all thine heart; and lean not unto thine own understanding.", ref: "Proverbs 3:5", translation: "KJV", theme: "Trust", image: "assets/img/woman-praying.jpg" },
+    { text: "I can do all things through Christ, who strengthens me.", ref: "Philippians 4:13", translation: "WEB", theme: "Strength", image: "assets/img/mountain-peaks.jpg" },
+    { text: "But they that wait upon the LORD shall renew their strength; they shall mount up with wings as eagles.", ref: "Isaiah 40:31", translation: "KJV", theme: "Hope", image: "assets/img/alps.jpg" },
+    { text: "Thy word is a lamp unto my feet, and a light unto my path.", ref: "Psalm 119:105", translation: "KJV", theme: "Guidance", image: "assets/img/candle-hands.jpg" },
+    { text: "We know that all things work together for good for those who love God, for those who are called according to his purpose.", ref: "Romans 8:28", translation: "WEB", theme: "Purpose", image: "assets/img/sunrise-silhouettes.jpg" },
+    { text: "Love is patient and is kind; love doesn't envy. Love doesn't brag, is not proud.", ref: "1 Corinthians 13:4", translation: "WEB", theme: "Love", image: "assets/img/woman-forest.jpg" },
+    { text: "The LORD is my shepherd; I shall not want.", ref: "Psalm 23:1", translation: "KJV", theme: "Provision", image: "assets/img/cross-mountain.jpg" },
+    { text: "This is the day which the LORD hath made; we will rejoice and be glad in it.", ref: "Psalm 118:24", translation: "KJV", theme: "Joy", image: "assets/img/cross-hill-sunset.jpg" },
+  ],
 };

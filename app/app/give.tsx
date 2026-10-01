@@ -7,6 +7,10 @@ import { C, F, R } from "@/theme";
 import { BackHeader, Bar, Body, Button, Confetti, ConfettiHandle, Display, Icon, Label, Press, Segmented, Serif } from "@/components/ui";
 import { CAMPAIGNS, CHURCH } from "@/data/mock";
 import { fmt } from "@/lib/time";
+import { Jar } from "@/components/Motion";
+import { Dimensions } from "react-native";
+
+const JW = Math.floor((Dimensions.get("window").width - 32 - 20) / 3);
 
 const AMOUNTS = [5, 10, 25, 50, 100];
 const FUNDS = ["Tithe", "Offering", "Building Fund", "Missions", "Families in Need"];
@@ -71,21 +75,31 @@ export default function Give() {
           </Animated.View>
         ) : null}
 
-        <Label style={{ marginHorizontal: 20, marginTop: 10, marginBottom: 10 }}>Campaigns</Label>
-        <View style={{ paddingHorizontal: 16, gap: 12 }}>
-          {CAMPAIGNS.map((c, i) => (
-            <Animated.View key={c.id} entering={FadeInDown.delay(150 + i * 80)}>
-              <Press onPress={() => setFund(c.id === "build" ? "Building Fund" : c.id === "nepal" ? "Missions" : "Families in Need")} scaleTo={0.98} style={{ backgroundColor: "#fff", borderRadius: R.xl, padding: 10, flexDirection: "row", gap: 14 }}>
-                <Image source={c.image} style={{ width: 100, height: 124, borderRadius: 24 }} contentFit="cover" />
-                <View style={{ flex: 1, paddingVertical: 6, paddingRight: 8 }}>
-                  <Display size={26}>{c.title} <Serif size={27} color={c.color}>{c.accent}</Serif></Display>
-                  <Body size={13} color={C.muted} numberOfLines={2} style={{ marginTop: 2 }}>{c.body}</Body>
-                  <View style={{ marginTop: 10 }}><Bar progress={c.raised / c.goal} color={c.color} delay={300 + i * 150} /></View>
-                  <Body size={12.5} style={{ marginTop: 6 }}><Body size={12.5} weight="bold">{CHURCH.currency} {fmt(c.raised)}</Body> of {fmt(c.goal)} · {Math.round((c.raised / c.goal) * 100)}%</Body>
-                </View>
-              </Press>
-            </Animated.View>
-          ))}
+        <View style={{ margin: 16, marginTop: 8, borderRadius: R.xl, backgroundColor: C.flame, padding: 16, paddingTop: 20 }}>
+          <Label color="rgba(255,255,255,0.85)">Campaigns · tap a jar</Label>
+          <Display size={34} color="#fff" style={{ marginTop: 6, lineHeight: 34 }}>Watch it <Serif size={36} color={C.ink}>fill up.</Serif></Display>
+          <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
+            {CAMPAIGNS.map((c, i) => {
+              const pct = c.raised / c.goal;
+              const f = c.id === "build" ? "Building Fund" : c.id === "nepal" ? "Missions" : "Families in Need";
+              return (
+                <Animated.View key={c.id} entering={FadeInDown.delay(150 + i * 90)} style={{ width: JW, alignItems: "flex-start" }}>
+                  <View style={{ alignSelf: "center", zIndex: 2, marginBottom: -22 }}>
+                    <Image source={c.image} style={{ width: 46, height: 46, borderRadius: 23, borderWidth: 3, borderColor: C.flame }} contentFit="cover" />
+                  </View>
+                  <Jar pct={pct} color={c.color === C.flame ? C.sun : c.color} width={JW} height={Math.round(JW * 1.6)} delay={400 + i * 200}>
+                    <Display size={30} color="#fff">{Math.round(pct * 100)}<Body size={13} weight="bold" color="#fff">%</Body></Display>
+                  </Jar>
+                  <Press onPress={() => setFund(f)} style={{ marginTop: 10 }}>
+                    <Display size={19} color="#fff" style={{ textTransform: "uppercase", lineHeight: 19 }}>{c.title}</Display>
+                    <Serif size={18} color={C.ink} style={{ lineHeight: 20 }}>{c.accent}</Serif>
+                    <Body size={11.5} weight="bold" color="#fff" style={{ marginTop: 4 }}>{CHURCH.currency} {fmt(c.raised)}</Body>
+                    <Body size={10.5} color="rgba(255,255,255,0.8)">of {fmt(c.goal)}</Body>
+                  </Press>
+                </Animated.View>
+              );
+            })}
+          </View>
         </View>
       </ScrollView>
       <Confetti ref={confetti} />
