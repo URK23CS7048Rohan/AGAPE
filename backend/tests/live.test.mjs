@@ -190,11 +190,14 @@ test("rides: request → volunteer accepts → live location → status updates"
 
   const points = [];
   const ch = await channel(ann.c, `ride-${stamp}`, "ride_locations", `ride_id=eq.${ride.id}`, (row) => points.push(row));
-  await sleep(500);
-  ok(await bob.c.from("ride_locations").insert({ ride_id: ride.id, lat: 29.3261, lng: 48.0618, heading: 12 }));
+  // the first realtime subscriber on a fresh stack warms up change capture, so keep sending until one arrives
+  await waitFor(async () => {
+    ok(await bob.c.from("ride_locations").insert({ ride_id: ride.id, lat: 29.3261, lng: 48.0618, heading: 12 }));
+    await sleep(700);
+    return points.length >= 1;
+  }, 30000, "first live location over realtime");
   ok(await bob.c.from("ride_locations").insert({ ride_id: ride.id, lat: 29.3268, lng: 48.0662, heading: 40 }));
-  await waitFor(() => points.length >= 2, 10000, "live location over realtime");
-  assert.equal(points[1].lng, 48.0662);
+  await waitFor(() => points.some((p) => p.lng === 48.0662), 10000, "next live location over realtime");
   await ann.c.removeChannel(ch);
   assert.ok((await eve.c.from("ride_locations").insert({ ride_id: ride.id, lat: 1, lng: 1 })).error, "only the driver posts");
 
