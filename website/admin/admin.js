@@ -453,6 +453,13 @@
         { k: "lat", label: "Church latitude", type: "number", ph: "29.3375", hint: "For the ride map in the app. In Google Maps, right-click the church → copy the numbers." },
         { k: "lng", label: "Church longitude", type: "number", ph: "48.0747" },
       ], C.church)));
+      C.apps = C.apps || {};
+      v.appendChild(card("App downloads", "The “Take Agape everywhere” buttons on the website.", fieldsGrid([
+        { k: "androidApk", label: "Android app (.apk) download link", wide: true, hint: "Built automatically on GitHub (see README → Publishing the app). Replace with your own link any time." },
+        { k: "webApp", label: "Web app link (iPhone “Add to Home Screen”)", ph: "app/" },
+        { k: "appStore", label: "App Store link (once published)", ph: "https://apps.apple.com/…" },
+        { k: "playStore", label: "Google Play link (once published)", ph: "https://play.google.com/store/apps/details?id=church.agape.app" },
+      ], C.apps)));
       v.appendChild(card("Service times", "Shown in the “Plan a visit” section and used for the live countdown.", listEditor({
         items: C.services, addLabel: "Add a service",
         title: (s) => `${s.label} · ${s.time}`, sub: (s) => `${DAYS[s.day]} · ${s.note || ""}`, thumbColor: () => "#FF5A1F",

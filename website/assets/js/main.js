@@ -754,21 +754,46 @@ void main(){
     return { build, start, stop, draw, setVisible: (v) => (v && visible ? start() : !v && stop()) };
   }
 
-  // big ride map + ride steps
+  // big ride map + ride steps: a real street map (OpenStreetMap, Google-night style) with a car on a real road route;
+  // the canvas illustration is the fallback while it loads, or if it can't (offline)
   (() => {
     const cv = $(".big-map");
     if (!cv) return;
+    const card = cv.closest(".map-card");
     const steps = $$(".ride-steps li"), eta = $(".js-eta");
     let lastStep = -1, lastEta = "";
-    makeMap(cv, {
+    const progress = (p, min) => {
+      const s = p < 0.08 ? 0 : p < 0.2 ? 1 : p < 0.99 ? 2 : 3;
+      if (s !== lastStep) { steps.forEach((li, i) => li.classList.toggle("is-on", i <= s)); lastStep = s; }
+      const e = p >= 0.99 ? "Arrived" : `${min ?? Math.max(1, Math.ceil((1 - p) * 7))} min`;
+      if (e !== lastEta) { eta.textContent = e; lastEta = e; }
+    };
+    const sketch = makeMap(cv, {
       seed: 11, region: innerWidth > 900 ? [0.54, 0.18, 0.93, 0.8] : [0.12, 0.5, 0.9, 0.9], water: innerWidth > 900 ? "tr" : "top",
-      onProgress: (p) => {
-        const s = p < 0.08 ? 0 : p < 0.2 ? 1 : p < 0.99 ? 2 : 3;
-        if (s !== lastStep) { steps.forEach((li, i) => li.classList.toggle("is-on", i <= s)); lastStep = s; }
-        const e = p >= 0.99 ? "Arrived" : `${Math.max(1, Math.ceil((1 - p) * 7))} min`;
-        if (e !== lastEta) { eta.textContent = e; lastEta = e; }
-      },
+      onProgress: (p) => progress(p),
     });
+    if (!window.AgapeMap || !card) return;
+    const ch = SITE.church || {};
+    const church = [Number(ch.lng) || 48.0747, Number(ch.lat) || 29.3375];
+    const go = () => {
+      const host = document.createElement("div");
+      host.className = "real-map";
+      card.insertBefore(host, cv.nextSibling);
+      window.AgapeMap.ride(host, {
+        church, start: [church[0] - 0.024, church[1] - 0.016],
+        label: (ch.short || "Agape") + (ch.short && ch.short !== "Agape" ? "" : " International"),
+        onProgress: progress,
+        padding: () => (innerWidth > 900
+          ? { top: 140, bottom: 170, left: Math.round(innerWidth * 0.52), right: 70 }
+          : { top: Math.round(innerHeight * 0.5), bottom: 150, left: 30, right: 30 }),
+      }).then((r) => {
+        sketch.stop(); cv.style.display = "none"; card.classList.add("is-real");
+        watch(card, (v) => (v ? r.start() : r.stop()));
+      }).catch((e) => { console.warn("[agape] street map unavailable:", e && e.message); host.remove(); });
+    };
+    // start loading the map a little before the section scrolls into view
+    const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); go(); } }, { rootMargin: "900px 0px" });
+    io.observe(card);
   })();
 
   /* =======================================================
@@ -1197,6 +1222,25 @@ void main(){
       history.replaceState(null, "", location.pathname + "#give");
     }
     upd();
+  })();
+
+  /* =======================================================
+     APP DOWNLOADS — Android APK straight from the site; iPhone: Add to Home Screen
+     ======================================================= */
+  (() => {
+    const sheet = $(".dl-sheet"), ios = $(".js-dl-ios");
+    if (!sheet || !ios) return;
+    document.body.appendChild(sheet); // out of the smooth-scroll container so "fixed" means the screen
+    const ua = navigator.userAgent;
+    const isIOS = /iPhone|iPad|iPod/.test(ua) || (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+    const isAndroid = /Android/.test(ua);
+    $(".stores").classList.toggle("is-ios", isIOS);
+    $(".stores").classList.toggle("is-android", isAndroid);
+    const open = () => { sheet.hidden = false; requestAnimationFrame(() => sheet.classList.add("is-open")); };
+    const close = () => { sheet.classList.remove("is-open"); setTimeout(() => (sheet.hidden = true), 300); };
+    ios.addEventListener("click", open);
+    sheet.addEventListener("click", (e) => { if (e.target === sheet || e.target.closest(".dl-sheet__x")) close(); });
+    addEventListener("keydown", (e) => { if (e.key === "Escape" && !sheet.hidden) close(); });
   })();
 
   /* =======================================================

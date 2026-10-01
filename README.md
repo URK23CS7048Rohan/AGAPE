@@ -30,7 +30,7 @@ The site is a sequence of full-screen, colour-blocked scenes. The page colour ch
 * **A week at Agape:** a pinned horizontal scroll through seven colour panels (Sun to Sat). Photos sit in arch, circle, leaf and morphing-blob shapes with parallax, alongside live widgets (viewers, prayer count, course ring, AI typing, ride ETA).
 * **Watch:** the player grows from a small card to full-bleed cinema as you scroll, with live chat bubbles and hearts floating over the video. A flip-digit countdown to the next service sits beneath it.
 * **Sermon library:** a draggable 3D cylinder with inertia. The filter chips spin to the chosen book.
-* **Rides:** a full-bleed live map with a cursor light and floating ETA and driver cards.
+* **Rides:** a full-bleed real street map (OpenStreetMap in Google-Maps night style) with a car driving a real road route, floating ETA and driver cards.
 * **Bible games:** a gold page where you drag word tiles into the blanks (tapping still works). The stickers can be thrown around.
 * **Prayer wall:** paper notes that drop onto the board. You can pick them up and throw them, with inertia and tilt. New requests fall in from the top.
 * **Giving:** campaign "jars" fill with liquid to their percentage and slosh when you move the cursor over them.
@@ -74,11 +74,14 @@ npx expo start               # scan the QR with Expo Go, or press i / a for a si
 ```
 Screens: Welcome (Apple / Google / e-mail code / guest) · Onboarding · Home (hero, promos, week strip, verse deck, continue-learning, events, prayer) · Notifications · Watch · Sermon (YouTube player, save, notes synced, live chat) · Grow (streak, courses, study guides) · Course → Lesson (video / PDF / quiz) · Community (chats, groups, news) · Chat (realtime) · Me (member card, settings, Face ID lock, delete account) · Pastoral care · Volunteer · Bible games (live leaderboard) · Ask Agape (AI) · Rides (member + driver modes, live GPS) · Prayer wall · Give (Tap checkout) · Events (RSVP + ticket).
 
+### Why Expo?
+Expo is the toolkit around React Native. It produces a normal native Android app (APK/AAB) and iPhone app from one codebase, plus a web version. It isn't "Expo Go": the APK on the website is a standalone app.
+
 ### Get an installable APK (Android)
 **Option A: GitHub, no account setup** (about 10 minutes, all in the browser)
 1. Create a GitHub repo and upload this whole `agape/` folder, including the hidden `.github` folder.
-2. The **Android APK** workflow runs automatically (or open **Actions → Android APK → Run workflow**).
-3. When it finishes, open the run and download **agape-apk** from Artifacts. Unzip it, send `app-release.apk` to your phone, and install it (allow "install unknown apps").
+2. The **Publish app** workflow runs automatically (or open **Actions → Publish app → Run workflow**).
+3. When it finishes, the APK is at `https://github.com/<owner>/<repo>/releases/download/app-latest/agape.apk`. Open that link on an Android phone and install it (allow "install unknown apps" the first time).
 4. Optional: add the repository secrets `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY` and `EXPO_PUBLIC_SITE_URL` to build it against live data.
 
 **Option B: Expo's cloud build** (free Expo account)
@@ -135,12 +138,17 @@ Accounts to create (all under the church's name and billing):
 3. **Giving — Tap Payments** (tap.company, supports KNET). `supabase secrets set TAP_SECRET_KEY=sk_live_…` (test with `sk_test_…` first). Optional: `TAP_SOURCE=src_kw.knet` to open KNET directly. Never set `PAYMENTS_TEST_MODE` in production.
 4. **AI assistant:** `supabase secrets set ANTHROPIC_API_KEY=…` (daily limit per member: `DAILY_LIMIT=50`).
 5. **Sign in with Google / Apple:** Supabase → Auth → Providers. Google: OAuth client from Google Cloud. Apple: Services ID + key from the Apple Developer account (also enables native sign-in on iPhone).
-6. **Google Maps key** for the ride map on Android → `app.json` → `android.config.googleMaps.apiKey`.
+6. **Maps need no key.** The ride map (app and website) uses free OpenStreetMap tiles from OpenFreeMap and free road routing from the public OSRM server. If the church ever outgrows the free router, set `EXPO_PUBLIC_ROUTER_URL` to its own OSRM/Valhalla server.
 7. **Connect the front-ends:**
    * Website: `website/assets/js/config.js` → Supabase URL + anon key. Deploy the `website/` folder to Cloudflare Pages / Netlify.
    * App: `app/.env` (or GitHub secrets for the APK workflow) → `EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`, `EXPO_PUBLIC_SITE_URL`.
-8. **Store builds:** Apple Developer ($99/yr) and Google Play ($25 once) accounts → `npx eas-cli build -p ios` / `-p android --profile production` → submit.
-9. **In /admin before launch:** church address, phone and map coordinates (Church info), real service times, events, campaigns and their starting totals, sermons with YouTube links, courses, and the counters shown on the website.
+8. **Let people download the app from the website** (no store needed):
+   * Every push runs `.github/workflows/publish-app.yml`. It builds the Android APK and publishes it at a permanent link: `https://github.com/<owner>/<repo>/releases/download/app-latest/agape.apk`. The website's **Download for Android** button points there; change it in /admin → Church info → App downloads.
+   * The same workflow builds the **installable web app** and puts the website + `/app` together in the `site-deploy` branch. Connect that branch to Cloudflare Pages or Netlify (no build command). iPhone users tap **Install on iPhone** → open `/app` in Safari → Share → *Add to Home Screen*. Android users can also use the web app.
+   * Add the repository secrets `EXPO_PUBLIC_SUPABASE_URL` and `EXPO_PUBLIC_SUPABASE_ANON_KEY` so both builds use live data.
+   * The APK is signed with a fixed key, so new versions install over old ones. For Google Play, use an EAS production build with the church's own upload key.
+9. **Store builds (optional, later):** Apple Developer ($99/yr) and Google Play ($25 once) accounts → `npx eas-cli build -p ios` / `-p android --profile production` → submit.
+10. **In /admin before launch:** church address, phone and map coordinates (Church info), real service times, events, campaigns and their starting totals, sermons with YouTube links, courses, and the counters shown on the website.
 
 ## Known limits (honest list)
 * Drivers share their location while the app is open. Screen-locked tracking needs `expo-task-manager` background updates in a custom build.

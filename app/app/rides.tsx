@@ -1,44 +1,25 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Alert, Linking, Platform, StyleSheet, TextInput, View } from "react-native";
-import MapView, { Marker, Polyline, PROVIDER_GOOGLE } from "react-native-maps";
 import Animated, { Easing, FadeIn, FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import * as Haptics from "expo-haptics";
 import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { C, F, R } from "@/theme";
+import { C, F, R, shadow } from "@/theme";
 import { Avatar, Body, Button, Chip, Confetti, ConfettiHandle, Display, Icon, IconButton, Label, LiveDot, Press, Segmented, Serif } from "@/components/ui";
-import { DARK_MAP_STYLE, RIDE } from "@/data/mock";
+import { LiveMap, MapMarker } from "@/components/map/LiveMap";
+import { RIDE } from "@/data/mock";
 import { useStore } from "@/lib/store";
 import { useSiteContent } from "@/lib/content";
-import { Ride, colorFor, etaMinutes, useDriverBoard, useMyRide, useRideLocation } from "@/lib/data";
+import { Ride, colorFor, useDriverBoard, useMyRide, useRideLocation } from "@/lib/data";
+import { along, remaining, useRoute } from "@/lib/route";
 import { acceptRide, pushRideLocation, requestRide, setRideStatus, startDirect } from "@/lib/api";
 
 type LatLng = { latitude: number; longitude: number };
 type Phase = "request" | "searching" | "enroute" | "arrived";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
-
-/** Interpolates a point along a polyline, t ∈ [0,1] (demo mode only). */
-function along(route: LatLng[], t: number) {
-  const seg: number[] = [];
-  let total = 0;
-  for (let i = 1; i < route.length; i++) {
-    const d = Math.hypot(route[i].latitude - route[i - 1].latitude, route[i].longitude - route[i - 1].longitude);
-    seg.push(d); total += d;
-  }
-  let dist = t * total;
-  for (let i = 0; i < seg.length; i++) {
-    if (dist <= seg[i]) {
-      const k = seg[i] ? dist / seg[i] : 0;
-      const a = route[i], b = route[i + 1];
-      return { latitude: a.latitude + (b.latitude - a.latitude) * k, longitude: a.longitude + (b.longitude - a.longitude) * k, heading: (Math.atan2(b.longitude - a.longitude, b.latitude - a.latitude) * 180) / Math.PI, index: i };
-    }
-    dist -= seg[i];
-  }
-  const last = route[route.length - 1];
-  return { ...last, heading: 0, index: route.length - 2 };
-}
+const ll = (p: LatLng | null | undefined) => (p ? { lat: p.latitude, lng: p.longitude } : null);
 
 function Radar() {
   const t = useSharedValue(0);
@@ -60,16 +41,6 @@ function openNavigation(lat: number, lng: number) {
   Linking.openURL(google!).catch(() => Linking.openURL(waze));
 }
 
-const CarMarker = ({ at }: { at: LatLng & { heading?: number } }) => (
-  <Marker coordinate={at} anchor={{ x: 0.5, y: 0.5 }} flat rotation={at.heading || 0}>
-    <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(46,211,160,0.3)", alignItems: "center", justifyContent: "center" }}>
-      <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>
-        <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.mint }} />
-      </View>
-    </View>
-  </Marker>
-);
-
 export default function Rides() {
   const insets = useSafeAreaInsets();
   const { live, session, isVolunteer, needsAccount, profile } = useStore();
@@ -77,8 +48,8 @@ export default function Rides() {
   const church = site.church;
   const uid = session?.user.id ?? null;
   const [mode, setMode] = useState(0); // 0 = rider, 1 = volunteer
-  const map = useRef<MapView>(null);
   const confetti = useRef<ConfettiHandle>(null);
+  const [sheetH, setSheetH] = useState(380);
 
   // service times → ride slots ("Sun 10:00 AM")
   const TIMES = useMemo(() => {
@@ -98,21 +69,20 @@ export default function Rides() {
 
   // pickup = centre of the map (drag the map to adjust), starting from the phone's location
   const [pickup, setPickup] = useState<LatLng>(live ? church.coords : RIDE.pickup);
+  const [me, setMe] = useState<LatLng | null>(null);
+  const [recenter, setRecenter] = useState(0);
   const [pickupLabel, setPickupLabel] = useState(live ? "Locating you…" : RIDE.pickup.label);
   const geoTimer = useRef<any>(null);
-  useEffect(() => {
-    if (!live) return;
-    (async () => {
-      const { status } = await Location.requestForegroundPermissionsAsync().catch(() => ({ status: "denied" }));
-      if (status !== "granted") { setPickupLabel("Drag the map to your pickup point"); return; }
-      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null);
-      if (!pos) return;
-      const at = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
-      setPickup(at);
-      map.current?.animateToRegion({ ...at, latitudeDelta: 0.012, longitudeDelta: 0.012 }, 600);
-      label(at);
-    })();
-  }, [live]);
+  const locate = async () => {
+    const { status } = await Location.requestForegroundPermissionsAsync().catch(() => ({ status: "denied" }));
+    if (status !== "granted") { setPickupLabel("Drag the map to your pickup point"); return; }
+    const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced }).catch(() => null);
+    if (!pos) { setPickupLabel("Drag the map to your pickup point"); return; }
+    const at = { latitude: pos.coords.latitude, longitude: pos.coords.longitude };
+    setMe(at); setPickup(at); setRecenter((n) => n + 1);
+    label(at);
+  };
+  useEffect(() => { if (live) locate(); }, [live]);
   const label = (at: LatLng) => {
     clearTimeout(geoTimer.current);
     geoTimer.current = setTimeout(async () => {
@@ -122,23 +92,26 @@ export default function Rides() {
     }, 500);
   };
 
-  // ---------------------------------------------------------------- demo simulation
+  // ---------------------------------------------------------------- demo: a real road route, driven by a simulated car
   const [demoPhase, setDemoPhase] = useState<Phase>("request");
   const [t, setT] = useState(0);
   const [demoAccepted, setDemoAccepted] = useState<Set<string>>(new Set());
-  const demoCar = useMemo(() => along(RIDE.route, t), [t]);
+  const demoStart = useMemo(() => ({ lat: RIDE.route[0].latitude + 0.012, lng: RIDE.route[0].longitude - 0.018 }), []);
+  const demoRoute = useRoute(live ? null : demoStart, live ? null : ll(RIDE.pickup));
+  const demoCoords = demoRoute?.coords ?? RIDE.route.map((p) => [p.longitude, p.latitude] as [number, number]);
+  const demoCar = useMemo(() => along(demoCoords, t), [t, demoCoords]);
   useEffect(() => {
     if (live || demoPhase !== "enroute") return;
     const iv = setInterval(() => {
       setT((x) => {
-        const n = Math.min(1, x + 0.006);
+        const n = Math.min(1, x + 0.004);
         if (n >= 1) {
           clearInterval(iv);
           setTimeout(() => { setDemoPhase("arrived"); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); confetti.current?.burst(undefined, 420, 90); }, 300);
         }
         return n;
       });
-    }, 100);
+    }, 120);
     return () => clearInterval(iv);
   }, [demoPhase, live]);
 
@@ -157,20 +130,19 @@ export default function Rides() {
   }, [ride?.status]);
 
   const ridePickup: LatLng = live && ride ? { latitude: ride.pickup_lat, longitude: ride.pickup_lng } : RIDE.pickup;
-  const car = live ? driverPos : phase === "enroute" || phase === "arrived" ? demoCar : null;
-  const eta = live ? (driverPos ? etaMinutes(driverPos, ridePickup) : null) : Math.max(1, Math.ceil((1 - t) * 7));
+  const carPt = live
+    ? (driverPos ? { lat: driverPos.latitude, lng: driverPos.longitude, heading: driverPos.heading || undefined } : null)
+    : phase === "enroute" || phase === "arrived" ? demoCar : null;
+  // live road route: driver → pickup while they're coming, pickup → church once you're in the car
+  const liveLeg = useRoute(live && phase === "enroute" && carPt ? carPt : live && (phase === "searching" || phase === "arrived") ? ll(ridePickup) : null,
+    live && phase === "enroute" ? ll(ridePickup) : live && (phase === "searching" || phase === "arrived") ? { lat: church.coords.latitude, lng: church.coords.longitude } : null);
+  const eta = live ? (phase === "enroute" && liveLeg ? liveLeg.minutes : null) : Math.max(1, Math.ceil((1 - t) * (demoRoute?.minutes ?? 7)));
   const driver = live ? ride?.driver : { full_name: RIDE.driver.name, phone: RIDE.driver.phone, vehicle: `${RIDE.driver.car} · ${RIDE.driver.plate}` };
 
-  const fit = () => {
-    if (mode === 1 && live) {
-      const pts = [...board.data.mine, ...board.data.open].map((r) => ({ latitude: r.pickup_lat, longitude: r.pickup_lng }));
-      if (pts.length) map.current?.fitToCoordinates([...pts, church.coords], { edgePadding: { top: 200, bottom: 420, left: 60, right: 60 }, animated: true });
-      return;
-    }
-    if (!live) { map.current?.fitToCoordinates([...RIDE.route], { edgePadding: { top: 200, bottom: 420, left: 60, right: 60 }, animated: true }); return; }
-    if (ride) map.current?.fitToCoordinates([ridePickup, church.coords, ...(driverPos ? [driverPos] : [])], { edgePadding: { top: 200, bottom: 420, left: 60, right: 60 }, animated: true });
-  };
-  useEffect(() => { fit(); }, [mode, ride?.id, ride?.status, board.data.open.length, board.data.mine.length]);
+  // ---------------------------------------------------------------- driver's own position (while sharing) + route to the rider
+  const [myPos, setMyPos] = useState<LatLng | null>(null);
+  const driving = live ? board.data.mine.find((r) => r.status !== "arrived") ?? board.data.mine[0] : null;
+  const driveLeg = useRoute(mode === 1 && driving && myPos ? ll(myPos) : null, mode === 1 && driving ? { lat: driving.pickup_lat, lng: driving.pickup_lng } : null);
 
   // ---------------------------------------------------------------- member actions
   const request = async () => {
@@ -206,6 +178,7 @@ export default function Rides() {
     if (status !== "granted") { Alert.alert("Location needed", "Allow location so your rider can see you coming."); return; }
     // Keeps sharing while the app is open. For screen-locked tracking add expo-task-manager background updates (README).
     watchSub.current = await Location.watchPositionAsync({ accuracy: Location.Accuracy.High, distanceInterval: 15, timeInterval: 4000 }, (pos) => {
+      setMyPos({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
       const now = Date.now();
       if (now - lastSent.current < 4000) return;
       lastSent.current = now;
@@ -232,96 +205,80 @@ export default function Rides() {
     } catch (e: any) { Alert.alert("Ride", e?.message || "Please try again."); board.reload(); }
   };
 
-  // ---------------------------------------------------------------- render
-  const showCenterPin = live && mode === 0 && phase === "request";
-  return (
-    <View style={{ flex: 1, backgroundColor: C.ink }}>
-      <StatusBar style="light" />
-      <MapView
-        ref={map}
-        onMapReady={fit}
-        style={StyleSheet.absoluteFill}
-        provider={Platform.OS === "android" ? PROVIDER_GOOGLE : undefined}
-        customMapStyle={DARK_MAP_STYLE}
-        userInterfaceStyle="dark"
-        initialRegion={{ latitude: 29.3305, longitude: 48.068, latitudeDelta: 0.03, longitudeDelta: 0.03 }}
-        showsUserLocation={live}
-        showsPointsOfInterest={false}
-        showsCompass={false}
-        toolbarEnabled={false}
-        onRegionChangeComplete={(r: any) => { if (showCenterPin) { const at = { latitude: r.latitude, longitude: r.longitude }; setPickup(at); label(at); } }}
-      >
-        {mode === 0 ? (
-          <>
-            {!live ? (
-              <>
-                <Polyline coordinates={RIDE.route} strokeColor="rgba(46,211,160,0.25)" strokeWidth={10} />
-                <Polyline coordinates={phase === "enroute" ? [demoCar, ...RIDE.route.slice(demoCar.index + 1)] : RIDE.route} strokeColor={C.mint} strokeWidth={5} />
-              </>
-            ) : car ? (
-              <Polyline coordinates={[car, ridePickup]} strokeColor={C.mint} strokeWidth={4} lineDashPattern={[6, 8]} />
-            ) : null}
-            {!showCenterPin ? (
-              <Marker coordinate={ridePickup} anchor={{ x: 0.5, y: 0.5 }}>
-                <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.ink, borderWidth: 4, borderColor: C.mint }} />
-              </Marker>
-            ) : null}
-            <Marker coordinate={church.coords} anchor={{ x: 0.5, y: 1 }}>
-              <View style={{ alignItems: "center" }}>
-                <View style={{ backgroundColor: "#fff", paddingHorizontal: 10, height: 26, borderRadius: 13, justifyContent: "center", marginBottom: 6 }}><Body size={11.5} weight="bold">{church.short || "Agape"}</Body></View>
-                <View style={{ width: 34, height: 34, borderRadius: 17, backgroundColor: C.flame, alignItems: "center", justifyContent: "center", borderWidth: 3, borderColor: "#fff" }}><Icon name="cross" size={17} color="#fff" /></View>
-              </View>
-            </Marker>
-            {car ? <CarMarker at={car} /> : null}
-          </>
-        ) : live ? (
-          [...board.data.mine, ...board.data.open].map((r) => (
-            <Marker key={r.id} coordinate={{ latitude: r.pickup_lat, longitude: r.pickup_lng }}>
-              <Avatar name={r.member?.full_name || "Member"} color={r.volunteer_id ? C.mint : colorFor(r.member_id)} size={36} ring="#fff" />
-            </Marker>
-          ))
-        ) : (
-          RIDE.requests.map((r) => (
-            <Marker key={r.id} coordinate={{ latitude: r.lat, longitude: r.lng }}>
-              <Avatar name={r.name} color={r.color} size={36} ring="#fff" />
-            </Marker>
-          ))
-        )}
-      </MapView>
+  // ---------------------------------------------------------------- the map
+  const pickMode = live && mode === 0 && phase === "request";
+  const churchPt = { lat: church.coords.latitude, lng: church.coords.longitude };
+  const churchMarker: MapMarker = { id: "church", kind: "church", ...churchPt, label: church.short === "Agape" ? "Agape International" : church.short || "Church" };
+  let markers: MapMarker[] = [churchMarker];
+  let route: { coords: [number, number][]; dashed?: boolean; color?: string } | null = null;
+  let fit: { lat: number; lng: number }[] | undefined;
+  let fitKey = "";
+  if (mode === 0) {
+    if (me && pickMode) markers.push({ id: "you", kind: "you", lat: me.latitude, lng: me.longitude });
+    if (!pickMode) markers.push({ id: "pickup", kind: "pickup", ...ll(ridePickup)! });
+    if (carPt) markers.push({ id: "car", kind: "car", lat: carPt.lat, lng: carPt.lng, heading: carPt.heading });
+    if (live) {
+      if (liveLeg) route = { coords: phase === "enroute" ? remaining(liveLeg, carPt) ?? liveLeg.coords : liveLeg.coords, dashed: !liveLeg.real, color: phase === "searching" ? "#8AB4F8" : undefined };
+      fit = pickMode ? undefined : [ll(ridePickup)!, ...(carPt ? [carPt] : [churchPt])];
+      fitKey = pickMode ? "" : `${ride?.id}:${phase}`;
+    } else {
+      route = { coords: phase === "enroute" ? remaining({ coords: demoCoords, minutes: 0, km: 0, real: true }, demoCar) ?? demoCoords : demoCoords };
+      fit = demoCoords.map(([lng, lat]) => ({ lat, lng }));
+      fitKey = `demo:${demoCoords.length}`;
+    }
+  } else {
+    const rows: { id: string; lat: number; lng: number; name: string; color: string; mine?: boolean }[] = live
+      ? [...board.data.mine.map((r) => ({ id: r.id, lat: r.pickup_lat, lng: r.pickup_lng, name: r.member?.full_name || "Member", color: "#188038", mine: true })),
+         ...board.data.open.map((r) => ({ id: r.id, lat: r.pickup_lat, lng: r.pickup_lng, name: r.member?.full_name || "Member", color: colorFor(r.member_id) }))]
+      : RIDE.requests.map((r) => ({ id: r.id, lat: r.lat, lng: r.lng, name: r.name, color: r.color, mine: demoAccepted.has(r.id) }));
+    rows.forEach((r) => markers.push({ id: `p:${r.id}`, kind: "person", lat: r.lat, lng: r.lng, letter: r.name, color: r.color, label: r.mine ? r.name.split(" ")[0] : undefined }));
+    if (myPos) markers.push({ id: "me", kind: "car", lat: myPos.latitude, lng: myPos.longitude });
+    if (driveLeg) route = { coords: driveLeg.coords, dashed: !driveLeg.real };
+    fit = [...rows.map((r) => ({ lat: r.lat, lng: r.lng })), churchPt];
+    fitKey = `drive:${rows.map((r) => r.id).join()}`;
+  }
+  const top = insets.top + (mode === 0 && phase === "enroute" && eta ? 190 : 118);
 
-      {/* drag-the-map pickup pin */}
-      {showCenterPin ? (
-        <View pointerEvents="none" style={{ position: "absolute", left: 0, right: 0, top: 0, bottom: 0, alignItems: "center", justifyContent: "center" }}>
-          <View style={{ alignItems: "center", marginBottom: 36 }}>
-            <View style={{ backgroundColor: "#fff", paddingHorizontal: 12, height: 28, borderRadius: 14, justifyContent: "center", marginBottom: 6 }}><Body size={12} weight="bold">Pickup here</Body></View>
-            <View style={{ width: 22, height: 22, borderRadius: 11, backgroundColor: C.ink, borderWidth: 5, borderColor: C.mint }} />
-          </View>
-        </View>
-      ) : null}
+  return (
+    <View style={{ flex: 1, backgroundColor: "#F2EFE9" }}>
+      <StatusBar style="dark" />
+      <LiveMap
+        style={StyleSheet.absoluteFill}
+        initial={{ lat: church.coords.latitude, lng: church.coords.longitude, zoom: 13 }}
+        markers={markers}
+        route={route}
+        padding={{ top, bottom: sheetH + insets.bottom + 20, left: 10, right: 10 }}
+        fit={fit} fitKey={fitKey}
+        center={pickMode && me ? { lat: me.latitude, lng: me.longitude, zoom: 16 } : undefined} centerKey={pickMode ? `me:${recenter}` : undefined}
+        follow={mode === 0 && carPt ? "car" : undefined}
+        pick={pickMode}
+        onCenter={(p) => { if (pickMode) { const at = { latitude: p.lat, longitude: p.lng }; setPickup(at); label(at); } }}
+      />
 
       {/* top bar */}
-      <View style={{ position: "absolute", top: insets.top + 6, left: 16, right: 16, gap: 12 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <IconButton name="chevron-left" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} bg="rgba(255,255,255,0.15)" color="#fff" />
-          <Body size={17} weight="semi" color="#fff" style={{ flex: 1 }}>Ride ministry</Body>
-          {sharingFor ? (
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.mint, paddingHorizontal: 12, height: 30, borderRadius: R.pill }}>
-              <LiveDot color={C.ink} size={6} />
-              <Body size={12} weight="bold">Sharing location</Body>
-            </View>
-          ) : null}
+      <View style={{ position: "absolute", top: insets.top + 6, left: 16, right: 16, gap: 10 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <IconButton name="chevron-left" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} bg="#fff" style={shadow(4, 10, 0.18)} />
+          <View style={[{ flex: 1, height: 44, borderRadius: 22, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", paddingHorizontal: 16, gap: 8 }, shadow(4, 10, 0.18)]}>
+            <Icon name="car-side" size={18} color="#188038" />
+            <Body size={15.5} weight="semi" style={{ flex: 1 }} numberOfLines={1}>Ride ministry</Body>
+            {sharingFor ? (<><LiveDot color="#188038" size={6} /><Body size={12} weight="bold" color="#188038">Sharing</Body></>) : null}
+          </View>
+          {pickMode ? <IconButton name="crosshair" onPress={locate} bg="#fff" color="#1A73E8" style={shadow(4, 10, 0.18)} label="My location" /> : null}
         </View>
-        <Segmented items={["I need a ride", "I'm driving"]} value={mode} onChange={setMode} dark accent={C.mint} />
+        <View style={[{ borderRadius: R.pill, backgroundColor: "#fff" }, shadow(4, 10, 0.15)]}>
+          <Segmented items={["I need a ride", "I'm driving"]} value={mode} onChange={setMode} accent={C.ink} />
+        </View>
         {mode === 0 && phase === "enroute" && eta ? (
-          <Animated.View entering={FadeInDown} style={{ alignSelf: "flex-start", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }}>
+          <Animated.View entering={FadeInDown} style={[{ alignSelf: "flex-start", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }, shadow(6, 14, 0.18)]}>
             <Body size={12} color={C.muted}>{live && ride?.status === "accepted" ? "Driver is" : "Arriving in"}</Body>
-            <Display size={30}>{live && ride?.status === "accepted" ? `${eta} min away` : `${eta} min`}</Display>
+            <Display size={30} color="#188038">{live && ride?.status === "accepted" ? `${eta} min away` : `${eta} min`}</Display>
           </Animated.View>
         ) : null}
       </View>
 
       {/* bottom sheet */}
-      <View style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10 }}>
+      <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10 }}>
         {mode === 0 && phase === "request" ? (
           <Animated.View key="req" entering={FadeInUp.springify().damping(18)} style={sheet}>
             <Display size={34}>Need a <Serif size={36} color="#0E9F74">ride?</Serif></Display>

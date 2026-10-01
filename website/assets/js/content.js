@@ -81,6 +81,13 @@ window.AGAPE_DEFAULT = {
     { title: "Mission", accent: "Nepal", body: "Sending 14 people to serve in rural schools next spring.", raised: 8400, goal: 20000, image: "assets/img/alps.jpg", color: "#6E4BFF" },
     { title: "Families", accent: "in Need", body: "Groceries, rent support, and school fees for families in our city.", raised: 12750, goal: 15000, image: "assets/img/hands-together.jpg", color: "#2ED3A0" },
   ],
+  // Where people get the app (edited in /admin → Church info → App downloads)
+  apps: {
+    androidApk: "https://github.com/URK23CS7048Rohan/AGAPE/releases/download/app-latest/agape.apk",
+    webApp: "app/",
+    appStore: "",
+    playStore: "",
+  },
   testimonies: [
     { quote: "I moved here alone for work. Within a month I had a small group, a ride to church, and people who called me family.", name: "Priya R.", role: "Member since 2024", color: "#FFE3D6", accent: "#FF5A1F" },
     { quote: "We posted on the prayer wall when my father was in the ICU. Three hundred people prayed. He's home now.", name: "Joseph A.", role: "Prayer wall", color: "#E6DEFF", accent: "#6E4BFF" },

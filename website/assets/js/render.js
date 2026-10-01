@@ -25,6 +25,12 @@
 
     /* church + links */
     set(".js-church-name", C.church.name);
+    /* app downloads */
+    const APPS = C.apps || {};
+    set(".js-dl-android", APPS.androidApk || "#download", "href");
+    set(".js-dl-web", APPS.webApp || "app/", "href");
+    $$(".js-dl-appstore").forEach((a) => { a.hidden = !APPS.appStore; if (APPS.appStore) a.href = APPS.appStore; });
+    $$(".js-dl-play").forEach((a) => { a.hidden = !APPS.playStore; if (APPS.playStore) a.href = APPS.playStore; });
     set(".js-church-tagline", C.church.tagline);
     set(".js-church-address", C.church.address);
     set(".js-yt", C.church.youtube, "href");

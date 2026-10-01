@@ -571,3 +571,44 @@ body[data-tone="light"] .nav__burger span{background:#0B0710}
 .prayer--v4 .pform__name::placeholder{color:rgba(11,7,16,.45)}
 .pnote__pending{display:block;font-size:11.5px;font-weight:600;color:rgba(11,7,16,.55);padding:6px 0 2px}
 .pnote__ok{font-style:normal;font-size:10.5px;font-weight:700;background:#FFC23D;color:#0B0710;border-radius:99px;padding:2px 8px;margin-left:auto}
+
+/* ---- real street map in the Rides section (MapLibre + OpenStreetMap) ---- */
+.map-card .real-map{position:absolute;inset:0;z-index:0;background:#242F3E}
+.map-card .real-map .maplibregl-ctrl-attrib{background:rgba(36,47,62,.7)!important;color:#9CA5B3}
+.map-card .real-map .maplibregl-ctrl-attrib a{color:#9CA5B3}
+.rides--full .map-card.is-real::after{background:linear-gradient(90deg,rgba(11,7,16,.95) 0%,rgba(11,7,16,.78) 32%,rgba(11,7,16,.05) 56%,rgba(11,7,16,0) 70%),linear-gradient(0deg,#0B0710 0%,transparent 16%,transparent 86%,#0B0710 100%)}
+@media (max-width:900px){.rides--full .map-card.is-real::after{background:linear-gradient(180deg,rgba(11,7,16,.95) 0%,rgba(11,7,16,.82) 42%,rgba(11,7,16,.05) 62%,rgba(11,7,16,.35) 100%)}}
+.rm-church{display:flex;align-items:flex-end;gap:4px}
+.rm-church svg{filter:drop-shadow(0 2px 3px rgba(0,0,0,.5))}
+.rm-church b{font:700 13px/1 var(--f-sans,sans-serif);color:#F28B82;text-shadow:0 0 3px #242F3E,0 0 3px #242F3E,0 0 4px #242F3E;margin-bottom:22px;white-space:nowrap}
+.rm-start{width:16px;height:16px;border-radius:50%;background:#fff;border:5px solid #34A853;box-shadow:0 1px 4px rgba(0,0,0,.5)}
+.rm-car svg{filter:drop-shadow(0 3px 4px rgba(0,0,0,.55))}
+
+/* ---- app downloads ---- */
+.stores{flex-wrap:wrap}
+.store{border:0;cursor:pointer;font:inherit}
+.store--apk{background:#2ED3A0;color:#0B0710}
+.store--apk .store__ic{background:#0B0710;color:#2ED3A0}
+.store--ios{background:#fff;color:#0B0710}
+.store--line{background:transparent;color:#fff;box-shadow:inset 0 0 0 1.5px rgba(255,255,255,.3)}
+.stores.is-ios .store--apk{order:2;opacity:.7}
+.stores.is-android .store--ios{order:2;opacity:.7}
+.dl-note{margin-top:18px;max-width:520px;font-size:13.5px;line-height:1.55;color:rgba(244,238,228,.62)}
+.dl-note a{color:#2ED3A0;text-decoration:underline;text-underline-offset:3px}
+.dl-note b{color:#F4EEE4}
+.dl-sheet{position:fixed;inset:0;z-index:1000;background:rgba(11,7,16,.6);backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);display:grid;place-items:end center;padding:16px;opacity:0;transition:opacity .3s}
+.dl-sheet.is-open{opacity:1}
+.dl-sheet[hidden]{display:none}
+.dl-sheet__card{position:relative;width:min(460px,100%);background:#F4EEE4;color:#0B0710;border-radius:32px;padding:30px 26px 24px;transform:translateY(40px);transition:transform .45s cubic-bezier(.2,.9,.2,1);margin-bottom:max(16px,env(safe-area-inset-bottom))}
+@media (min-width:700px){.dl-sheet{place-items:center}}
+.dl-sheet.is-open .dl-sheet__card{transform:none}
+.dl-sheet__card h3{font:800 34px/1 var(--f-display);letter-spacing:-.02em;margin:0 0 16px}
+.dl-sheet__card h3 em{font-family:var(--f-serif);font-weight:400;color:#FF5A1F}
+.dl-sheet__card ol{list-style:none;padding:0;margin:0 0 14px;display:grid;gap:12px}
+.dl-sheet__card li{display:flex;align-items:center;gap:12px;font-size:15.5px;line-height:1.4}
+.dl-sheet__card li>span{flex:none;width:30px;height:30px;border-radius:50%;background:#0B0710;color:#fff;display:grid;place-items:center;font-weight:700;font-size:13px}
+.dl-sheet__card li .ic{width:16px;height:16px;vertical-align:-3px;color:#1A73E8}
+.dl-sheet__card li a{color:#FF5A1F;font-weight:600}
+.dl-sheet__card p{font-size:13.5px;color:rgba(11,7,16,.6);margin:0 0 16px}
+.dl-sheet__x{position:absolute;right:14px;top:14px;width:38px;height:38px;border-radius:50%;border:0;background:rgba(11,7,16,.07);display:grid;place-items:center;cursor:pointer}
+.store[hidden]{display:none!important}

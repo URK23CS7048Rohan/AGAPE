@@ -1,12 +1,11 @@
 // Metro config: identical to Expo's default, except that on WEB the two
-// native-only modules (Google Maps and WebView) are swapped for small stand-ins,
+// native-only WebView module is swapped for a small stand-in (the map has its own .web.tsx),
 // so the app can also run in a browser (used for the screenshot workflow).
 const { getDefaultConfig } = require("expo/metro-config");
 const path = require("path");
 
 const config = getDefaultConfig(__dirname);
 const WEB_STUBS = {
-  "react-native-maps": path.resolve(__dirname, "web-stubs/maps.js"),
   "react-native-webview": path.resolve(__dirname, "web-stubs/webview.js"),
 };
 const upstream = config.resolver.resolveRequest;

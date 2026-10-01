@@ -1,0 +1,16 @@
+{
+  "name": "Agape International Ministries",
+  "short_name": "Agape",
+  "description": "Sermons, prayer, courses, community and a ride to church.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0F0B12",
+  "theme_color": "#0F0B12",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}

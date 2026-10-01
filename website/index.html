@@ -813,10 +813,26 @@
   <div class="download__inner">
     <div class="download__copy">
       <h2 class="h2 h2--xl" data-split>Take Agape <em>everywhere.</em></h2>
-      <p class="section-sub section-sub--light">Free on iPhone and Android. Face ID sign-in, a home-screen widget, and your membership card in Apple Wallet.</p>
+      <p class="section-sub section-sub--light">Free for Android and iPhone. Download it right here: no store, no account needed to look around.</p>
       <div class="stores">
-        <a href="#" class="store" data-magnetic><span class="store__ic"><svg class="ic"><use href="#i-smartphone"/></svg></span><span><small>Download on the</small><b>App Store</b></span></a>
-        <a href="#" class="store" data-magnetic><span class="store__ic"><svg class="ic" style="fill:#fff;stroke:none"><use href="#i-play"/></svg></span><span><small>Get it on</small><b>Google Play</b></span></a>
+        <a href="#" class="store store--apk js-dl-android" download data-magnetic><span class="store__ic"><svg class="ic"><use href="#i-arrow-down"/></svg></span><span><small>Download for</small><b>Android</b></span></a>
+        <button type="button" class="store store--ios js-dl-ios" data-magnetic><span class="store__ic"><svg class="ic"><use href="#i-smartphone"/></svg></span><span><small>Install on</small><b>iPhone</b></span></button>
+        <a href="#" class="store store--line js-dl-appstore" hidden target="_blank" rel="noopener"><span class="store__ic"><svg class="ic"><use href="#i-smartphone"/></svg></span><span><small>Download on the</small><b>App Store</b></span></a>
+        <a href="#" class="store store--line js-dl-play" hidden target="_blank" rel="noopener"><span class="store__ic"><svg class="ic" style="fill:#fff;stroke:none"><use href="#i-play"/></svg></span><span><small>Get it on</small><b>Google Play</b></span></a>
+      </div>
+      <p class="dl-note">Android 8 or newer. The first time, your phone asks to allow installs from your browser: tap <b>Settings → Allow</b>, then <b>Install</b>. Or <a class="js-dl-web" href="app/">open the app in your browser</a>.</p>
+      <div class="dl-sheet" hidden>
+        <div class="dl-sheet__card" role="dialog" aria-label="Install on iPhone">
+          <button type="button" class="dl-sheet__x" aria-label="Close"><svg class="ic"><use href="#i-x"/></svg></button>
+          <h3>Add Agape to your <em>iPhone</em></h3>
+          <ol>
+            <li><span>1</span><div>Open <a class="js-dl-web" href="app/">the Agape web app</a> in <b>Safari</b>.</div></li>
+            <li><span>2</span><div>Tap the <b>Share</b> button <svg class="ic"><use href="#i-share-2"/></svg> at the bottom.</div></li>
+            <li><span>3</span><div>Choose <b>Add to Home Screen</b>, then <b>Add</b>.</div></li>
+          </ol>
+          <p>It opens full-screen from your home screen with its own icon, like any app. The App Store version is on its way.</p>
+          <a class="btn btn--brand btn--block js-dl-web" href="app/"><span>Open the web app</span><i><svg class="ic"><use href="#i-arrow-up-right"/></svg></i></a>
+        </div>
       </div>
     </div>
     <div class="download__phones">
@@ -866,6 +882,7 @@
 <script src="assets/js/vendor/SplitText.min.js"></script>
 <script src="assets/js/vendor/Draggable.min.js"></script>
 <script src="assets/js/vendor/InertiaPlugin.min.js"></script>
+<script src="assets/js/agape-map.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/v3.js"></script>
 <script src="assets/js/v4.js"></script>

@@ -219,16 +219,3 @@ export const RIDE = {
     { id: "rq3", name: "Esther & kids", pickup: "Jabriya Block 1", time: "Sun 5:15 PM", seats: 3, color: C.sun, lat: 29.3217, lng: 48.0293 },
   ],
 };
-
-export const DARK_MAP_STYLE = [
-  { elementType: "geometry", stylers: [{ color: "#17131d" }] },
-  { elementType: "labels.text.fill", stylers: [{ color: "#8a8196" }] },
-  { elementType: "labels.text.stroke", stylers: [{ color: "#17131d" }] },
-  { featureType: "poi", stylers: [{ visibility: "off" }] },
-  { featureType: "road", elementType: "geometry", stylers: [{ color: "#2a2432" }] },
-  { featureType: "road.arterial", elementType: "geometry", stylers: [{ color: "#322b3c" }] },
-  { featureType: "road.highway", elementType: "geometry", stylers: [{ color: "#3d3448" }] },
-  { featureType: "transit", stylers: [{ visibility: "off" }] },
-  { featureType: "water", elementType: "geometry", stylers: [{ color: "#0e2233" }] },
-  { featureType: "landscape.natural", elementType: "geometry", stylers: [{ color: "#1b1622" }] },
-];

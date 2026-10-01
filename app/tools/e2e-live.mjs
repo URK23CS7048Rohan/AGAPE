@@ -165,7 +165,7 @@ await step("rides: request → driver accepts → live location", async () => {
   await driver.auth.signInWithPassword({ email: `driver-${stamp}@agape.test`, password: "Agape-test-2026!" });
 
   await go("/rides");
-  await page.waitForTimeout(2000);
+  await page.waitForTimeout(7000); // street map tiles
   await shot("rides-request");
   await click("Request ride");
   const ride = await waitFor(async () => (await admin.from("rides").select("id, status").eq("member_id", me).single()).data, 10000, "ride saved");
@@ -180,6 +180,7 @@ await step("rides: request → driver accepts → live location", async () => {
     await sleep(900);
   }
   await page.getByText(/min/).first().waitFor({ timeout: 15000 });
+  await page.waitForTimeout(5000); // let the street map + road route draw
   await shot("rides-enroute");
   await driver.rpc("set_ride_status", { ride_id: ride.id, new_status: "arrived" });
   await page.getByText("Your ride is").first().waitFor({ timeout: 15000 });

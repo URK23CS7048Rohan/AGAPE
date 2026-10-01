@@ -44,6 +44,24 @@ await step("website loads in live mode", async () => {
   await shot("home");
 });
 
+await step("rides section shows a real street map", async () => {
+  await scrollTo("#rides");
+  await page.waitForSelector(".map-card.is-real", { timeout: 30000 });
+  await page.waitForTimeout(6000);
+  await shot("rides-real-map");
+});
+
+await step("download section: Android APK + iPhone install", async () => {
+  await scrollTo("#download");
+  const href = await page.getAttribute(".js-dl-android", "href");
+  if (!/\.apk$/.test(href || "")) throw new Error("no APK link: " + href);
+  await shot("download");
+  await page.evaluate(() => document.querySelector(".js-dl-ios").click());
+  await page.waitForTimeout(800);
+  await shot("download-iphone-sheet");
+  await page.evaluate(() => document.querySelector(".dl-sheet__x").click());
+});
+
 await step("visitor posts a prayer request (held for review)", async () => {
   await scrollTo("#prayer");
   await page.evaluate((txt) => {
