@@ -9,7 +9,7 @@ shot() { sleep "${2:-6}"; adb exec-out screencap -p > "android-shots/$1.png"; }
 # if uiautomator can't read the screen (endless animations keep it from going idle), tap $2,$3 instead
 tap() {
   FX=$2; FY=$3
-  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml /tmp/ui.xml >/dev/null 2>&1
+  rm -f /tmp/ui.xml; adb shell rm -f /sdcard/ui.xml; adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1; adb pull /sdcard/ui.xml /tmp/ui.xml >/dev/null 2>&1
   python3 - "$1" <<'PY'
 import re,sys,subprocess
 want=sys.argv[1]; xml=open('/tmp/ui.xml',encoding='utf-8',errors='ignore').read()
