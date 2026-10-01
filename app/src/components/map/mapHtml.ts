@@ -73,7 +73,7 @@ export function mapHtml(initial: { lat: number; lng: number; zoom?: number }) {
   /* ======================= vector engine (MapLibre + OpenFreeMap) ======================= */
   function startGL(){
   var glOk=false;
-  var map=new maplibregl.Map({container:"map",style:"${MAP_STYLE_URL}",center:[${initial.lng},${initial.lat}],zoom:${initial.zoom ?? 13},attributionControl:false,pitchWithRotate:false,dragRotate:false,fadeDuration:0});
+  var map=new maplibregl.Map({container:"map",style:"${MAP_STYLE_URL}",center:[${initial.lng},${initial.lat}],zoom:${initial.zoom ?? 13},attributionControl:false,pitchWithRotate:false,dragRotate:false,fadeDuration:0,preserveDrawingBuffer:true});
   map.touchZoomRotate.disableRotation();
   map.addControl(new maplibregl.AttributionControl({compact:true}),"bottom-left");
 
@@ -122,7 +122,16 @@ export function mapHtml(initial: { lat: number; lng: number; zoom?: number }) {
   // if this phone can't draw vector tiles (old GPU, no workers…), switch to the lite map
   var giveUp=function(){if(glOk||liteOn)return;try{map.remove()}catch(e){}document.getElementById("map").innerHTML="";flushFn=null;startLite();};
   map.on("error",function(e){if(!ready)giveUp();});
-  map.on("idle",function(){if(glOk)return;try{if(map.queryRenderedFeatures().length>0)glOk=true;else setTimeout(function(){if(!glOk&&map.queryRenderedFeatures().length===0)giveUp();},1500);}catch(e){}});
+  // did the GPU actually draw the map? sample the canvas: a working map has many colours, a broken one is blank
+  function drawn(){
+    try{
+      var c=map.getCanvas(),t=document.createElement("canvas");t.width=48;t.height=48;var x=t.getContext("2d");x.drawImage(c,0,0,48,48);
+      var d=x.getImageData(0,0,48,48).data,seen={},n=0;
+      for(var i=0;i<d.length;i+=4*7){if(d[i+3]<10)continue;var k=(d[i]>>3)+","+(d[i+1]>>3)+","+(d[i+2]>>3);if(!seen[k]){seen[k]=1;n++;}}
+      return n>=6;
+    }catch(e){return true;}
+  }
+  map.on("idle",function(){if(glOk||liteOn)return;setTimeout(function(){if(glOk||liteOn)return;if(drawn())glOk=true;else giveUp();},600);});
   setTimeout(function(){if(!glOk)giveUp();},15000);
 
   /* --- state --- */

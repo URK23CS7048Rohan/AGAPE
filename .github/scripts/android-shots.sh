@@ -44,5 +44,6 @@ for r in prayer give games events rides assistant; do
   shot "$r" 2
   adb shell input swipe 540 1900 540 900 450
   shot "$r-2" 3
+  if [ "$r" = rides ]; then shot rides-3 14; fi
 done
 ls -la android-shots
