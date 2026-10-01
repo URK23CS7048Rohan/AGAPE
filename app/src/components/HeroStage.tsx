@@ -11,7 +11,8 @@ import { Body, Button, Display, Icon, IconButton, Label, LiveDot, Press } from "
 import { Seal } from "./Motion";
 import { HeroContent } from "@/lib/content";
 import { nextService } from "@/lib/time";
-import { USER } from "@/data/mock";
+import { useStore } from "@/lib/store";
+import { useNotifications } from "@/lib/data";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 export const HERO_H = Math.max(620, Math.min(SH * 0.86, 780));
@@ -89,6 +90,9 @@ function NextServiceCard() {
 
 export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<number> }) {
   const insets = useSafeAreaInsets();
+  const { session, profile, firstName } = useStore();
+  const notes = useNotifications(session?.user.id ?? null).data;
+  const unread = profile ? notes.filter((n) => n.createdAt > profile.notifications_seen_at).length : 0;
   const [idx, setIdx] = useState(0);
   const slides = hero.slides.length ? hero.slides : [{ image: IMG.homeWorship, caption: "" }];
   useEffect(() => {
@@ -120,10 +124,10 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
           <Label size={8.5} color="rgba(255,255,255,0.7)">International Ministries</Label>
         </View>
         <IconButton name="creation" bg="rgba(255,255,255,0.16)" color={C.sun} onPress={() => router.push("/assistant")} />
-        <IconButton name="bell" badge bg="rgba(255,255,255,0.16)" color="#fff" onPress={() => router.push("/community")} />
+        <IconButton name="bell" badge={unread > 0} bg="rgba(255,255,255,0.16)" color="#fff" onPress={() => router.push("/notifications")} />
         <Press onPress={() => router.push("/me")}>
           <LinearGradient colors={[C.flame, C.rose]} style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.5)" }}>
-            <Body weight="bold" color="#fff" size={16}>{USER.first[0]}</Body>
+            <Body weight="bold" color="#fff" size={16}>{(firstName[0] || "A").toUpperCase()}</Body>
           </LinearGradient>
         </Press>
       </Animated.View>

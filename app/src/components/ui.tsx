@@ -21,7 +21,7 @@ import { C, F, R } from "@/theme";
 const { width: SW, height: SH } = Dimensions.get("window");
 
 /* ---------------------------------------------------------------- Icons */
-const MCI = new Set(["car", "car-side", "hands-pray", "gamepad-variant", "cross", "church", "fire", "trophy", "robot-happy", "hand-heart", "account-group", "bookshelf", "piggy-bank", "baby-face-outline", "face-recognition", "wallet", "qrcode", "creation"]);
+const MCI = new Set(["car", "car-side", "hands-pray", "gamepad-variant", "cross", "church", "fire", "trophy", "robot-happy", "hand-heart", "account-group", "bookshelf", "piggy-bank", "baby-face-outline", "face-recognition", "wallet", "qrcode", "creation", "steering"]);
 export function Icon({ name, size = 20, color = C.ink }: { name: string; size?: number; color?: string }) {
   if (MCI.has(name)) return <MaterialCommunityIcons name={name as any} size={size} color={color} />;
   return <Feather name={name as any} size={size} color={color} />;
@@ -51,13 +51,15 @@ export function Label({ children, color = C.muted, style, size = 11 }: TProps) {
 
 /* ---------------------------------------------------------------- Press (spring scale + haptics) */
 const APressable = Animated.createAnimatedComponent(Pressable);
-export function Press({ children, onPress, style, scaleTo = 0.96, haptic = true, disabled, hitSlop }: { children?: React.ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; scaleTo?: number; haptic?: boolean; disabled?: boolean; hitSlop?: number }) {
+export function Press({ children, onPress, style, scaleTo = 0.96, haptic = true, disabled, hitSlop, label }: { children?: React.ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; scaleTo?: number; haptic?: boolean; disabled?: boolean; hitSlop?: number; label?: string }) {
   const s = useSharedValue(1);
   const a = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   return (
     <APressable
       hitSlop={hitSlop}
       disabled={disabled}
+      accessibilityRole="button"
+      accessibilityLabel={label}
       onPressIn={() => (s.value = withSpring(scaleTo, { damping: 15, stiffness: 420 }))}
       onPressOut={() => (s.value = withSpring(1, { damping: 11, stiffness: 260 }))}
       onPress={() => {
@@ -109,9 +111,9 @@ export function Button({ label, icon = "arrow-right", variant = "flame", onPress
     </Press>
   );
 }
-export function IconButton({ name, onPress, bg = "#fff", color = C.ink, size = 44, style, badge }: { name: string; onPress?: () => void; bg?: string; color?: string; size?: number; style?: StyleProp<ViewStyle>; badge?: boolean }) {
+export function IconButton({ name, onPress, bg = "#fff", color = C.ink, size = 44, style, badge, label }: { name: string; onPress?: () => void; bg?: string; color?: string; size?: number; style?: StyleProp<ViewStyle>; badge?: boolean; label?: string }) {
   return (
-    <Press onPress={onPress} hitSlop={6} style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: "center", justifyContent: "center" }, style]}>
+    <Press onPress={onPress} hitSlop={6} label={label ?? name} style={[{ width: size, height: size, borderRadius: size / 2, backgroundColor: bg, alignItems: "center", justifyContent: "center" }, style]}>
       <Icon name={name} size={size * 0.42} color={color} />
       {badge ? <View style={{ position: "absolute", top: size * 0.24, right: size * 0.26, width: 8, height: 8, borderRadius: 4, backgroundColor: C.flame, borderWidth: 1.5, borderColor: bg }} /> : null}
     </Press>

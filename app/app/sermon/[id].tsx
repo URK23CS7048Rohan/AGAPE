@@ -9,9 +9,11 @@ import { WebView } from "react-native-webview";
 import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
 import { Avatar, Body, Display, Icon, IconButton, Label, LiveBadge, Press, Segmented, Serif } from "@/components/ui";
-import { CHURCH, SERMONS, SERIES } from "@/data/mock";
 import { useStore } from "@/lib/store";
-import { saveNote } from "@/lib/api";
+import { colorFor, useSermons } from "@/lib/data";
+import { useSiteContent } from "@/lib/content";
+import { countView } from "@/lib/api";
+import { supabase } from "@/lib/supabase";
 import { fmt } from "@/lib/time";
 
 const { width: SW } = Dimensions.get("window");
@@ -21,19 +23,51 @@ const CHAT_LINES = [
   ["Joel", C.sun, "That worship set though 🔥"], ["Anita", C.rose, "Praying for everyone watching from hospital ❤️"], ["Samuel", C.sky, "Romans 5:20 hits different"],
 ] as const;
 
+type ChatLine = { n: string; c: string; t: string; k: number };
+
+/** Live chat beside the stream: Supabase Realtime broadcast (not stored) + presence for "watching now". */
+function useLiveChat(room: string, name: string, on: boolean) {
+  const [msgs, setMsgs] = useState<ChatLine[]>([]);
+  const [watching, setWatching] = useState(0);
+  const ch = useRef<any>(null);
+  useEffect(() => {
+    if (!on) return;
+    if (!supabase) {
+      // demo: a friendly simulated chat
+      let k = 0;
+      const t = setInterval(() => { const [n, c, line] = CHAT_LINES[k % CHAT_LINES.length]; setMsgs((cs) => [...cs.slice(-7), { n, c, t: line, k: k++ }]); }, 2200);
+      return () => clearInterval(t);
+    }
+    const c = supabase.channel(`live:${room}`, { config: { broadcast: { self: true }, presence: { key: Math.random().toString(36).slice(2) } } });
+    c.on("broadcast", { event: "msg" }, ({ payload }: any) => setMsgs((m) => [...m.slice(-40), payload]));
+    c.on("presence", { event: "sync" }, () => setWatching(Object.keys(c.presenceState()).length));
+    c.subscribe(async (st: string) => { if (st === "SUBSCRIBED") await c.track({ name }); });
+    ch.current = c;
+    return () => { supabase!.removeChannel(c); ch.current = null; };
+  }, [room, on]);
+  const send = (t: string) => {
+    const line = { n: name, c: colorFor(name), t: t.slice(0, 280), k: Date.now() + Math.random() };
+    if (ch.current) ch.current.send({ type: "broadcast", event: "msg", payload: line });
+    else setMsgs((m) => [...m.slice(-7), { ...line, n: "You" }]);
+  };
+  return { msgs, watching, send };
+}
+
 export default function SermonScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const m = SERMONS.find((s) => s.id === id) ?? SERMONS[0];
-  const series = SERIES.find((s) => s.id === m.seriesId);
+  const { sermons: SERMONS, series: SERIES } = useSermons();
+  const CHURCH = useSiteContent().church;
+  const m = SERMONS.find((s) => s.id === id || (s as any).slug === id) ?? SERMONS[0];
+  const series = m ? SERIES.find((s) => s.id === m.seriesId) : undefined;
   const insets = useSafeAreaInsets();
-  const { saved, toggleSaved, notes, setNote } = useStore();
+  const { saved, toggleSaved, notes, setNote, firstName, name, member, needsAccount } = useStore();
   const [tab, setTab] = useState(1);
   const [playing, setPlaying] = useState(false);
-  const [downloaded, setDownloaded] = useState(false);
   const [liveMode, setLiveMode] = useState(false);
-  const [chat, setChat] = useState<{ n: string; c: string; t: string; k: number }[]>([]);
   const [draft, setDraft] = useState("");
-  const noteTimer = useRef<any>(null);
+  const live = useLiveChat(m?.id ?? "none", member ? name : "Guest", !!m?.live && tab === 2);
+  const chat = live.msgs;
+  useEffect(() => { if (m?.id) countView(m.id); }, [m?.id]);
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
   const heroSt = useAnimatedStyle(() => ({
@@ -42,15 +76,7 @@ export default function SermonScreen() {
   const topBar = useAnimatedStyle(() => ({ backgroundColor: `rgba(244,238,228,${interpolate(y.value, [HERO - 160, HERO - 80], [0, 0.96], Extrapolation.CLAMP)})` }));
   const titleSt = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [HERO - 120, HERO - 70], [0, 1], Extrapolation.CLAMP) }));
 
-  useEffect(() => {
-    let k = 0;
-    const t = setInterval(() => {
-      const [n, c, line] = CHAT_LINES[k % CHAT_LINES.length];
-      setChat((cs) => [...cs.slice(-7), { n, c, t: line, k: k++ }]);
-    }, 2200);
-    return () => clearInterval(t);
-  }, []);
-
+  if (!m) return <View style={{ flex: 1, backgroundColor: C.cream }}><Body center color={C.muted} style={{ marginTop: 120 }}>Loading…</Body></View>;
   // Specific video → embed it. Otherwise: live stream (if live now) or the channel's latest uploads.
   const uploads = "UU" + CHURCH.youtubeChannelId.slice(2);
   const embed = m.youtubeId
@@ -92,7 +118,7 @@ export default function SermonScreen() {
             <Label>{series ? `${series.book} · ` : ""}{m.date} · {m.duration}</Label>
             <Display size={48} style={{ marginTop: 8, lineHeight: 46 }}>{m.title}{"\n"}<Serif size={52} color={C.flame}>{m.accent}</Serif></Display>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 }}>
-              <Avatar name={m.speaker.replace("Ps. ", "")} color={C.ink} size={34} />
+              <Avatar name={(m.speaker || "Agape").replace("Ps. ", "")} color={C.ink} size={34} />
               <Body size={14} weight="semi">{m.speaker}</Body>
               <Body size={13} color={C.muted}>· {fmt(m.views)} views</Body>
             </View>
@@ -104,8 +130,8 @@ export default function SermonScreen() {
               <Body weight="semi" color="#fff">{m.live ? "Watch live" : "Play message"}</Body>
             </Press>
             <IconButton name="bookmark" size={54} bg={saved.has(m.id) ? C.flame : "#fff"} color={saved.has(m.id) ? "#fff" : C.ink} onPress={() => toggleSaved(m.id)} />
-            <IconButton name={downloaded ? "check" : "download"} size={54} bg={downloaded ? C.mint : "#fff"} onPress={() => setDownloaded(true)} />
-            <IconButton name="share-2" size={54} onPress={() => Share.share({ message: `${m.title} ${m.accent} — ${CHURCH.name}\n${CHURCH.youtubeUrl}` })} />
+            <IconButton name="youtube" size={54} onPress={() => Linking.openURL(m.youtubeId ? `https://www.youtube.com/watch?v=${m.youtubeId}` : CHURCH.youtubeUrl)} />
+            <IconButton name="share-2" size={54} onPress={() => Share.share({ message: `${m.title} ${m.accent} · ${CHURCH.name}\n${m.youtubeId ? `https://youtu.be/${m.youtubeId}` : CHURCH.youtubeUrl}` })} />
           </Animated.View>
           {m.live ? (
             <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
@@ -114,7 +140,6 @@ export default function SermonScreen() {
               <Press onPress={() => Linking.openURL(CHURCH.youtubeUrl)} style={{ paddingHorizontal: 14, height: 36, borderRadius: R.pill, backgroundColor: C.ink, justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">YouTube ↗</Body></Press>
             </View>
           ) : null}
-          {downloaded ? <Animated.View entering={FadeInUp}><Body size={13} color={C.muted} style={{ marginTop: 10 }}>Saved for offline listening · 142 MB</Body></Animated.View> : null}
 
           <View style={{ marginTop: 24 }}>
             <Segmented items={["About", "Notes", m.live ? "Live chat" : "Related"]} value={tab} onChange={setTab} />
@@ -138,15 +163,11 @@ export default function SermonScreen() {
           {tab === 1 ? (
             <Animated.View entering={FadeIn} style={{ marginTop: 18 }}>
               <View style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 16, minHeight: 200 }}>
-                <Label style={{ marginBottom: 8 }}>My notes · syncs to all devices</Label>
+                <Label style={{ marginBottom: 8 }}>{member ? "My notes · synced to your account" : "My notes · sign in to keep them on every device"}</Label>
                 <TextInput
                   multiline
                   value={notes[m.id] ?? ""}
-                  onChangeText={(t) => {
-                    setNote(m.id, t);
-                    clearTimeout(noteTimer.current);
-                    noteTimer.current = setTimeout(() => saveNote(m.id, t), 800);
-                  }}
+                  onChangeText={(t) => setNote(m.id, t)}
                   placeholder={"Grace isn't just a gift. It's a way of life.\n\nTap to start writing…"}
                   placeholderTextColor="rgba(15,11,18,0.35)"
                   style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 24, color: C.ink, minHeight: 150, textAlignVertical: "top" }}
@@ -157,6 +178,11 @@ export default function SermonScreen() {
 
           {tab === 2 && m.live ? (
             <View style={{ marginTop: 18, backgroundColor: C.ink, borderRadius: R.lg, padding: 14 }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
+                <LiveBadge small />
+                <Body size={12.5} color={C.creamMuted}>{live.watching ? `${live.watching} here now` : "Be kind · messages aren't saved"}</Body>
+              </View>
+              {chat.length === 0 ? <Body size={14} color={C.creamMuted} style={{ paddingVertical: 10 }}>Say hello to everyone watching 👋</Body> : null}
               {chat.map((c) => (
                 <Animated.View key={c.k} entering={FadeInDown.springify().damping(16)} style={{ flexDirection: "row", gap: 10, paddingVertical: 7 }}>
                   <Avatar name={c.n} color={c.c} size={28} />
@@ -168,7 +194,7 @@ export default function SermonScreen() {
               ))}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: R.pill, paddingLeft: 16, paddingRight: 5, height: 48 }}>
                 <TextInput value={draft} onChangeText={setDraft} placeholder="Say something kind…" placeholderTextColor="rgba(244,238,228,0.45)" style={{ flex: 1, color: C.cream, fontFamily: F.sans, fontSize: 15 }} />
-                <IconButton name="send" size={38} bg={C.rose} color="#fff" onPress={() => { if (!draft.trim()) return; setChat((cs) => [...cs.slice(-7), { n: "You", c: C.flame, t: draft.trim(), k: Date.now() }]); setDraft(""); }} />
+                <IconButton name="send" size={38} bg={C.rose} color="#fff" onPress={() => { if (!draft.trim() || needsAccount("chat during the live stream")) return; live.send(draft.trim()); setDraft(""); }} />
               </View>
             </View>
           ) : null}

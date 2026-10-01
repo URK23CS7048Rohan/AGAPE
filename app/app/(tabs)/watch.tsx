@@ -7,13 +7,15 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG, R, shadow } from "@/theme";
 import { Body, Chip, Display, Icon, Label, LiveBadge, Press, Serif } from "@/components/ui";
-import { CHURCH, SERIES, SERMONS, Series } from "@/data/mock";
+import { Series } from "@/data/mock";
+import { useSermons } from "@/lib/data";
+import { useSiteContent } from "@/lib/content";
 
 const { width: SW } = Dimensions.get("window");
 const CW = 230;
 const GAP = 14;
 
-function SeriesCard({ s, i, x }: { s: Series; i: number; x: SharedValue<number> }) {
+function SeriesCard({ s, i, x, firstId }: { s: Series; i: number; x: SharedValue<number>; firstId?: string }) {
   const arch = i % 2 === 1;
   const st = useAnimatedStyle(() => {
     const c = i * (CW + GAP);
@@ -23,9 +25,8 @@ function SeriesCard({ s, i, x }: { s: Series; i: number; x: SharedValue<number> 
     const c = i * (CW + GAP);
     return { transform: [{ translateX: interpolate(x.value, [c - SW, c + SW], [-30, 30], Extrapolation.CLAMP) }] };
   });
-  const first = SERMONS.find((m) => m.seriesId === s.id) ?? SERMONS[0];
   return (
-    <Press onPress={() => router.push(`/sermon/${first.id}`)} scaleTo={0.97}>
+    <Press onPress={() => firstId && router.push(`/sermon/${firstId}`)} scaleTo={0.97}>
       <Animated.View style={[{ width: CW, height: 340, borderRadius: R.xl, borderTopLeftRadius: arch ? CW / 2 : R.xl, borderTopRightRadius: arch ? CW / 2 : R.xl, overflow: "hidden", backgroundColor: C.ink }, st]}>
         <Animated.View style={[{ position: "absolute", top: 0, bottom: 0, left: -40, right: -40 }, img]}>
           <Image source={s.image} style={{ flex: 1 }} contentFit="cover" />
@@ -53,14 +54,16 @@ export default function Watch() {
   const [book, setBook] = useState("All");
   const x = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { x.value = e.contentOffset.x; });
-  const live = SERMONS[0];
+  const { series: SERIES, sermons: SERMONS, loading } = useSermons();
+  const CHURCH = useSiteContent().church;
+  const live = SERMONS.find((m) => m.live) ?? SERMONS[0];
   const books = ["All", ...Array.from(new Set(SERIES.map((s) => s.book)))];
-  const series = SERIES.filter((s) => book === "All" || s.book === book);
-  const list = useMemo(() => SERMONS.slice(1).filter((m) => {
+  const series = SERIES.filter((s) => (book === "All" || s.book === book) && SERMONS.some((m) => m.seriesId === s.id));
+  const list = useMemo(() => SERMONS.filter((m) => m !== live).filter((m) => {
     const s = SERIES.find((x) => x.id === m.seriesId);
     const text = `${m.title} ${m.accent} ${m.speaker} ${s?.book}`.toLowerCase();
     return (!q || text.includes(q.toLowerCase())) && (book === "All" || s?.book === book);
-  }), [q, book]);
+  }), [q, book, SERMONS, SERIES]);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.ink }}>
@@ -73,12 +76,12 @@ export default function Watch() {
         </Animated.View>
 
         {/* Live */}
-        <Animated.View entering={FadeInDown.delay(100).duration(700)}>
+        {live ? <Animated.View entering={FadeInDown.delay(100).duration(700)}>
           <Press onPress={() => router.push(`/sermon/${live.id}`)} scaleTo={0.98} style={[{ marginHorizontal: 16, marginTop: 22, height: 250, borderRadius: R.xl, overflow: "hidden" }, shadow(20, 30, 0.5, "#000")]}>
             <Image source={live.image} style={StyleSheet.absoluteFill} contentFit="cover" />
             <LinearGradient colors={["rgba(0,0,0,0.3)", "transparent", "rgba(0,0,0,0.88)"]} locations={[0, 0.35, 1]} style={StyleSheet.absoluteFill} />
             <View style={{ position: "absolute", top: 16, left: 16, right: 16, flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-              <LiveBadge />
+              {live.live ? <LiveBadge /> : <View />}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(0,0,0,0.4)", paddingHorizontal: 12, height: 30, borderRadius: R.pill }}>
                 <Icon name="eye" size={14} color="#fff" />
                 <Body size={12.5} weight="semi" color="#fff">YouTube</Body>
@@ -86,13 +89,13 @@ export default function Watch() {
             </View>
             <View style={{ position: "absolute", left: 18, bottom: 18, right: 90 }}>
               <Display size={36} color="#fff">{live.title} <Serif size={38} color={C.sun}>{live.accent}</Serif></Display>
-              <Body size={13} color="rgba(255,255,255,0.75)">{live.speaker} · Sunday Celebration</Body>
+              <Body size={13} color="rgba(255,255,255,0.75)">{live.speaker}{live.live ? " · Live & on demand" : ` · ${live.date}`}</Body>
             </View>
             <View style={{ position: "absolute", right: 18, bottom: 18, width: 58, height: 58, borderRadius: 29, backgroundColor: C.flame, alignItems: "center", justifyContent: "center" }}>
               <Icon name="play" size={24} color="#fff" />
             </View>
           </Press>
-        </Animated.View>
+        </Animated.View> : null}
 
         {/* YouTube channel */}
         <Animated.View entering={FadeInDown.delay(160).duration(700)}>
@@ -123,7 +126,7 @@ export default function Watch() {
           <Display size={30} color={C.cream} style={{ marginTop: 6 }}>Sorted by <Serif size={32} color={C.sun}>the Book</Serif></Display>
         </View>
         <Animated.ScrollView horizontal onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={CW + GAP} decelerationRate="fast" contentContainerStyle={{ paddingHorizontal: 16, gap: GAP, paddingBottom: 30 }}>
-          {series.map((s, i) => <SeriesCard key={s.id} s={s} i={i} x={x} />)}
+          {series.map((s, i) => <SeriesCard key={s.id} s={s} i={i} x={x} firstId={SERMONS.find((m) => m.seriesId === s.id)?.id} />)}
         </Animated.ScrollView>
 
         {/* Latest */}
@@ -146,7 +149,7 @@ export default function Watch() {
               </Press>
             </Animated.View>
           ))}
-          {list.length === 0 ? <Body color={C.creamMuted} center style={{ marginTop: 20 }}>No messages match that search yet.</Body> : null}
+          {list.length === 0 && !loading ? <Body color={C.creamMuted} center style={{ marginTop: 20 }}>{SERMONS.length ? "No messages match that search yet." : "Sermons appear here as soon as the team uploads them."}</Body> : null}
         </View>
       </ScrollView>
     </View>

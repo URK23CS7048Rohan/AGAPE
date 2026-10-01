@@ -1,7 +1,8 @@
-import { CHURCH } from "@/data/mock";
+import { currentContent } from "./content";
 
 /** Next service computed in the church's local time zone. */
-export function nextService(now = Date.now()) {
+export function nextService(now = Date.now(), church = currentContent().church) {
+  const CHURCH = church;
   const local = now + CHURCH.tzOffsetHours * 3600e3;
   const d = new Date(local);
   let best: { t: number; label: string; time: string } | null = null;

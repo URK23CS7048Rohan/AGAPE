@@ -6,23 +6,28 @@ import { LinearGradient } from "expo-linear-gradient";
 import * as Haptics from "expo-haptics";
 import { C, R } from "@/theme";
 import { BackHeader, Body, Button, Display, Icon, Label, Press, Serif } from "@/components/ui";
-import { USER } from "@/data/mock";
 import { useSiteContent } from "@/lib/content";
 import { useStore } from "@/lib/store";
-import { rsvp } from "@/lib/api";
+import { useCounts } from "@/lib/data";
 
 export default function Events() {
-  const { rsvps, toggleRsvp } = useStore();
+  const { rsvps, toggleRsvp, name, profile, live, session } = useStore();
   const EVENTS = useSiteContent().events;
+  const rc = useCounts("rsvp_counts");
+  const counts = rc.data;
+  const going = (key: string) => (counts[key] ?? 0) + (rsvps.has(key) && !live ? 1 : 0);
   const [ticket, setTicket] = useState<string | null>(null);
   const hero = EVENTS[0];
   if (!hero) return <View style={{ flex: 1, backgroundColor: C.paper }}><BackHeader title="Events" /><Body center color={C.muted} style={{ marginTop: 40 }}>No upcoming events yet.</Body></View>;
-  const t = EVENTS.find((e) => e.id === ticket);
+  const t = EVENTS.find((e) => e.key === ticket);
 
-  const toggle = (id: string) => {
-    const on = toggleRsvp(id);
-    rsvp(id, on);
+  const toggle = (key: string, title: string) => {
+    const was = rsvps.has(key);
+    const on = toggleRsvp(key, title);
+    if (on === was) return; // needs an account first
     Haptics.notificationAsync(on ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning).catch(() => {});
+    if (on) setTicket(key);
+    setTimeout(rc.reload, 700);
   };
 
   return (
@@ -41,13 +46,14 @@ export default function Events() {
               <Label color="rgba(255,255,255,0.8)">Featured · {hero.weekday} {hero.day} {hero.month}</Label>
               <Display size={36} color="#fff" style={{ marginTop: 4, maxWidth: 230 }} numberOfLines={2}>{hero.title}</Display>
             </View>
-            <Button label={rsvps.has(hero.id) ? "Ticket" : "RSVP"} icon={rsvps.has(hero.id) ? "maximize" : "arrow-right"} variant="light" small onPress={() => (rsvps.has(hero.id) ? setTicket(hero.id) : toggle(hero.id))} />
+            <Button label={rsvps.has(hero.key) ? "Ticket" : "RSVP"} icon={rsvps.has(hero.key) ? "maximize" : "arrow-right"} variant="light" small onPress={() => (rsvps.has(hero.key) ? setTicket(hero.key) : toggle(hero.key, hero.title))} />
           </View>
         </Animated.View>
 
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
           {EVENTS.map((e, i) => {
-            const on = rsvps.has(e.id);
+            const on = rsvps.has(e.key);
+            const n = going(e.key);
             return (
               <Animated.View key={e.id} entering={FadeInDown.delay(150 + i * 60)}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#fff", borderRadius: R.lg, padding: 12 }}>
@@ -58,16 +64,17 @@ export default function Events() {
                   <View style={{ flex: 1 }}>
                     <Body weight="semi" size={16}>{e.title}</Body>
                     <Body size={13} color={C.muted}>{e.time}</Body>
-                    <View style={{ flexDirection: "row", gap: 6, marginTop: 6 }}>
+                    {n ? <Body size={12} weight="semi" color={C.flame} style={{ marginTop: 2 }}>{n} going</Body> : null}
+                    <View style={{ flexDirection: "row", gap: 6, marginTop: 6, flexWrap: "wrap" }}>
                       {e.tags.map((t) => <View key={t} style={{ paddingHorizontal: 9, height: 22, borderRadius: R.pill, borderWidth: 1, borderColor: "rgba(15,11,18,0.15)", justifyContent: "center" }}><Body size={11}>{t}</Body></View>)}
                     </View>
                   </View>
                   <View style={{ gap: 6 }}>
-                    <Press onPress={() => toggle(e.id)} style={{ paddingHorizontal: 13, height: 36, borderRadius: R.pill, backgroundColor: on ? C.mint : C.ink, flexDirection: "row", alignItems: "center", gap: 5 }}>
+                    <Press onPress={() => toggle(e.key, e.title)} style={{ paddingHorizontal: 13, height: 36, borderRadius: R.pill, backgroundColor: on ? C.mint : C.ink, flexDirection: "row", alignItems: "center", gap: 5 }}>
                       {on ? <Animated.View entering={ZoomIn}><Icon name="check" size={14} color={C.ink} /></Animated.View> : null}
                       <Body size={12.5} weight="bold" color={on ? C.ink : "#fff"}>{on ? "Going" : "RSVP"}</Body>
                     </Press>
-                    {on ? <Press onPress={() => setTicket(e.id)} style={{ alignItems: "center" }}><Body size={12} weight="semi" color={C.flame}>Ticket</Body></Press> : null}
+                    {on ? <Press onPress={() => setTicket(e.key)} style={{ alignItems: "center" }}><Body size={12} weight="semi" color={C.flame}>Ticket</Body></Press> : null}
                   </View>
                 </View>
               </Animated.View>
@@ -84,10 +91,12 @@ export default function Events() {
               <Label>Admit one · {t.weekday} {t.day} {t.month}</Label>
               <Display size={36} style={{ marginTop: 6 }}>{t.title}</Display>
               <Body color={C.muted}>{t.time}</Body>
-              <View style={{ marginTop: 18, alignSelf: "center", width: 170, height: 170, borderRadius: 24, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>
-                <Icon name="qrcode" size={140} color={C.ink} />
+              <View style={{ marginTop: 18, alignSelf: "stretch", borderRadius: 24, backgroundColor: "#fff", padding: 18, alignItems: "center", borderWidth: 2, borderColor: C.ink, borderStyle: "dashed" }}>
+                <Label>You're on the list</Label>
+                <Display size={34} style={{ marginTop: 6 }} center numberOfLines={1}>{name}</Display>
+                <Body weight="semi" color={C.flame} style={{ marginTop: 2 }}>{profile?.member_no || (session ? "Member" : live ? "Guest" : "AGP-24-0187")}</Body>
               </View>
-              <Body center size={12.5} color={C.muted} style={{ marginTop: 10 }}>{USER.name} · {USER.memberId}</Body>
+              <Body center size={12.5} color={C.muted} style={{ marginTop: 10 }}>Show this at the welcome desk. We've added you to the guest list.</Body>
               <Button label="Done" icon="check" variant="ink" block onPress={() => setTicket(null)} style={{ marginTop: 16 }} />
             </View>
           </Animated.View>

@@ -6,7 +6,8 @@
 import { useEffect, useState } from "react";
 import { C, IMG } from "@/theme";
 import { supabase } from "./supabase";
-import { EVENTS, GROUPS, PROMOS, Promo, VERSES, Verse } from "@/data/mock";
+import { campaignKey, eventKey, groupKey } from "./keys";
+import { CAMPAIGNS, CHURCH, EVENTS, GROUPS, PROMOS, Promo, VERSES, Verse } from "@/data/mock";
 
 const BUNDLED: Record<string, any> = {
   "assets/img/agape-families.jpg": require("../../assets/images/agape-families.jpg"),
@@ -19,36 +20,62 @@ const BUNDLED: Record<string, any> = {
   "assets/img/agape-squad-band.jpg": require("../../assets/images/agape-squad-band.jpg"),
   "assets/img/agape-squad-healer.jpg": require("../../assets/images/agape-squad-healer.jpg"),
   "assets/img/alps.jpg": require("../../assets/images/alps.jpg"),
-  "assets/img/mountain-open-arms.jpg": require("../../assets/images/mountain-open-arms.jpg"),
-  "assets/img/cross-dusk.jpg": require("../../assets/images/cross-dusk.jpg"),
-  "assets/img/hand-sunset.jpg": require("../../assets/images/hand-sunset.jpg"),
-  "assets/img/dove.jpg": require("../../assets/images/dove.jpg"),
-  "assets/img/woman-praying.jpg": require("../../assets/images/woman-praying.jpg"),
-  "assets/img/mountain-peaks.jpg": require("../../assets/images/mountain-peaks.jpg"),
-  "assets/img/candle-hands.jpg": require("../../assets/images/candle-hands.jpg"),
-  "assets/img/sunrise-silhouettes.jpg": require("../../assets/images/sunrise-silhouettes.jpg"),
-  "assets/img/woman-forest.jpg": require("../../assets/images/woman-forest.jpg"),
-  "assets/img/cross-mountain.jpg": require("../../assets/images/cross-mountain.jpg"),
-  "assets/img/cross-hill-sunset.jpg": require("../../assets/images/cross-hill-sunset.jpg"),
+  "assets/img/bible-coffee.jpg": require("../../assets/images/bible-coffee.jpg"),
+  "assets/img/bible-dark.jpg": require("../../assets/images/bible-dark.jpg"),
   "assets/img/bricks.jpg": require("../../assets/images/bricks.jpg"),
+  "assets/img/campfire.jpg": require("../../assets/images/campfire.jpg"),
+  "assets/img/candle-hands.jpg": require("../../assets/images/candle-hands.jpg"),
+  "assets/img/city-night.jpg": require("../../assets/images/city-night.jpg"),
+  "assets/img/concert-lights.jpg": require("../../assets/images/concert-lights.jpg"),
+  "assets/img/cross-dusk.jpg": require("../../assets/images/cross-dusk.jpg"),
+  "assets/img/cross-hill-sunset.jpg": require("../../assets/images/cross-hill-sunset.jpg"),
+  "assets/img/cross-mountain.jpg": require("../../assets/images/cross-mountain.jpg"),
+  "assets/img/dove.jpg": require("../../assets/images/dove.jpg"),
+  "assets/img/friends-teal.jpg": require("../../assets/images/friends-teal.jpg"),
+  "assets/img/girl-praying-light.jpg": require("../../assets/images/girl-praying-light.jpg"),
+  "assets/img/hand-sunset.jpg": require("../../assets/images/hand-sunset.jpg"),
+  "assets/img/hands-stack.jpg": require("../../assets/images/hands-stack.jpg"),
   "assets/img/hands-together.jpg": require("../../assets/images/hands-together.jpg"),
+  "assets/img/kids-play.jpg": require("../../assets/images/kids-play.jpg"),
+  "assets/img/man-reading.jpg": require("../../assets/images/man-reading.jpg"),
+  "assets/img/microphone.jpg": require("../../assets/images/microphone.jpg"),
+  "assets/img/mountain-open-arms.jpg": require("../../assets/images/mountain-open-arms.jpg"),
+  "assets/img/mountain-peaks.jpg": require("../../assets/images/mountain-peaks.jpg"),
+  "assets/img/mug-bible.jpg": require("../../assets/images/mug-bible.jpg"),
+  "assets/img/neon-cross.jpg": require("../../assets/images/neon-cross.jpg"),
   "assets/img/phone-hand.jpg": require("../../assets/images/phone-hand.jpg"),
+  "assets/img/sunrise-silhouettes.jpg": require("../../assets/images/sunrise-silhouettes.jpg"),
+  "assets/img/team-meeting.jpg": require("../../assets/images/team-meeting.jpg"),
+  "assets/img/three-friends.jpg": require("../../assets/images/three-friends.jpg"),
+  "assets/img/white-chapel.jpg": require("../../assets/images/white-chapel.jpg"),
+  "assets/img/woman-forest.jpg": require("../../assets/images/woman-forest.jpg"),
+  "assets/img/woman-praying.jpg": require("../../assets/images/woman-praying.jpg"),
+  "assets/img/women-laughing.jpg": require("../../assets/images/women-laughing.jpg"),
+  "assets/img/worship-orange.jpg": require("../../assets/images/worship-orange.jpg"),
+  "assets/img/worship-pink.jpg": require("../../assets/images/worship-pink.jpg"),
+  "assets/img/worship-teal.jpg": require("../../assets/images/worship-teal.jpg"),
 };
 const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL || "").replace(/\/$/, "");
 
 /** Turns a stored image value into an expo-image source. */
-export function imageSource(p?: string, fallback: any = IMG.homeWorship) {
+export function imageSource(p?: string | null, fallback: any = IMG.homeWorship) {
   if (!p) return fallback;
   if (/^(https?:|data:)/.test(p)) return { uri: p };
   if (BUNDLED[p]) return BUNDLED[p];
-  if (SITE_URL) return { uri: `${SITE_URL}/${p}` };
+  if (SITE_URL) return { uri: `${SITE_URL}/${p.replace(/^\//, "")}` };
   return fallback;
 }
 
 export type HeroContent = { kicker: string; line1: string; words: string[]; slides: { image: any; caption: string }[] };
-export type EventItem = (typeof EVENTS)[number];
-export type GroupItem = (typeof GROUPS)[number];
-export type AppContent = { hero: HeroContent; promos: Promo[]; events: EventItem[]; groups: GroupItem[]; announcement?: { title: string; text: string; link: string }; gallery: { image: any; caption: string }[]; verses: Verse[] };
+export type EventItem = { id: string; key: string; title: string; day: string; month: string; weekday: string; time: string; place: string; tags: string[]; image: any; color: string };
+export type GroupItem = { id: string; key: string; name: string; text?: string; meets: string; members: number; color: string; image: any };
+export type CampaignItem = { id: string; key: string; title: string; accent: string; body: string; raised: number; goal: number; image: any; color: string };
+export type ChurchInfo = typeof CHURCH & { phone?: string; whatsapp?: string; email?: string };
+export type AppContent = {
+  hero: HeroContent; promos: Promo[]; events: EventItem[]; groups: GroupItem[]; campaigns: CampaignItem[];
+  announcement?: { title: string; text: string; link: string }; gallery: { image: any; caption: string }[]; verses: Verse[];
+  church: ChurchInfo; stats: { members: number; nations: number; rides: number; drivers: number; prayers: number };
+};
 
 const DEFAULT: AppContent = {
   hero: {
@@ -64,10 +91,13 @@ const DEFAULT: AppContent = {
     ],
   },
   promos: PROMOS,
-  events: EVENTS,
-  groups: GROUPS,
+  events: EVENTS.map((e) => ({ ...e, key: eventKey(e), id: eventKey(e) })),
+  groups: GROUPS.map((g) => ({ ...g, key: groupKey(g.name), id: groupKey(g.name) })),
+  campaigns: CAMPAIGNS.map((c) => ({ ...c, key: campaignKey(c), id: campaignKey(c) })),
   gallery: [],
   verses: VERSES,
+  church: CHURCH,
+  stats: { members: 2400, nations: 31, rides: 1286, drivers: 64, prayers: 18432 },
 };
 
 const route = (link?: string) => {
@@ -81,6 +111,7 @@ const route = (link?: string) => {
   if (l.includes("pray")) return "/prayer";
   return "/events";
 };
+const PALETTE = [C.flame, C.violet, C.rose, C.sun, C.mint, C.sky];
 
 export function mapSite(d: any): AppContent {
   if (!d || typeof d !== "object") return DEFAULT;
@@ -100,14 +131,26 @@ export function mapSite(d: any): AppContent {
       sticker: p.sticker1 || p.sticker2 ? [p.sticker1 || "", p.sticker2 || ""] : undefined,
     }));
   }
-  if (Array.isArray(d.events) && d.events.length) {
-    out.events = d.events.map((e: any, i: number) => ({
-      id: `e${i}-${(e.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: e.title || "Event", day: e.day || "", month: String(e.month || "").toUpperCase(), weekday: e.weekday || "",
-      time: e.meta || "", place: "", tags: String(e.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean), image: imageSource(e.image), color: [C.flame, C.violet, C.rose, C.sun, C.mint][i % 5],
-    }));
+  if (Array.isArray(d.events)) {
+    out.events = d.events.map((e: any, i: number) => {
+      const key = eventKey(e);
+      return {
+        id: key, key, title: e.title || "Event", day: e.day || "", month: String(e.month || "").toUpperCase(), weekday: e.weekday || "",
+        time: e.meta || "", place: "", tags: String(e.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean), image: imageSource(e.image), color: PALETTE[i % 5],
+      };
+    });
   }
-  if (Array.isArray(d.ministries) && d.ministries.length) {
-    out.groups = d.ministries.map((m: any, i: number) => ({ id: `g${i}`, name: m.name || "", meets: m.chip || "", members: 0, color: m.color || C.flame, image: imageSource(m.image) }));
+  if (Array.isArray(d.ministries)) {
+    out.groups = d.ministries.filter((m: any) => m && m.name).map((m: any) => {
+      const key = groupKey(m.name);
+      return { id: key, key, name: m.name, text: m.text || "", meets: m.chip || "", members: 0, color: m.color || C.flame, image: imageSource(m.image) };
+    });
+  }
+  if (Array.isArray(d.campaigns)) {
+    out.campaigns = d.campaigns.map((c: any, i: number) => {
+      const key = campaignKey(c);
+      return { id: key, key, title: c.title || "", accent: c.accent || "", body: c.body || "", raised: Number(c.raised) || 0, goal: Number(c.goal) || 1, image: imageSource(c.image), color: c.color || PALETTE[i % 6] };
+    });
   }
   if (Array.isArray(d.gallery)) out.gallery = d.gallery.map((g: any) => ({ image: imageSource(g.image), caption: g.caption || "" }));
   if (Array.isArray(d.verses) && d.verses.some((v: any) => v && v.text)) {
@@ -116,6 +159,20 @@ export function mapSite(d: any): AppContent {
       image: imageSource(v.image, VERSES[i % VERSES.length].image),
     }));
   }
+  if (d.church) {
+    const c = d.church;
+    out.church = {
+      ...CHURCH,
+      name: c.name || CHURCH.name, short: c.short || CHURCH.short, address: c.address || CHURCH.address, mapsUrl: c.mapsUrl || CHURCH.mapsUrl,
+      youtubeChannelId: c.youtubeChannelId || CHURCH.youtubeChannelId, youtubeUrl: c.youtube || CHURCH.youtubeUrl, currency: c.currency || CHURCH.currency,
+      tzOffsetHours: Number.isFinite(+c.tzOffsetHours) ? +c.tzOffsetHours : CHURCH.tzOffsetHours, phone: c.phone || "", whatsapp: c.whatsapp || "", email: c.email || "",
+      coords: Number(c.lat) && Number(c.lng) ? { latitude: Number(c.lat), longitude: Number(c.lng) } : CHURCH.coords,
+    };
+  }
+  if (Array.isArray(d.services) && d.services.length) {
+    out.church = { ...out.church, services: d.services.map((s: any) => ({ day: +s.day || 0, h: +s.h || 0, m: +s.m || 0, label: s.label || "Service", time: s.time || "" })) };
+  }
+  if (d.stats) out.stats = { ...DEFAULT.stats, ...Object.fromEntries(Object.entries(d.stats).map(([k, v]) => [k, Number(v) || 0])) };
   if (d.announcement) out.announcement = d.announcement;
   return out;
 }
@@ -153,3 +210,6 @@ export function useSiteContent(): AppContent {
   }, []);
   return c;
 }
+
+/** Latest content without subscribing (for helpers outside React). */
+export const currentContent = () => cache || DEFAULT;

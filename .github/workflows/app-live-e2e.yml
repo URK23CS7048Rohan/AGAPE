@@ -1,0 +1,84 @@
+# The real app (web build) against the real backend: a new member signs up with an e-mailed code,
+# posts a prayer, joins a group chat, RSVPs, takes notes, completes a lesson, plays a game,
+# requests a ride that a volunteer accepts and tracks it live, gives, and gets notifications.
+# Screenshots + a step report are published to the "app-shots-live" branch.
+name: App live test
+
+permissions:
+  contents: write
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [app-screenshots]
+    paths: ["app/**", "backend/**", ".github/workflows/app-live-e2e.yml"]
+
+jobs:
+  live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Start the backend
+        working-directory: backend
+        run: |
+          supabase start -x vector,logflare,studio,imgproxy
+          supabase status -o env | sed -E 's/^([A-Z_]+)="?([^"]*)"?$/\1=\2/' >> "$GITHUB_ENV"
+
+      - name: Serve Edge Functions (test payments, fake push service)
+        working-directory: backend
+        run: |
+          nohup node tests/mock-expo.mjs /tmp/pushes.jsonl > /tmp/mock-expo.log 2>&1 &
+          printf 'PAYMENTS_TEST_MODE=1\nEXPO_PUSH_URL=http://host.docker.internal:9999/push\n' > /tmp/functions.env
+          nohup supabase functions serve --env-file /tmp/functions.env > /tmp/functions.log 2>&1 &
+          for i in $(seq 1 90); do
+            code=$(curl -s -o /dev/null -w '%{http_code}' -X POST "$API_URL/functions/v1/payment-webhook" -H 'Content-Type: application/json' -d '{}')
+            [ "$code" = "400" ] && break; sleep 2
+          done
+          psql "$DB_URL" -c "select vault.create_secret('http://supabase_kong_agape:8000', 'project_url');" -c "select vault.create_secret('$SERVICE_ROLE_KEY', 'service_role_key');"
+
+      - name: Install the app
+        working-directory: app
+        run: |
+          npm install --no-audit --no-fund
+          npx expo install --fix
+          npx expo install @expo/metro-runtime
+
+      - name: Type-check (report only)
+        working-directory: app
+        run: npx tsc --noEmit > /tmp/tsc.txt 2>&1 || true
+
+      - name: Build the web app against the local backend
+        working-directory: app
+        env:
+          EXPO_PUBLIC_SUPABASE_URL: ${{ env.API_URL }}
+          EXPO_PUBLIC_SUPABASE_ANON_KEY: ${{ env.ANON_KEY }}
+        run: npx expo export --platform web --output-dir dist-live > /tmp/export.txt 2>&1 || (tail -60 /tmp/export.txt; exit 1)
+
+      - name: Run the member journey
+        working-directory: app
+        run: |
+          npx --yes serve@14 -s dist-live -l 3000 > /tmp/serve.log 2>&1 &
+          npm install --no-save --no-audit --no-fund playwright@1
+          npx playwright install --with-deps chromium > /dev/null
+          sleep 3
+          BASE=http://localhost:3000 MAIL_URL="${MAILPIT_URL:-${INBUCKET_URL:-http://127.0.0.1:54324}}" OUT=screenshots-live node tools/e2e-live.mjs
+
+      - name: Publish screenshots + report to the app-shots-live branch
+        if: always()
+        run: |
+          mkdir -p /tmp/out && cp app/screenshots-live/* /tmp/out/ 2>/dev/null || true
+          cp /tmp/tsc.txt /tmp/out/tsc.txt 2>/dev/null || true
+          tail -n 80 /tmp/functions.log > /tmp/out/functions.log 2>/dev/null || true
+          tail -n 80 /tmp/export.txt > /tmp/out/export.txt 2>/dev/null || true
+          echo "${{ job.status }} ${{ github.sha }}" > /tmp/out/status.txt
+          cd /tmp/out && git init -q -b app-shots-live && git add -A
+          git -c user.name=github-actions -c user.email=actions@github.com commit -qm "Live app test ${{ github.sha }}"
+          git push -qf "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}" app-shots-live

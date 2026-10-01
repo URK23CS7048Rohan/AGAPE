@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { Dimensions, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { Extrapolation, FadeInDown, FadeInRight, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { Image } from "expo-image";
@@ -13,7 +13,8 @@ import { PromoDeck } from "@/components/PromoDeck";
 import { WeekStrip } from "@/components/WeekStrip";
 import { HeroStage, HERO_H } from "@/components/HeroStage";
 import { useSiteContent } from "@/lib/content";
-import { COURSES } from "@/data/mock";
+import { useCourses, usePrayers } from "@/lib/data";
+import { fmt } from "@/lib/time";
 import { VerseDeck } from "@/components/VerseDeck";
 import { useStore } from "@/lib/store";
 
@@ -32,14 +33,19 @@ const QUICK = [
 
 export default function Home() {
   const insets = useSafeAreaInsets();
-  const { progress, rsvps, toggleRsvp } = useStore();
+  const { done: doneSet, rsvps, toggleRsvp, markActive } = useStore();
+  useEffect(() => { markActive(); }, []);
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
   const site = useSiteContent();
   const miniHeader = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [HERO_H - 160, HERO_H - 90], [0, 1], Extrapolation.CLAMP), transform: [{ translateY: interpolate(y.value, [HERO_H - 160, HERO_H - 90], [-10, 0], Extrapolation.CLAMP) }] }));
   useFocusEffect(React.useCallback(() => { setStatusBarStyle("light"); return () => setStatusBarStyle("dark"); }, []));
-  const course = COURSES[0];
-  const done = progress[course.id] ?? 0;
+  const { courses } = useCourses();
+  // the course you're in the middle of, else the first one
+  const course = courses.find((c) => { const d = c.lessons.filter((l) => doneSet.has(l.id)).length; return d > 0 && d < c.lessons.length; }) ?? courses[0];
+  const done = course ? course.lessons.filter((l) => doneSet.has(l.id)).length : 0;
+  const prayers = usePrayers().data;
+  const praying = prayers.reduce((a, p) => a + (p.count || 0), 0);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.cream }}>
@@ -79,17 +85,17 @@ export default function Home() {
         {/* Continue learning */}
         <View style={{ marginTop: 34 }}>
           <SectionTitle eyebrow="Pick up where you left off" title="Keep" accent="growing" action="All courses" onAction={() => router.push("/grow")} />
-          <Press onPress={() => router.push(`/course/${course.id}`)} scaleTo={0.98} style={{ marginHorizontal: 16, flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: "#fff", borderRadius: R.lg, padding: 10 }}>
+          {course ? <Press onPress={() => router.push(`/course/${course.id}`)} scaleTo={0.98} style={{ marginHorizontal: 16, flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: "#fff", borderRadius: R.lg, padding: 10 }}>
             <Image source={course.image} style={{ width: 96, height: 96, borderRadius: 22 }} contentFit="cover" />
             <View style={{ flex: 1 }}>
               <Label>{course.category} · {course.lessons.length} lessons</Label>
               <Display size={24} style={{ marginTop: 4 }}>{course.title} <Serif size={25} color={C.violet}>{course.accent}</Serif></Display>
-              <Body size={13} color={C.muted} numberOfLines={1}>Next: {course.lessons[Math.min(done, course.lessons.length - 1)].title}</Body>
+              <Body size={13} color={C.muted} numberOfLines={1}>{done >= course.lessons.length ? "Completed 🎉" : `Next: ${course.lessons.find((l) => !doneSet.has(l.id))?.title ?? ""}`}</Body>
             </View>
-            <Ring size={62} stroke={6} progress={done / course.lessons.length} color={C.violet} track="rgba(110,75,255,0.14)">
-              <Body size={13} weight="bold">{Math.round((done / course.lessons.length) * 100)}%</Body>
+            <Ring size={62} stroke={6} progress={done / Math.max(1, course.lessons.length)} color={C.violet} track="rgba(110,75,255,0.14)">
+              <Body size={13} weight="bold">{Math.round((done / Math.max(1, course.lessons.length)) * 100)}%</Body>
             </Ring>
-          </Press>
+          </Press> : null}
         </View>
 
         {/* Events */}
@@ -97,7 +103,7 @@ export default function Home() {
           <SectionTitle eyebrow="What's on" title="This" accent="month" action="Calendar" onAction={() => router.push("/events")} />
           <View style={{ marginHorizontal: 16, gap: 10 }}>
             {site.events.slice(0, 3).map((e, i) => {
-              const going = rsvps.has(e.id);
+              const going = rsvps.has(e.key);
               return (
                 <Animated.View key={e.id} entering={FadeInDown.delay(i * 80)}>
                   <Press onPress={() => router.push("/events")} scaleTo={0.98} style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#fff", borderRadius: R.lg, padding: 10, paddingRight: 12 }}>
@@ -109,7 +115,7 @@ export default function Home() {
                       <Body size={16} weight="semi">{e.title}</Body>
                       <Body size={13} color={C.muted}>{e.time}</Body>
                     </View>
-                    <Press onPress={() => toggleRsvp(e.id)} style={{ paddingHorizontal: 14, height: 36, borderRadius: R.pill, backgroundColor: going ? C.mint : C.flame, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 5 }}>
+                    <Press onPress={() => toggleRsvp(e.key, e.title)} style={{ paddingHorizontal: 14, height: 36, borderRadius: R.pill, backgroundColor: going ? C.mint : C.flame, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 5 }}>
                       {going ? <Icon name="check" size={14} color={C.ink} /> : null}
                       <Body size={12.5} weight="bold" color={going ? C.ink : "#fff"}>{going ? "Going" : "RSVP"}</Body>
                     </Press>
@@ -134,7 +140,7 @@ export default function Home() {
                   <View key={c} style={{ marginLeft: i ? -10 : 0 }}><Avatar name={["Anna", "Joel", "Mary", "Tom"][i]} color={c} size={32} ring="#241640" /></View>
                 ))}
               </View>
-              <Body size={13.5} color={C.creamMuted}><Body size={13.5} weight="bold" color="#fff">1,240</Body> praying this week</Body>
+              <Body size={13.5} color={C.creamMuted}><Body size={13.5} weight="bold" color="#fff">{fmt(praying || site.stats.prayers)}</Body> prayers on the wall</Body>
             </View>
           </LinearGradient>
         </Press>

@@ -1,33 +1,54 @@
 import React, { useRef, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
 import Animated, { FadeInDown, ZoomIn } from "react-native-reanimated";
 import { Image } from "expo-image";
 import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
 import { BackHeader, Bar, Body, Button, Confetti, ConfettiHandle, Display, Icon, Label, Press, Segmented, Serif } from "@/components/ui";
-import { CAMPAIGNS, CHURCH } from "@/data/mock";
 import { fmt } from "@/lib/time";
+import { useSiteContent } from "@/lib/content";
+import { useCounts } from "@/lib/data";
+import { giveOnline } from "@/lib/api";
 import { Jar } from "@/components/Motion";
 import { Dimensions } from "react-native";
 
 const JW = Math.floor((Dimensions.get("window").width - 32 - 20) / 3);
 
 const AMOUNTS = [5, 10, 25, 50, 100];
-const FUNDS = ["Tithe", "Offering", "Building Fund", "Missions", "Families in Need"];
 
 export default function Give() {
-  const [freq, setFreq] = useState(0);
+  const site = useSiteContent();
+  const CHURCH = site.church;
+  const totals = useCounts("giving_totals");
+  const CAMPAIGNS = site.campaigns.map((c) => ({ ...c, raised: c.raised + (totals.data[c.key] ?? 0) }));
+  const FUNDS = ["Tithe", "Offering", ...CAMPAIGNS.map((c) => `${c.title} ${c.accent}`.trim())];
   const [amount, setAmount] = useState("25");
   const [fund, setFund] = useState("Tithe");
-  const [done, setDone] = useState(false);
+  const [done, setDone] = useState<null | string>(null);
+  const [busy, setBusy] = useState(false);
   const confetti = useRef<ConfettiHandle>(null);
 
-  const give = () => {
-    // Production: create a payment intent server-side (Stripe / Tap / MyFatoorah for KNET) and present its sheet here.
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    confetti.current?.burst(undefined, 500, 110);
-    setDone(true);
-    setTimeout(() => setDone(false), 3500);
+  const give = async () => {
+    const n = Math.round(parseFloat(amount) * 1000) / 1000;
+    if (!(n >= 1)) { Alert.alert("Amount", `Please give at least ${CHURCH.currency} 1.`); return; }
+    const camp = CAMPAIGNS.find((c) => `${c.title} ${c.accent}`.trim() === fund);
+    setBusy(true);
+    try {
+      const r = await giveOnline({ amount: n, currency: CHURCH.currency, fund, campaignKey: camp?.key, campaignTitle: camp ? fund : undefined, frequency: "once" });
+      if (r.status === "succeeded" || r.status === "demo") {
+        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+        confetti.current?.burst(undefined, 500, 110);
+        setDone(r.status === "demo" ? "Demo mode: no payment was taken." : `Received with thanks. ${fund} · ${CHURCH.currency} ${n}. A receipt is in your e-mail from the payment provider.`);
+        totals.reload();
+        setTimeout(() => setDone(null), 6000);
+      } else if (r.status === "failed") {
+        Alert.alert("Payment didn't go through", "Nothing was charged. You can try again, or use a different card.");
+      } else if (r.status === "pending") {
+        setDone("We're confirming your payment with the bank. You'll get a notification when it's received.");
+      }
+    } catch (e: any) {
+      Alert.alert("Giving", e?.message || "Couldn't start the payment. Please try again.");
+    } finally { setBusy(false); }
   };
 
   return (
@@ -39,8 +60,7 @@ export default function Give() {
         </View>
 
         <Animated.View entering={FadeInDown.delay(100)} style={{ margin: 16, backgroundColor: C.ink, borderRadius: R.xl, padding: 20 }}>
-          <Segmented items={["One-time", "Monthly"]} value={freq} onChange={setFreq} dark />
-          <Label color={C.creamMuted} style={{ marginTop: 20, marginBottom: 10 }}>Amount</Label>
+          <Label color={C.creamMuted} style={{ marginBottom: 10 }}>Amount</Label>
           <View style={{ flexDirection: "row", gap: 8 }}>
             {AMOUNTS.map((a) => {
               const on = amount === String(a);
@@ -63,15 +83,15 @@ export default function Give() {
               </Press>
             ))}
           </View>
-          <Button label={done ? "Thank you! ♥" : `Give ${CHURCH.currency} ${amount || "—"}${freq ? " / month" : ""}`} icon="heart" variant={done ? "mint" : "flame"} block onPress={give} style={{ marginTop: 20 }} disabled={!parseFloat(amount)} />
+          <Button label={busy ? "Opening secure payment…" : done ? "Thank you! ♥" : `Give ${CHURCH.currency} ${amount || "—"}`} icon="heart" variant={done ? "mint" : "flame"} block onPress={give} style={{ marginTop: 20 }} disabled={!parseFloat(amount) || busy} />
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 12 }}>
             <Icon name="shield" size={13} color={C.creamMuted} />
-            <Body size={12} color={C.creamMuted}>Secure · Apple Pay · Google Pay · KNET</Body>
+            <Body size={12} color={C.creamMuted}>Secure checkout · KNET · Visa · Mastercard · Apple Pay</Body>
           </View>
         </Animated.View>
         {done ? (
           <Animated.View entering={ZoomIn.springify()} style={{ marginHorizontal: 16, marginBottom: 6, padding: 16, borderRadius: R.lg, backgroundColor: C.mintSoft }}>
-            <Body weight="semi">Receipt sent to your email. {fund} · {CHURCH.currency} {amount}{freq ? " monthly" : ""}.</Body>
+            <Body weight="semi">{done}</Body>
           </Animated.View>
         ) : null}
 
@@ -80,8 +100,8 @@ export default function Give() {
           <Display size={34} color="#fff" style={{ marginTop: 6, lineHeight: 34 }}>Watch it <Serif size={36} color={C.ink}>fill up.</Serif></Display>
           <View style={{ flexDirection: "row", gap: 10, marginTop: 18 }}>
             {CAMPAIGNS.map((c, i) => {
-              const pct = c.raised / c.goal;
-              const f = c.id === "build" ? "Building Fund" : c.id === "nepal" ? "Missions" : "Families in Need";
+              const pct = Math.min(1, c.raised / Math.max(1, c.goal));
+              const f = `${c.title} ${c.accent}`.trim();
               return (
                 <Animated.View key={c.id} entering={FadeInDown.delay(150 + i * 90)} style={{ width: JW, alignItems: "flex-start" }}>
                   <View style={{ alignSelf: "center", zIndex: 2, marginBottom: -22 }}>

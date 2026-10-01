@@ -1,5 +1,5 @@
-import React, { useEffect } from "react";
-import { Dimensions, StyleSheet, View } from "react-native";
+import React, { useEffect, useState } from "react";
+import { ActivityIndicator, Alert, Dimensions, Platform, StyleSheet, View } from "react-native";
 import Animated, { Easing, FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -9,6 +9,8 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, IMG, R } from "@/theme";
 import { Body, Button, Display, Icon, Label, Press, Serif } from "@/components/ui";
 import { useStore } from "@/lib/store";
+import { useSiteContent } from "@/lib/content";
+import { fmt } from "@/lib/time";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 
@@ -27,8 +29,18 @@ function Floating({ src, style, delay = 0, rotate = 0, arch }: { src: any; style
 
 export default function Welcome() {
   const insets = useSafeAreaInsets();
-  const { signIn } = useStore();
-  const go = (guest = false) => { signIn(guest); router.replace("/"); };
+  const { live, signInWith, continueAsGuest, demoSignIn } = useStore();
+  const { stats } = useSiteContent();
+  const [busy, setBusy] = useState<string | null>(null);
+  const oauth = async (p: "apple" | "google") => {
+    if (!live) { demoSignIn(); router.replace("/"); return; }
+    setBusy(p);
+    try { if (await signInWith(p)) router.replace("/"); }
+    catch (e: any) { Alert.alert("Couldn't sign in", e?.message || "Please try again, or use your e-mail instead."); }
+    finally { setBusy(null); }
+  };
+  const email = () => (live ? router.push("/sign-in") : (demoSignIn(), router.replace("/")));
+  const guest = () => { continueAsGuest(); router.replace("/"); };
   const w = SW * 0.38;
 
   return (
@@ -44,11 +56,11 @@ export default function Welcome() {
         <Floating src={IMG.squadBand} arch delay={400} style={{ right: 18, top: insets.top + 90, width: w, height: w * 1.35 }} rotate={6} />
         <Animated.View entering={FadeInDown.delay(900).springify()} style={{ position: "absolute", left: 24, top: insets.top + 30, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", paddingLeft: 6, paddingRight: 14, height: 40, borderRadius: R.pill }}>
           <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.mint, alignItems: "center", justifyContent: "center" }}><Icon name="car-side" size={15} color="#fff" /></View>
-          <Body size={13} weight="semi">38 rides to church</Body>
+          <Body size={13} weight="semi">{fmt(stats.rides)} rides to church</Body>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(1100).springify()} style={{ position: "absolute", right: 20, bottom: 10, flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", paddingLeft: 6, paddingRight: 14, height: 40, borderRadius: R.pill }}>
           <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.rose, alignItems: "center", justifyContent: "center" }}><Icon name="hands-pray" size={15} color="#fff" /></View>
-          <Body size={13} weight="semi">1,240 praying</Body>
+          <Body size={13} weight="semi">{fmt(stats.prayers)} prayers</Body>
         </Animated.View>
       </View>
       <LinearGradient colors={["transparent", C.ink]} style={{ position: "absolute", left: 0, right: 0, top: SH * 0.3, height: SH * 0.18 }} />
@@ -68,11 +80,17 @@ export default function Welcome() {
           <Body size={16} color={C.creamMuted} style={{ marginTop: 10 }}>Sermons, courses, community, prayer, games and a ride to church, all in one place.</Body>
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(500).duration(800)} style={{ gap: 10, marginTop: 24 }}>
-          <Button label="Continue with Apple" icon="smartphone" variant="white" block onPress={() => go()} />
-          <Button label="Continue with Google" icon="globe" variant="glass" block onPress={() => go()} />
-          <Press onPress={() => go(true)} style={{ height: 48, alignItems: "center", justifyContent: "center" }}>
-            <Body weight="semi" color={C.cream}>Sign in with email · <Body color={C.sun} weight="semi">Explore as guest</Body></Body>
+          <Button label={busy === "apple" ? "Opening Apple…" : "Continue with Apple"} icon="smartphone" variant="white" block onPress={() => oauth("apple")} disabled={!!busy} />
+          <Button label={busy === "google" ? "Opening Google…" : "Continue with Google"} icon="globe" variant="glass" block onPress={() => oauth("google")} disabled={!!busy} />
+          {busy ? <ActivityIndicator color={C.sun} style={{ marginTop: 4 }} /> : null}
+          <Press onPress={email} style={{ height: 54, borderRadius: R.pill, borderWidth: 1.5, borderColor: "rgba(244,238,228,0.25)", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}>
+            <Icon name="mail" size={18} color={C.cream} />
+            <Body weight="semi" color={C.cream}>Continue with e-mail</Body>
           </Press>
+          <Press onPress={guest} style={{ height: 40, alignItems: "center", justifyContent: "center", marginTop: -4 }}>
+            <Body weight="semi" color={C.sun}>Explore as guest</Body>
+          </Press>
+          <Body size={11.5} color="rgba(244,238,228,0.45)" center>By continuing you agree to the church's privacy policy. You can delete your account any time in Me → Settings.</Body>
         </Animated.View>
       </View>
     </View>

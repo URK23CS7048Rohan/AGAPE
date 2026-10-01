@@ -17,9 +17,11 @@
         "NSLocationWhenInUseUsageDescription": "Your location is used to arrange rides to and from church.",
         "NSLocationAlwaysAndWhenInUseUsageDescription": "Volunteer drivers share their location during a ride so members can see them arrive.",
         "UIBackgroundModes": [
-          "location"
+          "location",
+          "remote-notification"
         ]
-      }
+      },
+      "usesAppleSignIn": true
     },
     "android": {
       "package": "church.agape.app",
@@ -29,8 +31,9 @@
       },
       "edgeToEdgeEnabled": true,
       "permissions": [
-        "ACCESS_FINE_LOCATION",
         "ACCESS_COARSE_LOCATION",
+        "ACCESS_FINE_LOCATION",
+        "POST_NOTIFICATIONS",
         "USE_BIOMETRIC"
       ],
       "config": {
@@ -65,6 +68,15 @@
         "expo-local-authentication",
         {
           "faceIDPermission": "Sign in quickly and securely with Face ID."
+        }
+      ],
+      "expo-web-browser",
+      "expo-apple-authentication",
+      [
+        "expo-notifications",
+        {
+          "color": "#FF5A1F",
+          "defaultChannel": "default"
         }
       ]
     ],

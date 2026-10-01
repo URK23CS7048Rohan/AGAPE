@@ -1,5 +1,5 @@
-import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import React, { useMemo, useState } from "react";
+import { Alert, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
@@ -7,14 +7,38 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, IMG, R } from "@/theme";
 import { Avatar, Body, Display, Icon, IconButton, Label, Press, Segmented, Serif } from "@/components/ui";
-import { ANNOUNCEMENTS, CHATS } from "@/data/mock";
 import { useSiteContent } from "@/lib/content";
+import { useAnnouncements, useCounts, useInbox, usePrayers } from "@/lib/data";
+import { useStore } from "@/lib/store";
+import { joinGroup } from "@/lib/api";
+import { fmt } from "@/lib/time";
 
 export default function Community() {
   const insets = useSafeAreaInsets();
   const [tab, setTab] = useState(0);
-  const GROUPS = useSiteContent().groups;
-  const [joined, setJoined] = useState<Set<string>>(new Set([GROUPS[0]?.id]));
+  const site = useSiteContent();
+  const GROUPS = site.groups;
+  const { session, live, member, needsAccount } = useStore();
+  const inbox = useInbox(session?.user.id ?? null);
+  const CHATS = inbox.data;
+  const ANNOUNCEMENTS = useAnnouncements();
+  const groupCounts = useCounts("group_member_counts");
+  const counts = groupCounts.data;
+  const prayers = usePrayers().data;
+  const [busy, setBusy] = useState<string | null>(null);
+  const [demoJoined, setDemoJoined] = useState<Set<string>>(new Set([GROUPS[0]?.key]));
+  const joinedConv = useMemo(() => Object.fromEntries(CHATS.filter((c) => c.topicKey?.startsWith("group:")).map((c) => [c.topicKey!.slice(6), c.id])), [CHATS]);
+  const isJoined = (key: string) => (live ? !!joinedConv[key] : demoJoined.has(key));
+  const join = async (g: { key: string; name: string; color: string }) => {
+    if (!live) { setDemoJoined((s) => new Set(s).add(g.key)); return; }
+    if (joinedConv[g.key]) { router.push(`/chat/${joinedConv[g.key]}`); return; }
+    if (needsAccount("join a group")) return;
+    setBusy(g.key);
+    try { const id = await joinGroup(g.key, g.name, g.color); await inbox.reload(); groupCounts.reload(); if (id) router.push(`/chat/${id}`); }
+    catch (e: any) { Alert.alert("Couldn't join", e?.message || "Please try again."); }
+    finally { setBusy(null); }
+  };
+  const prayerTotal = prayers.reduce((a, p) => a + (p.count || 0), 0) || site.stats.prayers;
 
   return (
     <View style={{ flex: 1, backgroundColor: C.mintSoft }}>
@@ -25,7 +49,7 @@ export default function Community() {
             <Label>Real people · Real faith</Label>
             <Display size={56} style={{ marginTop: 8, lineHeight: 54 }}>Real{"\n"}<Serif size={62} color="#0E9F74">community.</Serif></Display>
           </View>
-          <IconButton name="edit-3" bg={C.ink} color="#fff" onPress={() => router.push("/chat/david")} />
+          <IconButton name="bell" bg={C.ink} color="#fff" onPress={() => router.push("/notifications")} />
         </Animated.View>
 
         {/* Prayer wall entry */}
@@ -34,7 +58,7 @@ export default function Community() {
             <Image source={IMG.homeWorship} style={StyleSheet.absoluteFill} contentFit="cover" />
             <LinearGradient colors={["rgba(29,18,51,0.95)", "rgba(29,18,51,0.4)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
             <View style={{ flex: 1, padding: 18, justifyContent: "center" }}>
-              <Label color="rgba(244,238,228,0.7)">Prayer wall · 18,432 prayers</Label>
+              <Label color="rgba(244,238,228,0.7)">Prayer wall · {fmt(prayerTotal)} prayers</Label>
               <Display size={30} color={C.cream} style={{ marginTop: 6 }}>Share a <Serif size={32} color="#FF9EC2">request</Serif></Display>
             </View>
           </Press>
@@ -44,8 +68,16 @@ export default function Community() {
           <Segmented items={["Chats", "Groups", "News"]} value={tab} onChange={setTab} accent={C.ink} />
         </View>
 
-        {tab === 0 ? (
+        {tab === 0 && live && !member ? (
+          <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, backgroundColor: "#fff", borderRadius: R.xl, padding: 20 }}>
+            <Display size={28}>Your <Serif size={30} color="#0E9F74">chats</Serif> live here</Display>
+            <Body color={C.muted} style={{ marginTop: 6 }}>Sign in to chat with your groups, your ride driver and the whole Agape family.</Body>
+            <Press onPress={() => router.push("/welcome")} style={{ marginTop: 14, alignSelf: "flex-start", paddingHorizontal: 18, height: 44, borderRadius: R.pill, backgroundColor: C.ink, justifyContent: "center" }}><Body weight="semi" color="#fff">Sign in</Body></Press>
+          </Animated.View>
+        ) : null}
+        {tab === 0 && (!live || member) ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, backgroundColor: "#fff", borderRadius: R.xl, paddingVertical: 6 }}>
+            {CHATS.length === 0 ? <Body color={C.muted} center style={{ padding: 20 }}>{inbox.loading ? "Loading your chats…" : "Join a group to start chatting."}</Body> : null}
             {CHATS.map((c, i) => (
               <Animated.View key={c.id} entering={FadeInDown.delay(i * 50)}>
                 <Press onPress={() => router.push(`/chat/${c.id}`)} scaleTo={0.985} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 12 }}>
@@ -70,7 +102,8 @@ export default function Community() {
         {tab === 1 ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, gap: 12 }}>
             {GROUPS.map((g, i) => {
-              const on = joined.has(g.id);
+              const on = isJoined(g.key);
+              const n = counts[`group:${g.key}`] ?? 0;
               return (
                 <Animated.View key={g.id} entering={FadeInDown.delay(i * 60)}>
                   <View style={{ height: 150, borderRadius: R.xl, overflow: "hidden" }}>
@@ -79,11 +112,11 @@ export default function Community() {
                     <View style={{ position: "absolute", left: 18, right: 18, bottom: 16, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
                       <View>
                         <Display size={34} color="#fff" style={{ textTransform: "uppercase" }}>{g.name}</Display>
-                        <Body size={13} color="rgba(255,255,255,0.8)">{g.members ? `${g.members} members · ` : ""}{g.meets}</Body>
+                        <Body size={13} color="rgba(255,255,255,0.8)">{n ? `${n} member${n === 1 ? "" : "s"} · ` : ""}{g.meets}</Body>
                       </View>
-                      <Press onPress={() => setJoined((s) => { const n = new Set(s); n.has(g.id) ? n.delete(g.id) : n.add(g.id); return n; })} style={{ paddingHorizontal: 16, height: 40, borderRadius: R.pill, backgroundColor: on ? "#fff" : g.color, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        {on ? <Icon name="check" size={14} color={C.ink} /> : null}
-                        <Body size={13.5} weight="bold" color={on ? C.ink : g.color === C.sun ? C.ink : "#fff"}>{on ? "Joined" : "Join"}</Body>
+                      <Press onPress={() => join(g)} disabled={busy === g.key} style={{ paddingHorizontal: 16, height: 40, borderRadius: R.pill, backgroundColor: on ? "#fff" : g.color, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 6 }}>
+                        {on ? <Icon name="message-circle" size={14} color={C.ink} /> : null}
+                        <Body size={13.5} weight="bold" color={on ? C.ink : g.color === C.sun ? C.ink : "#fff"}>{busy === g.key ? "Joining…" : on ? "Open chat" : "Join"}</Body>
                       </Press>
                     </View>
                   </View>
@@ -95,6 +128,7 @@ export default function Community() {
 
         {tab === 2 ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, gap: 12 }}>
+            {ANNOUNCEMENTS.length === 0 ? <Body color={C.muted} center style={{ padding: 20 }}>No announcements yet.</Body> : null}
             {ANNOUNCEMENTS.map((a, i) => (
               <Animated.View key={a.id} entering={FadeInDown.delay(i * 70)} style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 18, borderLeftWidth: 6, borderLeftColor: a.color }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>

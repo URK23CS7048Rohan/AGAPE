@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React from "react";
 import { StyleSheet, View } from "react-native";
 import Animated, { Extrapolation, FadeInDown, ZoomIn, interpolate, useAnimatedScrollHandler, useAnimatedStyle, useSharedValue } from "react-native-reanimated";
 import { Image } from "expo-image";
@@ -7,31 +7,26 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { C, R } from "@/theme";
-import { Body, Button, Confetti, ConfettiHandle, Display, Icon, IconButton, Label, Press, Ring, Serif } from "@/components/ui";
-import { COURSES } from "@/data/mock";
+import { Body, Button, Display, Icon, IconButton, Label, Press, Ring, Serif } from "@/components/ui";
 import { useStore } from "@/lib/store";
-import { completeLesson } from "@/lib/api";
+import { useCourses } from "@/lib/data";
 
 const KIND_ICON = { video: "play", pdf: "file-text", quiz: "help-circle" } as const;
 
 export default function CourseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
-  const c = COURSES.find((x) => x.id === id) ?? COURSES[0];
+  const { courses } = useCourses();
+  const c = courses.find((x) => x.id === id) ?? courses[0];
   const insets = useSafeAreaInsets();
-  const { progress, completeNext } = useStore();
-  const done = progress[c.id] ?? 0;
-  const confetti = useRef<ConfettiHandle>(null);
+  const { done: doneSet } = useStore();
   const y = useSharedValue(0);
   const onScroll = useAnimatedScrollHandler((e) => { y.value = e.contentOffset.y; });
   const hero = useAnimatedStyle(() => ({ transform: [{ translateY: interpolate(y.value, [-200, 0, 300], [-100, 0, 120], Extrapolation.CLAMP) }, { scale: interpolate(y.value, [-200, 0], [1.5, 1], Extrapolation.CLAMP) }] }));
-  const pct = done / c.lessons.length;
-
-  const complete = () => {
-    completeLesson(c.lessons[Math.min(done, c.lessons.length - 1)].id);
-    completeNext(c.id);
-    Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    confetti.current?.burst(undefined, 300, done + 1 >= c.lessons.length ? 90 : 36);
-  };
+  if (!c) return <View style={{ flex: 1, backgroundColor: C.lilac }} />;
+  const done = c.lessons.filter((l) => doneSet.has(l.id)).length;
+  const nextIdx = c.lessons.findIndex((l) => !doneSet.has(l.id));
+  const pct = done / Math.max(1, c.lessons.length);
+  const open = (lessonId: string) => router.push(`/lesson/${lessonId}?course=${c.id}`);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.lilac }}>
@@ -57,12 +52,12 @@ export default function CourseScreen() {
           <Label style={{ marginTop: 26, marginBottom: 10 }}>Module 1 · Lessons</Label>
           <View style={{ gap: 8 }}>
             {c.lessons.map((l, i) => {
-              const isDone = i < done;
-              const isNow = i === done;
+              const isDone = doneSet.has(l.id);
+              const isNow = i === nextIdx;
               return (
                 <Animated.View key={l.id} entering={FadeInDown.delay(i * 60).springify().damping(16)}>
                   <Press
-                    onPress={() => (isNow ? complete() : isDone ? null : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {}))}
+                    onPress={() => (isNow || isDone ? open(l.id) : Haptics.notificationAsync(Haptics.NotificationFeedbackType.Warning).catch(() => {}))}
                     scaleTo={isNow ? 0.97 : 0.99}
                     style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 12, borderRadius: R.md, backgroundColor: "#fff", borderWidth: isNow ? 2 : 0, borderColor: c.color, opacity: !isDone && !isNow ? 0.6 : 1 }}
                   >
@@ -83,10 +78,10 @@ export default function CourseScreen() {
               );
             })}
           </View>
-          {done >= c.lessons.length ? (
+          {nextIdx === -1 && c.lessons.length ? (
             <Animated.View entering={FadeInDown} style={{ marginTop: 20, padding: 20, borderRadius: R.lg, backgroundColor: C.ink }}>
               <Display size={30} color={C.cream}>Course <Serif size={32} color={C.sun}>complete!</Serif></Display>
-              <Body color={C.creamMuted} style={{ marginTop: 6 }}>Well done. Your certificate has been added to your profile.</Body>
+              <Body color={C.creamMuted} style={{ marginTop: 6 }}>Well done! Show this screen to the Institute team to collect your certificate.</Body>
             </Animated.View>
           ) : null}
         </View>
@@ -95,12 +90,11 @@ export default function CourseScreen() {
       <View style={{ position: "absolute", top: insets.top + 6, left: 16 }}>
         <IconButton name="chevron-left" onPress={() => router.back()} bg="rgba(255,255,255,0.92)" />
       </View>
-      {done < c.lessons.length ? (
+      {nextIdx > -1 ? (
         <View style={{ position: "absolute", left: 16, right: 16, bottom: insets.bottom + 16 }}>
-          <Button label={done === 0 ? "Start course" : `Complete: ${c.lessons[done].title}`} variant="ink" block onPress={complete} />
+          <Button label={done === 0 ? "Start course" : `Continue: ${c.lessons[nextIdx].title}`} variant="ink" block onPress={() => open(c.lessons[nextIdx].id)} />
         </View>
       ) : null}
-      <Confetti ref={confetti} />
     </View>
   );
 }

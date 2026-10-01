@@ -1,14 +1,18 @@
 import React, { useEffect, useState } from "react";
-import { KeyboardAvoidingView, Platform, ScrollView, Switch, TextInput, View } from "react-native";
+import { Alert, KeyboardAvoidingView, Platform, ScrollView, Switch, TextInput, View } from "react-native";
 import Animated, { FadeInDown, LinearTransition, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withSpring, withTiming } from "react-native-reanimated";
 import { StatusBar } from "expo-status-bar";
 import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
 import { Avatar, BackHeader, Body, Button, Display, Icon, Label, Press, Serif } from "@/components/ui";
-import { Prayer } from "@/data/mock";
 import { SwipeDeck } from "@/components/Motion";
-import { fetchPrayers, postPrayer, prayFor } from "@/lib/api";
+import { markAnswered, postPrayer, prayFor } from "@/lib/api";
 import { useStore } from "@/lib/store";
+import { LivePrayer, usePrayers } from "@/lib/data";
+import { useSiteContent } from "@/lib/content";
+import { fmt } from "@/lib/time";
+
+type Prayer = LivePrayer;
 
 function Heart({ a }: { a: number }) {
   const t = useSharedValue(0);
@@ -46,15 +50,15 @@ function DeckNote({ p, i, top, tx }: { p: Prayer; i: number; top: boolean; tx: a
   );
 }
 
-function PrayerCard({ p, i }: { p: Prayer; i: number }) {
-  const { praying, togglePraying } = useStore();
-  const on = praying.has(p.id);
+function PrayerCard({ p, i, onPray, onAnswered }: { p: Prayer; i: number; onPray: (p: Prayer) => boolean; onAnswered: (p: Prayer) => void }) {
+  const { praying } = useStore();
+  const on = praying.has(p.id) || !!p.prayed;
   const [burst, setBurst] = useState(0);
   const s = useSharedValue(1);
   const st = useAnimatedStyle(() => ({ transform: [{ scale: s.value }] }));
   const tap = () => {
-    const now = togglePraying(p.id);
-    if (now) { setBurst((b) => b + 1); prayFor(p.id); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); }
+    if (on) return;
+    if (onPray(p)) { setBurst((b) => b + 1); Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); }
     s.value = withSequence(withSpring(0.88, { damping: 10, stiffness: 400 }), withSpring(1, { damping: 8 }));
   };
   return (
@@ -68,32 +72,61 @@ function PrayerCard({ p, i }: { p: Prayer; i: number }) {
       <Animated.View style={[{ alignSelf: "flex-start", marginTop: 14 }, st]}>
         <Press onPress={tap} haptic={false} style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 14, height: 40, borderRadius: R.pill, backgroundColor: on ? C.rose : C.ink }}>
           <Icon name="hands-pray" size={17} color="#fff" />
-          <Body size={13.5} weight="semi" color="#fff">{on ? `You're praying · ${p.count + 1}` : `Praying · ${p.count}`}</Body>
+          <Body size={13.5} weight="semi" color="#fff">{on ? `You're praying · ${p.count}` : `Pray · ${p.count}`}</Body>
         </Press>
         {Array.from({ length: burst ? 10 : 0 }).map((_, k) => <Heart key={`${burst}-${k}`} a={(k / 10) * Math.PI * 2} />)}
       </Animated.View>
+      {p.mine && !p.answered ? (
+        <Press onPress={() => onAnswered(p)} style={{ position: "absolute", right: 14, bottom: 16 }}>
+          <Body size={12.5} weight="semi" color="rgba(15,11,18,0.6)">Mark answered ✓</Body>
+        </Press>
+      ) : null}
     </Animated.View>
   );
 }
 
 export default function PrayerWall() {
-  const [list, setList] = useState<Prayer[]>([]);
+  const q = usePrayers();
+  const list = q.data;
+  const stats = useSiteContent().stats;
   const [text, setText] = useState("");
   const [anon, setAnon] = useState(true);
   const [posted, setPosted] = useState(false);
+  const [busy, setBusy] = useState(false);
   const [prayed, setPrayed] = useState(0);
-  const { praying, togglePraying } = useStore();
-  useEffect(() => { fetchPrayers().then(setList); }, []);
+  const { praying, markPraying, needsAccount, live } = useStore();
+  const total = list.reduce((a, p) => a + (p.count || 0), 0);
 
   const post = async () => {
     const t = text.trim();
-    if (!t) return;
-    await postPrayer(t, anon);
-    setList((l) => [{ id: String(Date.now()), who: anon ? "Anonymous" : "You", text: t, count: 0, color: C.flame }, ...l]);
-    setText("");
-    setPosted(true);
+    if (!t || needsAccount("share a prayer request")) return;
+    setBusy(true);
+    try {
+      await postPrayer(t, anon);
+      if (!live) q.setData([{ id: String(Date.now()), who: anon ? "Anonymous" : "You", text: t, count: 0, color: C.flame, mine: true }, ...list]);
+      else q.reload();
+      setText("");
+      setPosted(true);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      setTimeout(() => setPosted(false), 2600);
+    } catch (e: any) { Alert.alert("Not posted", e?.message || "Please try again."); }
+    finally { setBusy(false); }
+  };
+
+  // returns true when the prayer was counted
+  const pray = (p: Prayer) => {
+    if (praying.has(p.id) || p.prayed) return false;
+    if (needsAccount("pray for requests")) return false;
+    markPraying(p.id);
+    q.setData(list.map((x) => (x.id === p.id ? { ...x, count: x.count + 1, prayed: true } : x)));
+    prayFor(p.id).catch(() => {});
+    setPrayed((n) => n + 1);
+    return true;
+  };
+  const answered = (p: Prayer) => {
+    q.setData(list.map((x) => (x.id === p.id ? { ...x, answered: true } : x)));
+    markAnswered(p.id, true).catch(() => {});
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-    setTimeout(() => setPosted(false), 2600);
   };
 
   return (
@@ -113,7 +146,7 @@ export default function PrayerWall() {
               <Switch value={anon} onValueChange={setAnon} trackColor={{ true: C.rose, false: "rgba(255,255,255,0.2)" }} />
               <Body size={13.5} color={C.creamMuted}>Anonymous</Body>
             </View>
-            <Button label="Share" icon="send" variant="rose" small onPress={post} />
+            <Button label={busy ? "Sharing…" : "Share"} icon="send" variant="rose" small onPress={post} disabled={busy} />
           </View>
         </View>
         {posted ? (
@@ -128,13 +161,14 @@ export default function PrayerWall() {
             items={list}
             height={340}
             keyOf={(p) => p.id}
-            onSwipe={(p, dir) => { if (dir === 1 && !praying.has(p.id)) { togglePraying(p.id); prayFor(p.id); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); setPrayed((n) => n + 1); } }}
+            onSwipe={(p, dir) => { if (dir === 1 && pray(p)) Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }}
             render={(p, top, tx) => <DeckNote p={p} i={list.indexOf(p)} top={top} tx={tx} />}
           />
         ) : null}
         {prayed ? <Animated.View entering={ZoomIn.springify()} style={{ alignSelf: "center", marginTop: 14, paddingHorizontal: 16, height: 38, borderRadius: R.pill, backgroundColor: C.rose, flexDirection: "row", alignItems: "center", gap: 8 }}><Icon name="hands-pray" size={16} color="#fff" /><Body size={13.5} weight="semi" color="#fff">You've prayed for {prayed} {prayed === 1 ? "person" : "people"} today</Body></Animated.View> : null}
-        <Label color={C.creamMuted} style={{ marginTop: 26 }}>18,432 prayers prayed this year</Label>
-        {list.map((p, i) => <PrayerCard key={p.id} p={p} i={i} />)}
+        <Label color={C.creamMuted} style={{ marginTop: 26 }}>{fmt(total || stats.prayers)} prayers prayed on this wall</Label>
+        {list.length === 0 && !q.loading ? <Body color={C.creamMuted} center style={{ marginTop: 10 }}>Be the first to share a request.</Body> : null}
+        {list.map((p, i) => <PrayerCard key={p.id} p={p} i={i} onPray={pray} onAnswered={answered} />)}
       </ScrollView>
     </KeyboardAvoidingView>
   );

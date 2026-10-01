@@ -9,9 +9,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
 import { C, IMG, R, shadow } from "@/theme";
 import { Body, Display, Icon, Label, Press, Serif } from "@/components/ui";
-import { USER } from "@/data/mock";
-import { useStore } from "@/lib/store";
+import { useStore, streakOf } from "@/lib/store";
 import { isLive } from "@/lib/supabase";
+import { fmt } from "@/lib/time";
 
 const TOOLS = [
   { icon: "car-side", label: "Ride ministry", sub: "Request or give a ride", color: C.mint, route: "/rides" },
@@ -20,10 +20,13 @@ const TOOLS = [
   { icon: "gamepad-variant", label: "Bible games", sub: "Verse Match & trivia", color: C.sun, route: "/games" },
   { icon: "creation", label: "Ask Agape", sub: "AI Bible assistant", color: C.sky, route: "/assistant" },
   { icon: "hands-pray", label: "Prayer wall", sub: "Pray with the family", color: C.rose, route: "/prayer" },
+  { icon: "bell", label: "Notifications", sub: "Rides, chats & news", color: C.ink, route: "/notifications" },
+  { icon: "shield", label: "Pastoral care", sub: "Private, to the pastors", color: "#B98AFF", route: "/care" },
 ];
+const ROLE: Record<string, string> = { member: "Member", volunteer: "Volunteer", staff: "Staff", admin: "Admin" };
 
 /** Membership card — tilts as you drag it (wallet-pass style). */
-function MemberCard() {
+function MemberCard({ name, no, since, role }: { name: string; no: string; since: string; role: string }) {
   const rx = useSharedValue(0);
   const ry = useSharedValue(0);
   const pan = Gesture.Pan()
@@ -44,14 +47,14 @@ function MemberCard() {
                 <Label color={C.sun} size={8.5}>International Ministries</Label>
               </View>
             </View>
-            <Icon name="qrcode" size={30} color="#fff" />
+            <Icon name="cross" size={26} color="#fff" />
           </View>
           <View>
-            <Label color="rgba(255,255,255,0.8)">Member since {USER.since}</Label>
-            <Display size={34} color="#fff" style={{ marginTop: 4 }}>{USER.name}</Display>
+            <Label color="rgba(255,255,255,0.8)">{since}</Label>
+            <Display size={34} color="#fff" style={{ marginTop: 4 }} numberOfLines={1}>{name}</Display>
             <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-              <Label color="#fff">{USER.memberId}</Label>
-              <Label color="#fff">{USER.group}</Label>
+              <Label color="#fff">{no}</Label>
+              <Label color="#fff">{role}</Label>
             </View>
           </View>
         </LinearGradient>
@@ -74,42 +77,56 @@ function Row({ icon, label, children, color = C.ink }: { icon: string; label: st
 
 export default function Me() {
   const insets = useSafeAreaInsets();
-  const { settings, setSetting, signOut, score, guest } = useStore();
+  const { settings, setSetting, signOut, deleteAccount, score, guest, live, member, profile, name, firstName, saved, activeDays, isVolunteer } = useStore();
+  const since = profile?.created_at ? `Member since ${new Date(profile.created_at).getFullYear()}` : live ? "Guest" : "Member since 2024";
+  const role = profile ? ROLE[profile.role] : live ? "Guest" : "Member";
+  const tools = isVolunteer ? TOOLS : [...TOOLS.slice(0, 1), { icon: "steering", label: "Volunteer", sub: "Drive, serve, welcome", color: C.mint, route: "/volunteer" }, ...TOOLS.slice(1)];
 
   const toggleFaceId = async (v: boolean) => {
     if (v) {
       const ok = await LocalAuthentication.hasHardwareAsync().catch(() => false);
-      if (ok) {
-        const r = await LocalAuthentication.authenticateAsync({ promptMessage: "Enable Face ID for Agape" }).catch(() => ({ success: false }));
-        if (!r.success) return;
-      }
+      const enrolled = ok && (await LocalAuthentication.isEnrolledAsync().catch(() => false));
+      if (!enrolled) { Alert.alert("Not available", "Set up Face ID, Touch ID or a fingerprint on this phone first."); return; }
+      const r = await LocalAuthentication.authenticateAsync({ promptMessage: "Lock Agape with Face ID" }).catch(() => ({ success: false }));
+      if (!r.success) return;
     }
     setSetting("faceId", v);
   };
+  const confirmDelete = () => Alert.alert("Delete your account?", "This permanently removes your profile, notes, progress, prayer requests and messages. Gifts stay on record for the church's accounts.", [
+    { text: "Cancel", style: "cancel" },
+    { text: "Delete", style: "destructive", onPress: async () => { try { await deleteAccount(); router.replace("/welcome"); } catch (e: any) { Alert.alert("Couldn't delete", e?.message || "Please try again."); } } },
+  ]);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.cream }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 150 }}>
         <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: 20 }}>
-          <Label>{guest ? "Guest" : `${USER.role} · ${USER.group}`}</Label>
-          <Display size={52} style={{ marginTop: 8, lineHeight: 50 }}>Hi, {USER.first}{"\n"}<Serif size={56} color={C.flame}>welcome home.</Serif></Display>
+          <Label>{guest ? "Guest" : `${role}${profile?.email ? ` · ${profile.email}` : ""}`}</Label>
+          <Display size={52} style={{ marginTop: 8, lineHeight: 50 }}>Hi, {guest ? "friend" : firstName}{"\n"}<Serif size={56} color={C.flame}>welcome home.</Serif></Display>
         </Animated.View>
 
-        <MemberCard />
+        <MemberCard name={guest ? "Guest" : name} no={profile?.member_no || (live ? "Sign in for your card" : "AGP-24-0187")} since={since} role={role} />
         <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 12, gap: 10 }}>
-          <Press onPress={() => Alert.alert("Wallet", "Wallet passes are issued by the backend (see README → Apple/Google Wallet).")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <Icon name="wallet" size={18} color="#fff" />
-            <Body weight="semi" color="#fff" size={14}>Add to Wallet</Body>
-          </Press>
+          {member || !live ? (
+            <Press onPress={() => router.push("/onboarding?edit=1")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Icon name="edit-3" size={17} color="#fff" />
+              <Body weight="semi" color="#fff" size={14}>Edit profile</Body>
+            </Press>
+          ) : (
+            <Press onPress={() => router.push("/welcome")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: C.flame, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Icon name="log-in" size={17} color="#fff" />
+              <Body weight="semi" color="#fff" size={14}>Sign in</Body>
+            </Press>
+          )}
           <Press onPress={() => router.push("/events")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <Icon name="qrcode" size={18} color={C.ink} />
-            <Body weight="semi" size={14}>Check in</Body>
+            <Icon name="calendar" size={17} color={C.ink} />
+            <Body weight="semi" size={14}>My events</Body>
           </Press>
         </View>
 
         {/* stats */}
         <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 16, gap: 10 }}>
-          {[["12", "sermons saved", C.peach], ["7", "day streak", C.sunSoft], [String(1180 + score), "game points", C.lilac]].map(([v, l, bg]) => (
+          {[[String(saved.size), "sermons saved", C.peach], [String(streakOf(activeDays)), "day streak", C.sunSoft], [fmt(score), "points this week", C.lilac]].map(([v, l, bg]) => (
             <View key={l} style={{ flex: 1, backgroundColor: bg, borderRadius: R.lg, padding: 14 }}>
               <Display size={30}>{v}</Display>
               <Body size={12} color={C.muted}>{l}</Body>
@@ -120,7 +137,7 @@ export default function Me() {
         {/* tools */}
         <Label style={{ marginHorizontal: 20, marginTop: 26, marginBottom: 10 }}>Everything else</Label>
         <View style={{ marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-          {TOOLS.map((t, i) => (
+          {tools.map((t, i) => (
             <Animated.View key={t.label} entering={FadeInDown.delay(i * 60)} style={{ width: "48.4%" }}>
               <Press onPress={() => router.push(t.route as any)} style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 16, height: 138, justifyContent: "space-between" }}>
                 <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: t.color, alignItems: "center", justifyContent: "center" }}>
@@ -138,21 +155,21 @@ export default function Me() {
         {/* settings */}
         <Label style={{ marginHorizontal: 20, marginTop: 26, marginBottom: 10 }}>Settings</Label>
         <View style={{ marginHorizontal: 16, backgroundColor: "#fff", borderRadius: R.xl, paddingVertical: 6 }}>
-          <Row icon="face-recognition" label="Face ID sign-in" color={C.ink}><Switch value={settings.faceId} onValueChange={toggleFaceId} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
+          <Row icon="face-recognition" label="Lock with Face ID" color={C.ink}><Switch value={settings.faceId} onValueChange={toggleFaceId} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
           <Row icon="bell" label="Push notifications" color={C.flame}><Switch value={settings.notifications} onValueChange={(v) => setSetting("notifications", v)} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
-          <Row icon="type" label="Larger text" color={C.violet}><Switch value={settings.largeText} onValueChange={(v) => setSetting("largeText", v)} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
-          <Row icon="baby-face-outline" label="Kids mode" color={C.sun}><Switch value={settings.kidsMode} onValueChange={(v) => setSetting("kidsMode", v)} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
-          <Press onPress={() => setSetting("language", settings.language === "English" ? "العربية" : settings.language === "العربية" ? "Malayalam" : "English")}>
-            <Row icon="globe" label="Language" color={C.mint}><Body color={C.muted}>{settings.language}</Body></Row>
-          </Press>
-          <Press onPress={() => Alert.alert("Pastoral care", "Your request is private and goes only to the pastoral team. Someone will reach out within 24 hours.")}>
+          <Press onPress={() => router.push("/care")}>
             <Row icon="shield" label="Confidential pastoral care" color={C.rose}><Icon name="chevron-right" size={18} color={C.muted} /></Row>
           </Press>
+          {member ? (
+            <Press onPress={confirmDelete}>
+              <Row icon="trash-2" label="Delete my account" color="#9A93A6"><Icon name="chevron-right" size={18} color={C.muted} /></Row>
+            </Press>
+          ) : null}
         </View>
 
-        <Press onPress={() => { signOut(); router.replace("/welcome"); }} style={{ marginHorizontal: 16, marginTop: 16, height: 52, borderRadius: R.pill, borderWidth: 1.5, borderColor: "rgba(15,11,18,0.15)", alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}>
+        <Press onPress={async () => { await signOut(); router.replace("/welcome"); }} style={{ marginHorizontal: 16, marginTop: 16, height: 52, borderRadius: R.pill, borderWidth: 1.5, borderColor: "rgba(15,11,18,0.15)", alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}>
           <Icon name="log-out" size={17} color={C.ink} />
-          <Body weight="semi">Sign out</Body>
+          <Body weight="semi">{guest ? "Leave guest mode" : "Sign out"}</Body>
         </Press>
         <Body size={12} color={C.muted} center style={{ marginTop: 14 }}>Agape International Ministries · v1.0 · {isLive ? "Connected" : "Demo data"}</Body>
       </ScrollView>
