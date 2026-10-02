@@ -1,0 +1,10 @@
+// Cloudflare Worker "agape": serves the static website (website/ folder, including /admin).
+// Cloudflare rebuilds and redeploys automatically on every push to main.
+{
+  "name": "agape",
+  "compatibility_date": "2026-10-01",
+  "assets": {
+    "directory": "./website",
+    "html_handling": "auto-trailing-slash"
+  }
+}
