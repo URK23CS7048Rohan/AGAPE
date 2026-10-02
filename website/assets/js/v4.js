@@ -141,7 +141,7 @@ window.AGAPE_V4_ENGINES.push(function weekScroll() {
   if (!reduce) {
     tween = gsap.to(track, {
       x: () => -amount(), ease: "none",
-      scrollTrigger: { trigger: sec, start: "top top", end: () => "+=" + amount(), pin: true, scrub: 0.8, anticipatePin: 1, invalidateOnRefresh: true, onUpdate: (s) => bar && (bar.style.transform = `scaleX(${s.progress})`) },
+      scrollTrigger: { trigger: sec, start: "top top", end: () => "+=" + amount(), pin: true, scrub: 0.8, anticipatePin: 1, invalidateOnRefresh: true, onUpdate: (s) => bar && (bar.style.transform = `scaleX(${s.progress})`), onToggle: (s) => bar && bar.parentElement.classList.toggle("is-on", s.isActive) },
     });
     $$(".day", track).forEach((d) => {
       const img = $(".day__media img", d), name = $(".day__name", d), media = $(".day__media", d), txt = $(".day__txt", d);
@@ -154,16 +154,6 @@ window.AGAPE_V4_ENGINES.push(function weekScroll() {
     const intro = $(".week__intro");
     if (intro) gsap.from($$(":scope > *", intro), { y: 50, opacity: 0, stagger: 0.1, duration: 1.1, ease: "expo.out", scrollTrigger: { trigger: sec, start: "top 70%", once: true } });
   }
-  // live widgets
-  const viewers = $(".js-dw-viewers"), pray = $(".js-dw-pray");
-  let vis = false, v = 1248, p = 312;
-  onView(sec, (x) => (vis = x));
-  setInterval(() => {
-    if (!vis || document.hidden) return;
-    v = Math.max(900, v + Math.round(Math.random() * 20 - 6)); p = Math.max(200, p + Math.round(Math.random() * 6 - 2));
-    if (viewers) viewers.textContent = v.toLocaleString("en-US");
-    if (pray) pray.textContent = p;
-  }, 1600);
   const ring = $(".dw-ring__c"), ringV = $(".js-dw-ring");
   if (ring) onView(ring, (x) => { if (!x || ring.dataset.done) return; ring.dataset.done = 1; const o = { p: 0 }; gsap.to(o, { p: 67, duration: 2, ease: "power3.out", onUpdate: () => { ring.style.setProperty("--p", o.p.toFixed(1)); ringV.textContent = Math.round(o.p) + "%"; } }); });
   const ty = $(".js-dw-type");

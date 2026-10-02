@@ -596,36 +596,7 @@ void main(){
     const live = $("#watch");
     let on = false;
     watch(live, (v) => (on = v));
-    // viewers
-    const vEl = $(".js-viewers"), cEl = $(".js-chatters");
-    let viewers = 1248, chatters = 312;
-    setInterval(() => {
-      if (!on) return;
-      viewers = Math.max(900, viewers + Math.round(rand(-6, 14)));
-      chatters = Math.max(200, chatters + Math.round(rand(-3, 5)));
-      if (vEl) vEl.textContent = fmt(viewers);
-      if (cEl) cEl.textContent = chatters;
-    }, 1800);
-    // chat
-    const people = [["Grace", "#FF5A1F"], ["Daniel", "#6E4BFF"], ["Mariam", "#2ED3A0"], ["Joel", "#FFC23D"], ["Anita", "#FF3D7F"], ["Samuel", "#4CC3FF"], ["Ruth", "#FF5A1F"], ["Thomas", "#6E4BFF"], ["Esther", "#2ED3A0"], ["Kevin", "#FF3D7F"]];
-    const lines = ["Amen! 🙌", "Watching from Salmiya, good morning family!", "That worship set though 🔥", "Grace upon grace. Needed this today.", "Praying for everyone watching from hospital today ❤️", "Hi from Fahaheel! 👋", "Romans 5:20 hits different", "Can't wait for Revival Nights!", "Hallelujah!", "Sharing this with my brother right now", "“Grace meets me before I clean up.” Wow.", "Joining from Chennai 🇮🇳", "Thank you Ps. John 🙏", "Kids are dancing in the living room 😂"];
-    const list = $(".js-chat");
-    let lastN = "", lastL = "";
-    const add = () => {
-      let n, c, line;
-      do { [n, c] = pick(people); } while (n === lastN);
-      do { line = pick(lines); } while (line === lastL);
-      lastN = n; lastL = line;
-      const m = document.createElement("div");
-      m.className = "cmsg";
-      m.innerHTML = `<span class="cmsg__ava" style="--c:${c}">${n[0]}</span><div><b>${n}</b><p>${line}</p></div>`;
-      list.appendChild(m);
-      gsap.from(m, { y: 24, opacity: 0, duration: 0.6, ease: "expo.out" });
-      while (list.children.length > 9) list.firstElementChild.remove();
-    };
-    for (let i = 0; i < 8; i++) add();
-    const loop = () => { if (on) add(); setTimeout(loop, rand(1300, 2800)); };
-    loop();
+    // (no invented viewer counts or chat messages: the real chat lives on YouTube)
     // hearts
     const hearts = $(".hearts");
     const heart = () => {
@@ -1084,27 +1055,25 @@ void main(){
      PRAYER WALL
      ======================================================= */
   (() => {
+    // prayers from Scripture (real requests stay private to members in the app)
     const reqs = [
-      ["Anonymous", "Please pray for my mom's surgery on Thursday. For steady hands and a quick recovery.", 42, "#FF3D7F"],
-      ["Joseph A.", "New job starts Monday. I'm praying for favor and for the courage to be a light there.", 28, "#6E4BFF"],
-      ["Anonymous", "For peace in our home. We've been arguing a lot lately.", 61, "#FF5A1F"],
-      ["Mariam K.", "My visa renewal is pending. Trusting God with the timing.", 37, "#2ED3A0"],
-      ["Anonymous", "Struggling with anxiety at night. Pray for rest.", 88, "#4CC3FF"],
-      ["Priya R.", "Thank you church! My dad is home from the ICU. Keep praying for full healing 🙏", 214, "#FFC23D"],
-      ["Samuel T.", "Exams this week. Pray for focus and calm.", 19, "#FF3D7F"],
-      ["Anonymous", "For my brother, who has walked away from faith. Bring him home, Lord.", 73, "#6E4BFF"],
-      ["Ruth & Ben", "We're expecting our first baby in December! Pray for a healthy pregnancy.", 96, "#2ED3A0"],
-      ["Anonymous", "Lost my job last month. Pray for provision for our family.", 57, "#FF5A1F"],
-      ["Grace L.", "Our small group is starting a food drive. Pray it reaches the families who need it most.", 33, "#4CC3FF"],
-      ["Anonymous", "Healing from a long illness. Some days are hard.", 49, "#FFC23D"],
+      ["1 Peter 5:7", "Casting all your worries on him, because he cares for you.", "#FF3D7F"],
+      ["Numbers 6:24", "The LORD bless thee, and keep thee: the LORD make his face shine upon thee.", "#6E4BFF"],
+      ["Psalm 51:10", "Create in me a clean heart, O God; and renew a right spirit within me.", "#FF5A1F"],
+      ["Matthew 6:11", "Give us this day our daily bread.", "#2ED3A0"],
+      ["Jeremiah 17:14", "Heal me, O LORD, and I shall be healed; save me, and I shall be saved.", "#4CC3FF"],
+      ["John 14:27", "Peace I leave with you, my peace I give unto you.", "#FFC23D"],
+      ["Joshua 1:9", "Be strong and of a good courage… for the LORD thy God is with thee.", "#FF3D7F"],
+      ["Matthew 6:10", "Thy kingdom come, thy will be done in earth, as it is in heaven.", "#6E4BFF"],
+      ["Psalm 139:23", "Search me, O God, and know my heart.", "#2ED3A0"],
     ];
     const PAPER = ["#FFE680", "#FFC2D8", "#BDF3DC", "#D9CCFF", "#FFD2B8", "#C7E9FF"];
     const board = $(".pnotes");
-    const note = ([who, txt, n, c], i, isNew) => {
+    const note = ([who, txt, c], i, isNew) => {
       const el = document.createElement("article");
       el.className = "pnote" + (isNew ? " is-new" : "");
       el.style.setProperty("--paper", PAPER[i % PAPER.length]);
-      el.innerHTML = `<span class="pnote__tape"></span><div class="pnote__who"><span style="--c:${c}">${who[0]}</span>${who}</div><p>${txt}</p><button class="pray-btn" data-n="${n}"><svg class="ic"><use href="#i-hand-heart"/></svg><span>Praying · ${n}</span></button>`;
+      el.innerHTML = `<span class="pnote__tape"></span><div class="pnote__who"><span style="--c:${c}">${isNew ? who[0] : "✝"}</span>${who}</div><p>${txt}</p><button class="pray-btn"><svg class="ic"><use href="#i-hand-heart"/></svg><span>Pray this</span></button>`;
       return el;
     };
     const notes = [];
@@ -1156,8 +1125,7 @@ void main(){
       const b = e.target.closest(".pray-btn");
       if (!b) return;
       const on = b.classList.toggle("is-on");
-      const n = parseInt(b.dataset.n) + (on ? 1 : 0);
-      $("span", b).textContent = on ? `You're praying · ${n}` : `Praying · ${n}`;
+      $("span", b).textContent = on ? "Amen" : "Pray this";
       if (on) for (let i = 0; i < 10; i++) {
         const d = document.createElement("i"); d.className = "burst"; b.appendChild(d);
         const a = (i / 10) * Math.PI * 2;
@@ -1169,7 +1137,7 @@ void main(){
       e.preventDefault();
       const ta = $("textarea", e.target), anon = $("input", e.target).checked;
       const txt = ta.value.trim(); if (!txt) return;
-      const el = note([anon ? "Anonymous" : "You", txt.replace(/</g, "&lt;"), 1, "#FF3D7F"], Math.floor(Math.random() * 6), true);
+      const el = note([anon ? "Anonymous" : "You", txt.replace(/</g, "&lt;"), "#FF3D7F"], Math.floor(Math.random() * 6), true);
       board.appendChild(el); notes.push(el);
       const W = board.clientWidth;
       gsap.set(el, { x: W / 2 - el.offsetWidth / 2, y: 20, zIndex: 999 });
@@ -1177,7 +1145,7 @@ void main(){
       makeDrag(el);
       ta.value = "";
       const btn = $("button[type=submit] span", e.target), orig = btn.textContent;
-      btn.textContent = "Posted. We're praying with you"; setTimeout(() => (btn.textContent = orig), 2600);
+      btn.textContent = "Share it in the Agape app"; setTimeout(() => (btn.textContent = orig), 3200);
     });
   })();
 
