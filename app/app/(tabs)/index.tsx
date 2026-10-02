@@ -24,7 +24,7 @@ const QUICK = [
   { icon: "car-side", label: "Rides", color: C.mint, route: "/rides" },
   { icon: "creation", label: "Ask AI", color: C.sky, route: "/assistant" },
   { icon: "heart", label: "Give", color: C.orange, route: "/give" },
-  { icon: "calendar", label: "Events", color: C.ink, route: "/events" },
+  { icon: "grid", label: "More", color: C.ink, route: "/church" },
 ];
 
 export default function Home() {
@@ -53,7 +53,7 @@ export default function Home() {
             <Display size={30} numberOfLines={1}>{signedIn ? `Hello, ${firstName} 👋` : "Hello 👋"}</Display>
             <Label style={{ marginTop: 2 }}>{today}</Label>
           </View>
-          <IconButton name="bell" border={C.line} onPress={() => router.push("/community?tab=news")} />
+          <IconButton name="bell" border={C.line} onPress={() => router.push("/notifications")} />
           <Press onPress={() => router.push(signedIn ? "/me" : "/auth")}>
             <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: C.sun, borderWidth: 2, borderColor: C.ink, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <Image source={IMG.logoMark} style={{ width: 26, height: 30 }} contentFit="contain" />

@@ -21,7 +21,7 @@ export default function Songs() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title="Song book" />
+      <BackHeader title="Song book" right={<Press onPress={() => router.push("/songs/sets")} style={{ height: 44, paddingHorizontal: 12, borderRadius: 14, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", gap: 6 }}><Icon name="list" size={16} color="#fff" /><Body size={13} weight="bold" color="#fff">Sets</Body></Press>} />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} refreshControl={<RefreshControl refreshing={false} onRefresh={q.reload} />} keyboardShouldPersistTaps="handled">
         <View style={{ marginHorizontal: 16, marginTop: 6, backgroundColor: C.mint, borderRadius: R.xl, padding: 18, overflow: "hidden" }}>
           <View style={{ position: "absolute", right: -16, top: -16 }}><Starburst size={110} color={C.sun} spikes={10} depth={0.6} spin><Icon name="music-note" size={28} /></Starburst></View>

@@ -66,6 +66,14 @@
         {
           "faceIDPermission": "Sign in quickly and securely with Face ID."
         }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Agape uses the camera to scan the check-in code at church.",
+          "microphonePermission": false,
+          "recordAudioAndroid": false
+        }
       ]
     ],
     "experiments": {

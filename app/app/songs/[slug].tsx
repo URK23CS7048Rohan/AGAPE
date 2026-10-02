@@ -9,12 +9,12 @@ import { getSong } from "@/lib/scripture";
 import { capoShapeKey, interval, keyPlus, lyricsOnly, parseSong, transposeChord } from "@/lib/chords";
 
 export default function SongView() {
-  const p = useLocalSearchParams<{ slug: string }>();
+  const p = useLocalSearchParams<{ slug: string; key?: string }>();
   const insets = useSafeAreaInsets();
   const q = useQuery(p.slug ? `song:${p.slug}` : null, () => getSong(p.slug!));
   const song = q.data;
   const [key, setKey] = useState("C");
-  useEffect(() => { if (song) setKey(song.original_key); }, [song?.slug]);
+  useEffect(() => { if (song) setKey(p.key || song.original_key); }, [song?.slug, p.key]);
   const [capo, setCapo] = useState(0);
   const [chords, setChords] = useState(true);
   const [size, setSize] = useState(17);

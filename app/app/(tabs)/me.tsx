@@ -15,8 +15,14 @@ import { deleteAccount, myContact, myStats, requestCare, updateProfile } from "@
 import { fmt } from "@/lib/time";
 
 const TOOLS = [
+  { icon: "edit-3", label: "Journal", sub: "Private notes with God", color: C.sun, route: "/journal" },
+  { icon: "hands-pray", label: "Prayer list", sub: "Pray & mark answered", color: C.rose, route: "/prayer-list" },
+  { icon: "check-circle", label: "Check in", sub: "At church today", color: C.sky, route: "/checkin" },
+  { icon: "arrow-up-right", label: "Next steps", sub: "Baptism, membership & more", color: C.lilac, route: "/next-steps" },
+  { icon: "heart", label: "Serve", sub: "Join a team", color: C.orange, route: "/serve" },
+  { icon: "grid", label: "Everything", sub: "All of church life", color: C.peach, route: "/church" },
   { icon: "car-side", label: "Ride ministry", sub: "Request or give a ride", color: C.mint, route: "/rides" },
-  { icon: "heart", label: "Give", sub: "Tithes, offerings & campaigns", color: C.orange, route: "/give" },
+  { icon: "gift", label: "Give", sub: "Tithes, offerings & campaigns", color: C.orange, route: "/give" },
   { icon: "calendar", label: "Events", sub: "RSVP & tickets", color: C.violet, route: "/events" },
   { icon: "gamepad-variant", label: "Bible games", sub: "Verse Match & trivia", color: C.sun, route: "/games" },
   { icon: "creation", label: "Ask Agape", sub: "AI Bible assistant", color: C.sky, route: "/assistant" },
