@@ -179,3 +179,51 @@
 .ai3__nucleus{background:radial-gradient(circle at 35% 30%,#fff,#FFD27A 25%,#FF5A1F 55%,#FF3D7F 80%,#6E4BFF);box-shadow:0 0 40px 8px rgba(255,90,31,.5),0 0 90px 20px rgba(255,61,127,.25)}
 .ai3__card{background:rgba(20,14,24,.85);border-color:rgba(255,255,255,.14);box-shadow:0 30px 60px -20px rgba(0,0,0,.8),0 0 30px -12px rgba(255,61,127,.4)}
 .ai3__card small{color:#FF8A5C}
+
+/* =========================================================
+   Posters in motion
+   ========================================================= */
+.vp__stage{transform-style:preserve-3d}
+.vp__rig{position:absolute;inset:0;transform-style:preserve-3d;transform:rotateX(var(--tx,0deg)) rotateY(var(--ty,0deg));transition:transform 1s cubic-bezier(.2,.8,.2,1)}
+.vp__card>.pz{animation:pzBob var(--bd,6s) ease-in-out var(--bdl,0s) infinite}
+@keyframes pzBob{0%,100%{translate:0 0;rotate:0deg}50%{translate:0 -14px;rotate:var(--br,.6deg)}}
+.vp__card.is-on>.pz{animation-duration:4.5s}
+/* a sheen sweeps across the poster on top */
+.vp__card.is-on>.pz::before{content:"";position:absolute;inset:-20% -60%;z-index:6;pointer-events:none;background:linear-gradient(105deg,transparent 42%,rgba(255,255,255,.28) 50%,transparent 58%);animation:pzSheen 5s cubic-bezier(.6,0,.2,1) infinite}
+@keyframes pzSheen{0%{transform:translateX(-60%)}35%,100%{transform:translateX(60%)}}
+
+/* motion inside the designs */
+.pz__sticky{animation:pzSway 5s ease-in-out infinite;transform-origin:72% 0}
+@keyframes pzSway{0%,100%{rotate:-4deg}50%{rotate:-1.5deg}}
+.pz__doodle svg{animation:pzTw 2.4s ease-in-out infinite}.pz__doodle svg+svg{animation-delay:-1.2s}
+@keyframes pzTw{0%,100%{scale:.75;opacity:.6}50%{scale:1.15;opacity:1}}
+.pz--grain{background-size:140% 140%;animation:pzDrift 12s ease-in-out infinite alternate}
+@keyframes pzDrift{from{background-position:0% 0%}to{background-position:100% 100%}}
+.pz__burst{animation:pzPulse 3s ease-in-out infinite}
+@keyframes pzPulse{50%{scale:1.15;opacity:.75}}
+.pz__ast{animation:pzSpin 9s linear infinite;display:inline-block}
+@keyframes pzSpin{to{rotate:360deg}}
+.pz__s--b{animation:pzBounce 2.6s ease-in-out infinite}
+.pz__s--c{animation:pzSpin 14s linear infinite}
+.pz__s--d{animation:pzBounce 3.2s ease-in-out -1s infinite}
+.pz__s--a{animation:pzWob 4s ease-in-out infinite}
+@keyframes pzBounce{0%,100%{translate:0 0}50%{translate:0 -2.4cqw}}
+@keyframes pzWob{0%,100%{rotate:-6deg}50%{rotate:3deg}}
+.pz--flow{background-size:160% 160%;animation:pzDrift 7s ease-in-out infinite alternate}
+.pz--flow .pz__script{animation:pzWob2 5s ease-in-out infinite}
+@keyframes pzWob2{0%,100%{rotate:-8deg;translate:0 0}50%{rotate:-3deg;translate:0 -1.6cqw}}
+.pz--photo,.pz--sign{background-size:115%;animation:pzZoom 14s ease-in-out infinite alternate}
+@keyframes pzZoom{from{background-size:112%;background-position:40% 50%}to{background-size:130%;background-position:60% 40%}}
+.pz--sign .pz__card{animation:pzSign 4s ease-in-out infinite;transform-origin:50% 100%}
+@keyframes pzSign{0%,100%{rotate:-1.5deg}50%{rotate:1.5deg}}
+.pz--rust .pz__card{animation:pzBreath 6s ease-in-out infinite}
+@keyframes pzBreath{50%{scale:1.025}}
+.pz--hand .pz__words span{animation:pzHop 3s ease-in-out infinite}
+.pz--hand .pz__words span:nth-child(2n){animation-delay:-.7s}.pz--hand .pz__words span:nth-child(3n){animation-delay:-1.4s}
+@keyframes pzHop{50%{translate:0 -1.2cqw}}
+.pz__sp{animation:pzTw 2s ease-in-out infinite}.pz__sp--b{animation-delay:-.6s}.pz__sp--c{animation-delay:-1.2s}
+.pz__rules i{transform-origin:0 50%;animation:pzRule 3s ease-in-out infinite}.pz__rules i+i{animation-delay:-1.5s}
+@keyframes pzRule{0%,100%{scale:.4 1}50%{scale:1 1}}
+.pz--grain::after,.pz--flow::after,.pz--rust::after,.pz--lime::after,.pz--stick::after{animation:pzGrain .9s steps(4) infinite}
+@keyframes pzGrain{25%{background-position:12px -8px}50%{background-position:-10px 14px}75%{background-position:6px 10px}}
+@media (prefers-reduced-motion:reduce){.vp__stage *{animation:none!important}}

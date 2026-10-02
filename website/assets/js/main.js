@@ -1243,7 +1243,12 @@ void main(){
     if (!sec || !stage || !V.length || !window.AgapePosters) return;
     const now = new Date();
     const today = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5) % V.length;
-    stage.innerHTML = V.map((v, i) => `<div class="vp__card" data-i="${i}" role="group" aria-label="${(v.ref || "").replace(/"/g, "")}">${AgapePosters.render(v, i)}</div>`).join("");
+    stage.innerHTML = `<div class="vp__rig">${V.map((v, i) => `<div class="vp__card" data-i="${i}" role="group" aria-label="${(v.ref || "").replace(/"/g, "")}" style="--bd:${(5 + (i % 4) * 0.8).toFixed(1)}s;--bdl:${(-i * 0.9).toFixed(1)}s;--br:${i % 2 ? -0.8 : 0.8}deg">${AgapePosters.render(v, i)}</div>`).join("")}</div>`;
+    const rig = $(".vp__rig", stage);
+    if (!isTouch && !reduce) {
+      sec.addEventListener("pointermove", (e) => { const r = stage.getBoundingClientRect(); rig.style.setProperty("--ty", `${((e.clientX - r.left) / r.width - 0.5) * 14}deg`); rig.style.setProperty("--tx", `${-((e.clientY - r.top) / r.height - 0.5) * 8}deg`); });
+      sec.addEventListener("pointerleave", () => { rig.style.removeProperty("--ty"); rig.style.removeProperty("--tx"); });
+    }
     const cards = $$(".vp__card", stage), refEl = $(".js-vref"), label = $(".js-vlabel");
     const mobile = () => innerWidth < 760;
     let cur = today, inView = false, timer = null;
@@ -1264,7 +1269,7 @@ void main(){
       label.textContent = cur === today ? "Verse of the day" : "Scripture for you";
     };
     const go = (i) => { cur = (i + V.length) % V.length; layout(); restart(); };
-    const restart = () => { clearTimeout(timer); if (inView && !reduce) timer = setTimeout(() => go(cur + 1), 6500); };
+    const restart = () => { clearTimeout(timer); if (inView && !reduce) timer = setTimeout(() => go(cur + 1), 3800); };
     cards.forEach((c, i) => c.addEventListener("click", () => i !== cur && go(i)));
     $(".js-vnext").addEventListener("click", () => go(cur + 1));
     $(".js-vprev").addEventListener("click", () => go(cur - 1));
@@ -1272,8 +1277,6 @@ void main(){
     let sx = 0, sy = 0, down = false;
     stage.addEventListener("pointerdown", (e) => { sx = e.clientX; sy = e.clientY; down = true; });
     stage.addEventListener("pointerup", (e) => { if (!down) return; down = false; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) go(cur + (dx < 0 ? 1 : -1)); });
-    stage.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && clearTimeout(timer));
-    stage.addEventListener("pointerleave", restart);
     ScrollTrigger.create({ trigger: sec, start: "top 70%", end: "bottom 30%", onToggle: (s) => { inView = s.isActive; inView ? restart() : clearTimeout(timer); } });
     addEventListener("resize", layout);
     layout();
