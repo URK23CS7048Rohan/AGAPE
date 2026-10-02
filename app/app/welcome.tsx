@@ -1,25 +1,30 @@
-import React, { useEffect } from "react";
+import React from "react";
 import { Dimensions, Text, View } from "react-native";
-import Animated, { Easing, FadeInDown, FadeInUp, useAnimatedStyle, useSharedValue, withRepeat, withSequence, withTiming } from "react-native-reanimated";
+import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
 import { Image } from "expo-image";
 import { StatusBar } from "expo-status-bar";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG } from "@/theme";
-import { Body, Button, Icon, Poster, Press, Starburst } from "@/components/ui";
+import { Body, Button, Icon, Press, Starburst } from "@/components/ui";
 import { useStore } from "@/lib/store";
 
 const { width: SW, height: SH } = Dimensions.get("window");
+const BG = "#FFFFFF";
 
-function Photo({ src, style, delay = 0, rotate = 0, color }: { src: any; style: any; delay?: number; rotate?: number; color: string }) {
-  const t = useSharedValue(0);
-  useEffect(() => {
-    t.value = withRepeat(withSequence(withTiming(1, { duration: 3000 + delay, easing: Easing.inOut(Easing.sin) }), withTiming(0, { duration: 3000 + delay, easing: Easing.inOut(Easing.sin) })), -1);
-  }, []);
-  const st = useAnimatedStyle(() => ({ transform: [{ translateY: -8 * t.value }, { rotate: `${rotate + t.value * 1.5}deg` }] } as any));
+/** Giant faded letters scattered behind the type, like the poster backdrop. */
+const LETTERS: { ch: string; style: any }[] = [
+  { ch: "A", style: { left: -SW * 0.12, top: SH * 0.08, transform: [{ rotate: "-14deg" }] } },
+  { ch: "G", style: { right: -SW * 0.16, top: SH * 0.2, transform: [{ rotate: "12deg" }] } },
+  { ch: "P", style: { left: SW * 0.18, top: SH * 0.5, transform: [{ rotate: "8deg" }] } },
+  { ch: "E", style: { right: -SW * 0.08, top: SH * 0.56, transform: [{ rotate: "-10deg" }] } },
+];
+
+/** Big poster word; each line slides up in turn. */
+function Line({ children, size, delay }: { children: React.ReactNode; size: number; delay: number }) {
   return (
-    <Animated.View entering={FadeInUp.delay(150 + delay).duration(700).springify().damping(18)} style={[{ position: "absolute", padding: 6, borderRadius: 26, backgroundColor: color }, style, st]}>
-      <Image source={src} style={{ flex: 1, borderRadius: 20 }} contentFit="cover" />
+    <Animated.View entering={FadeInDown.delay(delay).duration(650).springify().damping(16)}>
+      <Text style={{ fontFamily: F.poster, fontSize: size, lineHeight: size * 0.86, color: C.ink, textTransform: "uppercase", letterSpacing: -size * 0.01, includeFontPadding: false }}>{children}</Text>
     </Animated.View>
   );
 }
@@ -28,50 +33,72 @@ export default function Welcome() {
   const insets = useSafeAreaInsets();
   const { signIn } = useStore();
   const go = (guest = false) => { signIn(guest); router.replace("/"); };
-  const w = SW * 0.4;
-  const top = insets.top + 12;
+  // Sized so the three lines fill the width on any phone without crowding the buttons.
+  const size = Math.round(Math.min(SW * 0.36, (SH - insets.top - insets.bottom - 330) / 2.9, 170));
 
   return (
-    <View style={{ flex: 1, backgroundColor: "#fff" }}>
+    <View style={{ flex: 1, backgroundColor: BG, overflow: "hidden" }}>
       <StatusBar style="dark" />
 
-      {/* collage */}
-      <View style={{ height: Math.min(SH * 0.42, 380) }}>
-        <Photo src={IMG.familyDay} color={C.violet} style={{ left: 16, top: top + 50, width: w, height: w * 1.25 }} rotate={-7} />
-        <Photo src={IMG.squadBand} color={C.sun} delay={250} style={{ right: 16, top: top + 20, width: w, height: w * 1.15 }} rotate={6} />
-        <Photo src={IMG.homeWorship} color={C.mint} delay={450} style={{ left: SW / 2 - w * 0.55, top: top + w * 0.95, width: w * 1.1, height: w * 0.8 }} rotate={-2} />
-        <Animated.View entering={FadeInDown.delay(700).springify()} style={{ position: "absolute", left: SW / 2 - 52, top: top - 4 }}>
-          <Starburst size={104} color={C.mint} spikes={16} spin>
-            <Text style={{ fontFamily: F.sansBold, fontSize: 12.5, lineHeight: 15, color: "#fff", textAlign: "center" }}>AGAPE{"\n"}FAMILY</Text>
-          </Starburst>
+      {LETTERS.map((l, i) => (
+        <Animated.Text key={l.ch} entering={FadeIn.delay(100 + i * 120).duration(900)} style={[{ position: "absolute", fontFamily: F.poster, fontSize: SW * 0.78, lineHeight: SW * 0.8, color: C.lilac }, l.style]}>
+          {l.ch}
+        </Animated.Text>
+      ))}
+
+      {/* top bar */}
+      <View style={{ paddingTop: insets.top + 10, paddingHorizontal: 22, flexDirection: "row", alignItems: "center", gap: 8 }}>
+        <Image source={IMG.logoMark} style={{ width: 24, height: 30 }} contentFit="contain" />
+        <Body size={13.5} weight="bold" style={{ flex: 1 }}>Agape International{"\n"}Ministries</Body>
+      </View>
+      <Animated.View entering={ZoomIn.delay(700).springify().damping(12)} style={{ position: "absolute", right: 14, top: insets.top + 4 }}>
+        <Starburst size={104} color={C.mint} spikes={16} spin>
+          <Text style={{ fontFamily: F.sansBold, fontSize: 12.5, lineHeight: 15, color: "#fff", textAlign: "center" }}>ALL ARE{"\n"}WELCOME</Text>
+        </Starburst>
+      </Animated.View>
+
+      {/* poster */}
+      <View style={{ flex: 1, justifyContent: "center", paddingHorizontal: 22, paddingTop: 40 }}>
+        <View>
+          {/* the burst sits behind the letters so every word stays readable */}
+          <Animated.View entering={ZoomIn.delay(900).springify().damping(10)} style={{ position: "absolute", left: size * 0.9, top: size * 1.74 }}>
+            <Starburst size={size * 0.6} color={C.flame} spikes={9} depth={0.5} rotate={12} />
+          </Animated.View>
+          <Line size={size} delay={150}>Love</Line>
+          <Line size={size} delay={300}>Shows</Line>
+          <Line size={size} delay={450}>Up.</Line>
+
+          {/* tilted connector word, like the poster's "TO" */}
+          <Animated.View entering={FadeIn.delay(800)} style={{ position: "absolute", left: size * 1.62, top: size * 0.44, transform: [{ rotate: "-24deg" }] }}>
+            <Text style={{ fontFamily: F.poster, fontSize: size * 0.42, lineHeight: size * 0.42, color: C.ink, textTransform: "uppercase" }}>that</Text>
+          </Animated.View>
+          <Animated.View entering={ZoomIn.delay(1050).springify().damping(10)} style={{ position: "absolute", left: size * 1.56, top: size * 1.72, transform: [{ rotate: "14deg" }] }}>
+            <Icon name="star" size={size * 0.36} color={C.sun} />
+          </Animated.View>
+          <Animated.View entering={ZoomIn.delay(1150).springify().damping(10)} style={{ position: "absolute", left: size * 1.5, top: size * 2.18, transform: [{ rotate: "-10deg" }] }}>
+            <View style={{ backgroundColor: C.violet, borderRadius: 10, paddingHorizontal: 10, paddingVertical: 4 }}>
+              <Body size={13} weight="bold">every Sunday</Body>
+            </View>
+          </Animated.View>
+        </View>
+        <Animated.View entering={FadeInDown.delay(600).duration(700)}>
+          <Body size={15} color={C.muted} style={{ marginTop: 18, maxWidth: 320 }}>Sermons, courses, prayer, games and a ride to church. All in one place.</Body>
         </Animated.View>
       </View>
 
-      <View style={{ flex: 1, paddingHorizontal: 22, justifyContent: "flex-end", paddingBottom: insets.bottom + 14 }}>
-        <Animated.View entering={FadeInDown.delay(250).duration(700)}>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 10 }}>
-            <Image source={IMG.logoMark} style={{ width: 26, height: 32 }} contentFit="contain" />
-            <Body size={14} weight="bold">Agape International Ministries</Body>
-          </View>
-          <View>
-            <Poster size={Math.min(78, SW * 0.19)}>Love that{"\n"}shows up.</Poster>
-            <View style={{ position: "absolute", right: SW * 0.08, top: -6 }}>
-              <Starburst size={62} color={C.flame} spikes={9} depth={0.55} rotate={14} />
-            </View>
-            <View style={{ position: "absolute", right: 4, bottom: 6 }}>
-              <Icon name="star" size={34} color={C.sun} />
-            </View>
-          </View>
-          <Body size={15.5} color={C.muted} style={{ marginTop: 12 }}>Sermons, courses, community, prayer, games and a ride to church, all in one place.</Body>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(450).duration(700)} style={{ gap: 10, marginTop: 22 }}>
+      {/* actions */}
+      <Animated.View entering={FadeInDown.delay(750).duration(700)} style={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 12, gap: 10 }}>
+        <View>
           <Button label="Continue with Apple" icon="smartphone" variant="green" block onPress={() => go()} />
-          <Button label="Continue with Google" icon="globe" variant="white" block onPress={() => go()} />
-          <Press onPress={() => go(true)} style={{ height: 44, alignItems: "center", justifyContent: "center" }}>
-            <Body size={14} color={C.muted}>Have an email account? <Body size={14} weight="bold">Sign in</Body> · <Body size={14} weight="bold" color={C.flame}>Explore as guest</Body></Body>
-          </Press>
-        </Animated.View>
-      </View>
+          {/* ticket notches cut into the button, as in the reference */}
+          <View pointerEvents="none" style={{ position: "absolute", left: 46, top: -7, width: 14, height: 14, borderRadius: 7, backgroundColor: BG }} />
+          <View pointerEvents="none" style={{ position: "absolute", left: 46, bottom: -7, width: 14, height: 14, borderRadius: 7, backgroundColor: BG }} />
+        </View>
+        <Button label="Continue with Google" icon="globe" variant="white" block onPress={() => go()} />
+        <Press onPress={() => go(true)} style={{ height: 40, alignItems: "center", justifyContent: "center" }}>
+          <Body size={13.5} color={C.muted}>Have an account? <Body size={13.5} weight="bold">Sign in</Body> · <Body size={13.5} weight="bold" color={C.flame}>Explore as guest</Body></Body>
+        </Press>
+      </Animated.View>
     </View>
   );
 }
