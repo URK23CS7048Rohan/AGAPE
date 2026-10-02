@@ -444,3 +444,32 @@ export function TypingDots({ color = C.ink }: { color?: string }) {
 }
 
 export const screen = { width: SW, height: SH };
+
+/* ---------------------------------------------------------------- Loading / empty / error states */
+export function Loading({ label, dark }: { label?: string; dark?: boolean }) {
+  return (
+    <View style={{ paddingVertical: 36, alignItems: "center", gap: 10 }}>
+      <TypingDots color={dark ? "#fff" : C.ink} />
+      {label ? <Text style={{ fontFamily: F.sansMedium, fontSize: 13, color: dark ? "rgba(255,255,255,0.7)" : C.muted }}>{label}</Text> : null}
+    </View>
+  );
+}
+export function Empty({ icon = "inbox", title, body, action, onAction, color = C.violet }: { icon?: string; title: string; body?: string; action?: string; onAction?: () => void; color?: string }) {
+  return (
+    <View style={{ alignItems: "center", paddingVertical: 28, paddingHorizontal: 24, gap: 8 }}>
+      <Starburst size={74} color={color} spikes={12} depth={0.8}><Icon name={icon} size={26} color={onColor(color)} /></Starburst>
+      <Text style={{ fontFamily: F.display, fontSize: 19, color: C.ink, textAlign: "center", marginTop: 6, letterSpacing: -0.4 }}>{title}</Text>
+      {body ? <Text style={{ fontFamily: F.sans, fontSize: 14, lineHeight: 20, color: C.muted, textAlign: "center", maxWidth: 300 }}>{body}</Text> : null}
+      {action ? <Button label={action} small variant="ink" trail={null} onPress={onAction} style={{ marginTop: 8, alignSelf: "center" }} /> : null}
+    </View>
+  );
+}
+export function ErrorBox({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) {
+  return <Empty icon="wifi-off" color={C.rose} title="Couldn't load this" body={error?.message || "Check your connection and try again."} action={onRetry ? "Try again" : undefined} onAction={onRetry} />;
+}
+/** Renders loading / error / empty / content for a useQuery result. */
+export function Async<T>({ q, empty, children, label }: { q: { data?: T; loading: boolean; error?: Error; reload: () => void }; empty?: (d: T) => React.ReactNode | null; children: (d: T) => React.ReactNode; label?: string }) {
+  if (q.data === undefined) return q.error ? <ErrorBox error={q.error} onRetry={q.reload} /> : <Loading label={label} />;
+  const e = empty ? empty(q.data) : null;
+  return <>{e ?? children(q.data)}</>;
+}

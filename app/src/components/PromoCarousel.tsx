@@ -4,8 +4,9 @@ import Animated, { Extrapolation, SharedValue, interpolate, useAnimatedScrollHan
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import { C, R, onColor } from "@/theme";
-import { PROMOS, Promo } from "@/data/mock";
-import { Bar, Body, Display, Icon, Label, Press, Sticker, Ticket } from "./ui";
+import { Linking } from "react-native";
+import type { Promo } from "@/lib/content";
+import { Body, Display, Icon, Label, Press, Sticker, Ticket } from "./ui";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = SW - 64;
@@ -19,7 +20,7 @@ function PromoCard({ p, i, x }: { p: Promo; i: number; x: SharedValue<number> })
   });
   const fg = onColor(p.accentColor);
   return (
-    <Press onPress={() => router.push(p.route as any)} scaleTo={0.98} style={{ width: CARD_W }}>
+    <Press onPress={() => (p.url ? Linking.openURL(p.url) : router.push(p.route as any))} scaleTo={0.98} style={{ width: CARD_W }}>
       <Animated.View style={card}>
         <View style={{ paddingTop: 14 }}>
           <Ticket color={p.accentColor} at={0.5} notch={12} style={{ padding: 10 }}>
@@ -45,17 +46,10 @@ function PromoCard({ p, i, x }: { p: Promo; i: number; x: SharedValue<number> })
             <Icon name="arrow-up-right" size={20} color={fg} />
           </View>
         </View>
-        {p.progress ? (
-          <View style={{ marginTop: 10, paddingHorizontal: 4 }}>
-            <Bar progress={p.progress} color={C.mint} height={8} />
-            <Label style={{ marginTop: 6 }}>{Math.round(p.progress * 100)}% of goal raised · {p.cta}</Label>
-          </View>
-        ) : (
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, paddingHorizontal: 4 }}>
-            <Icon name="star" size={13} color={C.violet} />
-            <Body size={13} weight="semi">{p.cta}</Body>
-          </View>
-        )}
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 6, marginTop: 8, paddingHorizontal: 4 }}>
+          <Icon name="star" size={13} color={C.violet} />
+          <Body size={13} weight="semi">{p.cta}</Body>
+        </View>
       </Animated.View>
     </Press>
   );
@@ -69,7 +63,7 @@ function Dot({ i, x }: { i: number; x: SharedValue<number> }) {
   return <Animated.View style={[{ height: 7, borderRadius: 4, backgroundColor: C.ink }, st]} />;
 }
 
-export function PromoCarousel({ promos = PROMOS }: { promos?: Promo[] }) {
+export function PromoCarousel({ promos }: { promos: Promo[] }) {
   const x = useSharedValue(0);
   const ref = useRef<any>(null);
   const idx = useRef(0);

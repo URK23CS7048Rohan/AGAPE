@@ -9,30 +9,37 @@ agape/
 │   ├── assets/         css, js (main.js + vendored GSAP), fonts, img
 │   └── dist/agape-website-preview.html   single-file preview (everything inlined)
 ├── app/                Native iOS + Android app (Expo SDK 54 · React Native · expo-router · Reanimated 4)
-└── backend/supabase/   schema.sql (tables + RLS + realtime), seed.sql, functions/ask-agape (AI)
+└── backend/supabase/   migrations/ (tables + RLS + realtime), setup.sql (all-in-one), seed.sql (starter Bible games), functions/ask-agape (AI)
 ```
 
 ## Brand & media
 * Colours: the vibrant palette of flame `#FF5A1F`, sun `#FFC23D`, rose, violet and mint. The two primaries are `--brand` and `--gold` in `website/assets/css/style.css`, and `C.flame` and `C.sun` in `app/src/theme.ts`. Change them there to recolour everything.
 * The logo is cut out in four variants in `assets/img/`: `logo-mark.png` and `logo-full.png` for light backgrounds, plus `-light` versions for dark ones. The app icon and splash screen are built from it.
 * The church's own photos are the `agape-*.jpg` files. The remaining stock images are only used for atmosphere (sermon series art, giving campaigns, the Bible games and AI demos).
-* YouTube: channel **Agape International Media** (`UCjly5vzmBLYGHaj-H4jefng`). The website player and the app's Watch screen embed the channel's latest uploads (playlist `UU…`), and the live stream when the church is broadcasting. To pin one video in the app, set `EXPO_PUBLIC_YOUTUBE_VIDEO_ID`.
+* YouTube: channel **Agape International Media** (`UCjly5vzmBLYGHaj-H4jefng`). The website player and the app's Watch screen embed the channel's latest uploads (playlist `UU…`), and the live stream when the church is broadcasting. Individual sermons are added in the admin (paste the YouTube link).
 
 ## Admin panel (`website/admin/`)
-Staff manage everything from one place, without touching code:
-* **All images:** every photo on the site, grouped by section. Click, drag or paste to replace a photo. Uploads are resized automatically.
-* **Homepage hero:** headline, cycling words, intro text and the slideshow photos (drag to reorder).
-* **Promotions, Events, Ministries, Giving campaigns, Testimonies:** add, edit, duplicate, reorder and delete, with photo and colour pickers.
-* **Photo gallery:** drop in many photos at once, write captions on the cards, drag to reorder.
-* **Watch & YouTube, Church info:** channel, player artwork, announcement bar, contact details, service times (these drive the live countdowns) and the counter numbers.
-* **Community:** moderate the prayer wall (answered, hide, delete), manage ride requests and drivers, change member roles (member, volunteer, staff), and post announcements to the app.
-* **Live preview:** see the real site update as you edit, in phone or desktop size. **Save & publish** (Ctrl/⌘+S) pushes the changes to the website, and the app picks them up live.
+One admin for the website **and** the app. Staff sign in with the same email and password they use in the app (their account needs the `staff` or `admin` role).
 
-How it works: the site renders its sections from `assets/js/content.js` (the defaults) merged with the saved edits.
-* **Demo mode** (no Supabase configured): edits are stored in the browser, which is handy for trying things out. Serve the folder (`npx serve website`), open `/admin`, and sign in with any email and password.
-* **Live mode:** fill in `website/assets/js/config.js` with the Supabase URL and anon key. Edits save to the `site_content` table, photos upload to the public `media` Storage bucket, and only accounts with the staff role can sign in or publish (enforced by row-level security, tested).
-* The app reads the same `site_content` row (`app/src/lib/content.ts`) for hero photos, promotions, events and ministries, and updates in real time when staff publish.
-* `dist/agape-admin-demo.html` is a single-file demo of the admin with live preview. It opens straight from disk, and its edits stay in that browser.
+**Website** (saved together with **Save & publish**, Ctrl/⌘+S; the app picks these up live too):
+* **All images, Homepage hero, Promotions, Photo gallery, Events, Ministries, Giving campaigns, Testimonies, Watch & YouTube.**
+* **Church info:** contact details, service times (drive the countdowns), the **online giving link** used by the app's Give button, and the **church location** for the ride map.
+* **Live preview** of the real site in phone or desktop size.
+
+**App** (each item saves on its own, straight to the app):
+* **Sermons:** series and messages (paste a YouTube link; mark a message *Live* while streaming).
+* **Courses:** courses with their lessons (video / PDF / reading links and notes). Only published courses show.
+* **Study guides:** PDF links shown under Grow.
+* **Bible games:** Trivia and Verse Match packs and their questions.
+* **Groups & chats:** groups in the app's Family tab; each gets a group chat automatically.
+* **RSVPs & check-in:** who's coming to each event, with a tick-box check-in.
+* **Pastoral care:** the private requests members send from the app.
+
+**Community:** moderate the prayer wall, assign drivers to rides, change member roles (only an admin can make admins), and post announcements to the app's News tab.
+
+Staff also have **Staff tools** inside the app (Me → Staff tools) for moderating on the go: prayer wall, rides, care requests, news and live numbers.
+
+How it works: the website renders from `assets/js/content.js` (defaults) merged with the edits saved in the `site_content` table. The admin requires Supabase (`website/assets/js/config.js`); there is no demo mode. Photos upload to the public `media` Storage bucket. Row-level security decides who can change what.
 
 ## 1. Website
 * Open `website/index.html` in a browser, or serve it: `npx serve website`.
@@ -46,10 +53,10 @@ How it works: the site renders its sections from `assets/js/content.js` (the def
 cd app
 npm install
 npx expo install --fix      # aligns every native package to the installed Expo SDK
-cp .env.example .env         # optional: connect Supabase (without it the app runs on demo data)
+cp .env.example .env         # required: your Supabase URL + anon key (see 3. Backend)
 npx expo start               # scan the QR with Expo Go, or press i / a for a simulator
 ```
-Screens: Welcome/sign-in · Home (live card + countdown, promo carousel, quick actions, verse of the day, course progress, events, prayer) · Watch (live, search, series by book, latest) · Sermon (collapsing hero, YouTube Live player, save/download/share, synced notes, live chat) · Grow (reading-plan streak, courses, PDF study guides) · Course (lessons with progress ring, complete → confetti) · Community (chats, groups, announcements) · Chat · Me (tilting membership card, Wallet/check-in, settings: Face ID, notifications, larger text, kids mode, language, pastoral care) · Bible Games (Verse Match + Trivia, haptics, live leaderboard) · Ask Agape (AI with streamed replies) · Rides (live map, request → searching → driver en route with ETA → arrived; volunteer mode with accept + Google Maps/Waze hand-off + location sharing) · Prayer wall · Give (one-time/monthly, funds, campaign progress) · Events (RSVP, ticket).
+Screens: Welcome · Sign in / create account (or browse as a guest) · Home (hero, next-service countdown, promotions, verse of the day, course progress, events with RSVP, prayer) · Watch (live service, series, search) · Sermon (YouTube player, save, synced notes, live chat) · Grow (learning streak, courses, study guides) · Course (lessons unlock in order, progress saved) · Family (chats, groups with group chats, church news) · Chat + new message · Prayer wall (post anonymously, pray, mark answered) · Events (RSVP, QR ticket) · Give (opens the church's giving page) · Bible games (Verse Match + Trivia, weekly leaderboard) · Ask Agape (AI) · Rides (request → volunteer accepts → live driver location; volunteer mode) · Me (member card with QR, profile, Face ID lock, pastoral care, delete account) · Staff tools (staff only).
 
 ### Get an installable APK (Android)
 **Option A: GitHub, no account setup** (about 10 minutes, all in the browser)
@@ -71,15 +78,25 @@ The test APK is signed with a debug key, which is fine for installing and sharin
 Store builds: `npx eas-cli build -p ios` / `-p android --profile production` (create the church's own Apple/Google developer accounts first).
 
 ## 3. Backend (Supabase)
-1. Create a project under the church's billing. SQL editor → run `backend/supabase/schema.sql`, then `seed.sql`.
-2. Auth → enable Email, Apple and Google providers.
-3. AI assistant: `supabase functions deploy ask-agape` and `supabase secrets set ANTHROPIC_API_KEY=… ANTHROPIC_MODEL=…` (the key stays server-side; there's a per-user daily limit).
-4. Put the project URL and anon key in `app/.env`.
-5. Staff get `role = 'staff'` in `profiles`. Until a custom admin panel is built they can manage videos, courses, trivia packs, events and announcements from Supabase Studio. The `staff_stats` view feeds an analytics dashboard.
+1. Create a project on [supabase.com](https://supabase.com) (region close to Kuwait, e.g. Frankfurt or Mumbai). Leave the Data API on; "automatic RLS" can be on.
+2. **SQL Editor → New query →** paste all of `backend/supabase/setup.sql` → **Run**. It creates every table, security rule and function, plus the starter Bible games. (It's generated from `migrations/` + `seed.sql` by `make-setup.sh`; with the Supabase CLI you can run `supabase db push` from `backend/` instead.)
+3. **Project Settings → API:** copy the **Project URL** and the **anon public** key into
+   * `website/assets/js/config.js` (`supabaseUrl`, `supabaseAnonKey`),
+   * `app/.env` (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`), and
+   * GitHub → Settings → Secrets → Actions, with the same two names, so the APK is built connected. Add `EXPO_PUBLIC_SITE_URL` (your website address) and `GOOGLE_MAPS_ANDROID_KEY` (ride map on Android) there too.
 
-The schema has been run on PostgreSQL 16 and its RLS was tested with member and volunteer accounts.
+   Never put the `service_role` key in the app or website.
+4. **Authentication → URL Configuration:** set the Site URL to your website (used by the email confirmation and password-reset links). Email sign-in is on by default.
+5. Sign up once (in the app, or create the user under Authentication → Users), then in the SQL Editor run
+   `update public.profiles set role = 'admin' where email = 'you@example.com';`
+   From then on, change roles in the admin → Members & roles.
+6. Ask Agape (AI): `supabase functions deploy ask-agape` and `supabase secrets set ANTHROPIC_API_KEY=…` (the key stays server-side; there's a per-user daily limit).
 
-## Replace before launch
-* **Placeholders:** church address and coordinates (`app/src/data/mock.ts → CHURCH`), service times (both CONFIG blocks), event dates, giving campaigns and amounts, testimonies, member counts, the pastor name on the demo sermons, the Instagram/Facebook/WhatsApp links, and the Google Maps Android key (`app.json`).
-* **Live chat preview:** the chat beside the website player is a labelled preview of the in-app feature, not a live feed.
-* **Wiring still to do:** a payment gateway for Give (Tap / MyFatoorah for KNET, or Stripe) with a webhook that marks donations `succeeded`; push notifications (expo-notifications + `push_tokens`); background location for drivers (dev build + expo-task-manager); real QR codes (react-native-qrcode-svg) and Wallet passes; replacing the demo data in screens with the `src/lib/api.ts` calls (already written for prayers, notes, lesson progress, scores, rides, live location and RSVPs).
+The migrations and their security rules were tested on a local Supabase stack: 57 end-to-end checks of the app's own data layer as a guest, members, a volunteer driver and staff, plus the admin in a browser.
+
+## Before launch
+* **Content:** the website's default content (`website/assets/js/content.js`) still has sample numbers, testimonies, campaign amounts and event dates. Edit them in the admin and press **Save & publish** once; the app shows exactly the same content.
+* **Giving:** add the church's online giving page in admin → Church info. The App Store and Google Play require donations to happen on the church's own page (Give opens it with the chosen amount and fund). Until then the app says giving is "coming soon".
+* **Ride map:** set the church location in admin → Church info, and add a Google Maps Android key (`GOOGLE_MAPS_ANDROID_KEY` secret). Drivers keep the app open while driving; background tracking needs a dev build with expo-task-manager.
+* **Still to add later:** push notifications (expo-notifications + the `push_tokens` table), a payment gateway inside the giving page, and a camera scanner for check-in QR codes (the admin's RSVP page has tick-box check-in meanwhile).
+* **Store listing:** a privacy policy URL (members can delete their account in Me → Settings, which Apple requires).

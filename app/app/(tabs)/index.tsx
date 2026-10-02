@@ -5,12 +5,16 @@ import { Image } from "expo-image";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, IMG, R, onColor } from "@/theme";
-import { AvatarStack, Body, Display, Icon, IconButton, Label, Press, Ring, SectionTitle, Starburst } from "@/components/ui";
+import { Body, Display, Icon, IconButton, Label, Press, Ring, SectionTitle, Starburst } from "@/components/ui";
 import { PromoCarousel } from "@/components/PromoCarousel";
 import { HeroStage, NextService } from "@/components/HeroStage";
-import { useSiteContent } from "@/lib/content";
-import { COURSES, USER, VERSES } from "@/data/mock";
-import { useStore } from "@/lib/store";
+import { imageSource, useSiteContent } from "@/lib/content";
+import { VERSES } from "@/data/verses";
+import { useAuth } from "@/lib/auth";
+import { useQuery } from "@/lib/query";
+import { completedLessons, listCourses } from "@/lib/api";
+import { useRsvps } from "@/lib/hooks";
+import { fmt } from "@/lib/time";
 
 const QUICK = [
   { icon: "play", label: "Watch", color: C.flame, route: "/watch" },
@@ -25,11 +29,19 @@ const QUICK = [
 
 export default function Home() {
   const insets = useSafeAreaInsets();
-  const { progress, rsvps, toggleRsvp } = useStore();
+  const { firstName, signedIn } = useAuth();
   const site = useSiteContent();
+  const rsvp = useRsvps();
+  const courses = useQuery("courses", listCourses);
+  const doneSet = useQuery(signedIn ? "progress:lessons" : null, completedLessons);
   const verse = VERSES[new Date().getDate() % VERSES.length];
-  const course = COURSES[0];
-  const done = progress[course.id] ?? 0;
+  // the course the member is furthest into but hasn't finished (or the first course)
+  const course = (() => {
+    const list = (courses.data || []).filter((c) => c.lessons.length);
+    const done = (c: (typeof list)[number]) => c.lessons.filter((l) => doneSet.data?.has(l.id)).length;
+    return list.filter((c) => done(c) < c.lessons.length).sort((a, b) => done(b) / b.lessons.length - done(a) / a.lessons.length)[0] ?? list[0];
+  })();
+  const done = course ? course.lessons.filter((l) => doneSet.data?.has(l.id)).length : 0;
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "short" });
 
   return (
@@ -38,11 +50,11 @@ export default function Home() {
         {/* Greeting */}
         <Animated.View entering={FadeInDown.duration(500)} style={{ flexDirection: "row", alignItems: "center", paddingHorizontal: 20, gap: 10, marginBottom: 22 }}>
           <View style={{ flex: 1 }}>
-            <Display size={30}>Hello, {USER.first} 👋</Display>
+            <Display size={30} numberOfLines={1}>{signedIn ? `Hello, ${firstName} 👋` : "Hello 👋"}</Display>
             <Label style={{ marginTop: 2 }}>{today}</Label>
           </View>
-          <IconButton name="bell" badge border={C.line} onPress={() => router.push("/community")} />
-          <Press onPress={() => router.push("/me")}>
+          <IconButton name="bell" border={C.line} onPress={() => router.push("/community?tab=news")} />
+          <Press onPress={() => router.push(signedIn ? "/me" : "/auth")}>
             <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: C.sun, borderWidth: 2, borderColor: C.ink, alignItems: "center", justifyContent: "center", overflow: "hidden" }}>
               <Image source={IMG.logoMark} style={{ width: 26, height: 30 }} contentFit="contain" />
             </View>
@@ -69,10 +81,12 @@ export default function Home() {
         </View>
 
         {/* Promotions */}
-        <View style={{ marginTop: 32 }}>
-          <SectionTitle title="Happening at Agape" sub="Don't miss what's next" />
-          <PromoCarousel promos={site.promos} />
-        </View>
+        {site.promos.length ? (
+          <View style={{ marginTop: 32 }}>
+            <SectionTitle title="Happening at Agape" sub="Don't miss what's next" />
+            <PromoCarousel promos={site.promos} />
+          </View>
+        ) : null}
 
         {/* Verse of the day */}
         <Animated.View entering={FadeInDown.delay(100)} style={{ marginHorizontal: 16, marginTop: 32 }}>
@@ -92,50 +106,54 @@ export default function Home() {
         </Animated.View>
 
         {/* Continue learning */}
-        <View style={{ marginTop: 32 }}>
-          <SectionTitle title="Keep growing" action="All courses" onAction={() => router.push("/grow")} />
-          <Press onPress={() => router.push(`/course/${course.id}`)} scaleTo={0.98} style={{ marginHorizontal: 16, flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: "#fff", borderRadius: R.lg, padding: 10, borderWidth: 1.5, borderColor: C.line }}>
-            <View style={{ width: 92, height: 92, borderRadius: 18, backgroundColor: course.color, padding: 6 }}>
-              <Image source={course.image} style={{ flex: 1, borderRadius: 13 }} contentFit="cover" />
-            </View>
-            <View style={{ flex: 1 }}>
-              <Label>{course.category} · {course.lessons.length} lessons</Label>
-              <Display size={19} style={{ marginTop: 2 }} numberOfLines={2}>{course.title} {course.accent}</Display>
-              <Label numberOfLines={1} style={{ marginTop: 4 }}>Next: {course.lessons[Math.min(done, course.lessons.length - 1)].title}</Label>
-            </View>
-            <Ring size={58} stroke={6} progress={done / course.lessons.length} color={C.violet}>
-              <Body size={13} weight="bold">{Math.round((done / course.lessons.length) * 100)}%</Body>
-            </Ring>
-          </Press>
-        </View>
+        {course ? (
+          <View style={{ marginTop: 32 }}>
+            <SectionTitle title="Keep growing" action="All courses" onAction={() => router.push("/grow")} />
+            <Press onPress={() => router.push(`/course/${course.id}`)} scaleTo={0.98} style={{ marginHorizontal: 16, flexDirection: "row", gap: 14, alignItems: "center", backgroundColor: "#fff", borderRadius: R.lg, padding: 10, borderWidth: 1.5, borderColor: C.line }}>
+              <View style={{ width: 92, height: 92, borderRadius: 18, backgroundColor: course.color || C.violet, padding: 6 }}>
+                <Image source={imageSource(course.cover_url, IMG.institute)} style={{ flex: 1, borderRadius: 13 }} contentFit="cover" />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Label>{course.category ? `${course.category} · ` : ""}{course.lessons.length} lessons</Label>
+                <Display size={19} style={{ marginTop: 2 }} numberOfLines={2}>{course.title}</Display>
+                <Label numberOfLines={1} style={{ marginTop: 4 }}>{done >= course.lessons.length ? "Completed 🎉" : `Next: ${course.lessons[Math.min(done, course.lessons.length - 1)].title}`}</Label>
+              </View>
+              <Ring size={58} stroke={6} progress={done / course.lessons.length} color={course.color || C.violet}>
+                <Body size={13} weight="bold">{Math.round((done / course.lessons.length) * 100)}%</Body>
+              </Ring>
+            </Press>
+          </View>
+        ) : null}
 
         {/* Events */}
-        <View style={{ marginTop: 32 }}>
-          <SectionTitle title="This month" action="Calendar" onAction={() => router.push("/events")} />
-          <View style={{ marginHorizontal: 16, gap: 10 }}>
-            {site.events.slice(0, 3).map((e, i) => {
-              const going = rsvps.has(e.id);
-              return (
-                <Animated.View key={e.id} entering={FadeInDown.delay(i * 70)}>
-                  <Press onPress={() => router.push("/events")} scaleTo={0.98} style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#fff", borderRadius: R.lg, padding: 10, paddingRight: 12, borderWidth: 1.5, borderColor: C.line }}>
-                    <View style={{ width: 60, height: 64, borderRadius: 16, backgroundColor: e.color, alignItems: "center", justifyContent: "center" }}>
-                      <Display size={24} color={onColor(e.color)} style={{ lineHeight: 26 }}>{e.day}</Display>
-                      <Label size={11} color={onColor(e.color)}>{e.month}</Label>
-                    </View>
-                    <View style={{ flex: 1 }}>
-                      <Body size={15.5} weight="semi" numberOfLines={1}>{e.title}</Body>
-                      <Label numberOfLines={1}>{e.time}</Label>
-                    </View>
-                    <Press onPress={() => toggleRsvp(e.id)} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: going ? C.mint : C.ink, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 5 }}>
-                      {going ? <Icon name="check" size={14} color="#fff" /> : null}
-                      <Body size={12.5} weight="bold" color="#fff">{going ? "Going" : "RSVP"}</Body>
+        {site.events.length ? (
+          <View style={{ marginTop: 32 }}>
+            <SectionTitle title="Coming up" action="Calendar" onAction={() => router.push("/events")} />
+            <View style={{ marginHorizontal: 16, gap: 10 }}>
+              {site.events.slice(0, 3).map((e, i) => {
+                const going = rsvp.going(e.key);
+                return (
+                  <Animated.View key={e.key} entering={FadeInDown.delay(i * 70)}>
+                    <Press onPress={() => router.push("/events")} scaleTo={0.98} style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#fff", borderRadius: R.lg, padding: 10, paddingRight: 12, borderWidth: 1.5, borderColor: C.line }}>
+                      <View style={{ width: 60, height: 64, borderRadius: 16, backgroundColor: e.color, alignItems: "center", justifyContent: "center" }}>
+                        <Display size={24} color={onColor(e.color)} style={{ lineHeight: 26 }}>{e.day}</Display>
+                        <Label size={11} color={onColor(e.color)}>{e.month}</Label>
+                      </View>
+                      <View style={{ flex: 1 }}>
+                        <Body size={15.5} weight="semi" numberOfLines={1}>{e.title}</Body>
+                        <Label numberOfLines={1}>{e.time}</Label>
+                      </View>
+                      <Press onPress={() => rsvp.toggle(e)} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: going ? C.mint : C.ink, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 5 }}>
+                        {going ? <Icon name="check" size={14} color="#fff" /> : null}
+                        <Body size={12.5} weight="bold" color="#fff">{going ? "Going" : "RSVP"}</Body>
+                      </Press>
                     </Press>
-                  </Press>
-                </Animated.View>
-              );
-            })}
+                  </Animated.View>
+                );
+              })}
+            </View>
           </View>
-        </View>
+        ) : null}
 
         {/* Prayer teaser */}
         <Press onPress={() => router.push("/prayer")} scaleTo={0.98} style={{ marginHorizontal: 16, marginTop: 32, borderRadius: R.xl, backgroundColor: C.rose, padding: 20, overflow: "hidden" }}>
@@ -144,9 +162,12 @@ export default function Home() {
           </View>
           <Body size={13} weight="semi">Prayer wall</Body>
           <Display size={30} style={{ marginTop: 6, maxWidth: "75%" }}>You don't have to carry it alone.</Display>
-          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 16, gap: 12 }}>
-            <AvatarStack names={["Anna", "Joel", "Mary"]} colors={[C.sun, C.violet, C.mint]} ring={C.rose} extra="+9" />
-            <Body size={13.5}><Body size={13.5} weight="bold">1,240</Body> praying this week</Body>
+          <View style={{ flexDirection: "row", alignItems: "center", marginTop: 16, gap: 8 }}>
+            <View style={{ backgroundColor: C.ink, borderRadius: 12, paddingHorizontal: 12, height: 36, flexDirection: "row", alignItems: "center", gap: 6 }}>
+              <Body size={13.5} weight="bold" color="#fff">Share a request</Body>
+              <Icon name="arrow-up-right" size={15} color="#fff" />
+            </View>
+            {site.stats.prayers ? <Body size={13}><Body size={13} weight="bold">{fmt(site.stats.prayers)}</Body> prayers this year</Body> : null}
           </View>
         </Press>
       </Animated.ScrollView>

@@ -2,7 +2,6 @@
   index.html                     ← src/index.src.html + icon sprite
   admin/index.html               ← admin/index.html + icon sprite (in place)
   dist/agape-website-preview.html  single file, all assets inlined
-  dist/agape-admin-demo.html       single-file admin with live preview (demo mode)
 """
 import re, base64, pathlib, mimetypes, json
 root = pathlib.Path(__file__).resolve().parent.parent
@@ -58,12 +57,4 @@ def site_single(include_assets=True, preview=False):
 site = site_single()
 (root/'dist/agape-website-preview.html').write_text(site)
 
-# ---- admin demo single file
-adm = a.replace('<link rel="stylesheet" href="admin.css" />', '<style>' + (root/'admin/admin.css').read_text().replace('url("../assets/fonts/', 'url("__F__') + '</style>')
-adm = re.sub(r'url\("__F__([^"]+)"\)', lambda m: f'url("{data_uri(root/"assets/fonts"/m.group(1))}")', adm)
-adm = re.sub(r'src="\.\./(assets/img/[^"]+)"', lambda m: f'src="{assets.get(m.group(1)) or data_uri(root/m.group(1))}"', adm)
-adm = inline_scripts(adm, root/'admin')
-site_for_preview = site_single(include_assets=False, preview=True)
-adm = adm.replace('</head>', '<script>' + assets_js + '</script>\n<script>window.AGAPE_SITE_HTML=' + json.dumps(site_for_preview).replace('</', '<\\/') + ';</script>\n</head>', 1)
-(root/'dist/agape-admin-demo.html').write_text(adm)
-print('index.html', len(html)//1024, 'KB · site preview', len(site)//1024, 'KB · admin demo', len(adm)//1024, 'KB')
+print('index.html', len(html)//1024, 'KB · site preview', len(site)//1024, 'KB')

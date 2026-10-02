@@ -5,6 +5,7 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R } from "@/theme";
 import { BackHeader, Body, Display, Icon, IconButton, Press, Starburst, TypingDots } from "@/components/ui";
 import { askAgape, ChatMsg } from "@/lib/api";
+import { useNeedsAccount } from "@/lib/auth";
 
 const SUGGEST = ["What does Romans 8:28 mean?", "Give me a devotional on anxiety", "Where's the verse about “be still”?", "Summarize Sunday's sermon"];
 
@@ -25,6 +26,7 @@ export default function Assistant() {
   const [draft, setDraft] = useState("");
   const [busy, setBusy] = useState(false);
   const list = useRef<FlatList>(null);
+  const needs = useNeedsAccount();
 
   const stream = (id: string, full: string) => {
     let i = 0;
@@ -37,13 +39,15 @@ export default function Assistant() {
 
   const ask = async (q: string) => {
     const text = q.trim();
-    if (!text || busy) return;
+    if (!text || busy || needs("ask Agape questions")) return;
     setBusy(true);
     setDraft("");
     const history: Msg[] = [...msgs, { id: String(Date.now()), role: "user", content: text }];
     const botId = String(Date.now() + 1);
     setMsgs([...history, { id: botId, role: "assistant", content: "", shown: "", streaming: true }]);
-    const reply = await askAgape(history.map(({ role, content }) => ({ role, content })));
+    let reply: string;
+    try { reply = await askAgape(history.filter((m) => !m.content.startsWith("⚠️")).map(({ role, content }) => ({ role, content }))); }
+    catch (e: any) { reply = `⚠️ ${e.message}`; }
     setMsgs((m) => m.map((x) => (x.id === botId ? { ...x, content: reply } : x)));
     stream(botId, reply);
   };

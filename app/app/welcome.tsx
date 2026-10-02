@@ -7,7 +7,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG } from "@/theme";
 import { Body, Button, Icon, Press, Starburst } from "@/components/ui";
-import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 const BG = "#FFFFFF";
@@ -31,8 +31,8 @@ function Line({ children, size, delay }: { children: React.ReactNode; size: numb
 
 export default function Welcome() {
   const insets = useSafeAreaInsets();
-  const { signIn } = useStore();
-  const go = (guest = false) => { signIn(guest); router.replace("/"); };
+  const { continueAsGuest } = useAuth();
+  const guest = () => { continueAsGuest(); router.replace("/"); };
   // Sized so the three lines fill the width on any phone without crowding the buttons.
   const size = Math.round(Math.min(SW * 0.36, (SH - insets.top - insets.bottom - 330) / 2.9, 170));
 
@@ -89,14 +89,14 @@ export default function Welcome() {
       {/* actions */}
       <Animated.View entering={FadeInDown.delay(750).duration(700)} style={{ paddingHorizontal: 22, paddingBottom: insets.bottom + 12, gap: 10 }}>
         <View>
-          <Button label="Continue with Apple" icon="smartphone" variant="green" block onPress={() => go()} />
+          <Button label="Create a free account" icon="user-plus" variant="green" block onPress={() => router.push("/auth?mode=signup")} />
           {/* ticket notches cut into the button, as in the reference */}
           <View pointerEvents="none" style={{ position: "absolute", left: 46, top: -7, width: 14, height: 14, borderRadius: 7, backgroundColor: BG }} />
           <View pointerEvents="none" style={{ position: "absolute", left: 46, bottom: -7, width: 14, height: 14, borderRadius: 7, backgroundColor: BG }} />
         </View>
-        <Button label="Continue with Google" icon="globe" variant="white" block onPress={() => go()} />
-        <Press onPress={() => go(true)} style={{ height: 40, alignItems: "center", justifyContent: "center" }}>
-          <Body size={13.5} color={C.muted}>Have an account? <Body size={13.5} weight="bold">Sign in</Body> · <Body size={13.5} weight="bold" color={C.flame}>Explore as guest</Body></Body>
+        <Button label="Sign in" icon="log-in" variant="white" block onPress={() => router.push("/auth")} />
+        <Press onPress={guest} style={{ height: 40, alignItems: "center", justifyContent: "center" }}>
+          <Body size={13.5} color={C.muted}>Just looking? <Body size={13.5} weight="bold" color={C.flame}>Explore as a guest</Body></Body>
         </Press>
       </Animated.View>
     </View>

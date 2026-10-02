@@ -1,12 +1,13 @@
-import { CHURCH } from "@/data/mock";
+import type { Service } from "./content";
 
-/** Next service computed in the church's local time zone. */
-export function nextService(now = Date.now()) {
-  const local = now + CHURCH.tzOffsetHours * 3600e3;
+/** Next service from the times set in /admin, computed in the church's local time zone. */
+export function nextService(services: Service[], tzOffsetHours: number, now = Date.now()) {
+  if (!services.length) return null;
+  const local = now + tzOffsetHours * 3600e3;
   const d = new Date(local);
   let best: { t: number; label: string; time: string } | null = null;
   let live: string | null = null;
-  for (const s of CHURCH.services) {
+  for (const s of services) {
     const diff = (s.day - d.getUTCDay() + 7) % 7;
     let t = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate() + diff, s.h, s.m);
     if (t <= local && local < t + 90 * 60e3) live = s.label;
@@ -25,9 +26,24 @@ export function nextService(now = Date.now()) {
   };
 }
 
-export function greeting(date = new Date()) {
-  const h = date.getHours();
-  return h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening";
+export const fmt = (n: number) => Math.round(n || 0).toLocaleString("en-US");
+
+/** "5m", "3h", "Yesterday", "12 Sep" */
+export function ago(iso?: string | null) {
+  if (!iso) return "";
+  const t = new Date(iso).getTime();
+  const s = (Date.now() - t) / 1000;
+  if (s < 60) return "now";
+  if (s < 3600) return `${Math.floor(s / 60)}m`;
+  if (s < 86400) return `${Math.floor(s / 3600)}h`;
+  if (s < 172800) return "Yesterday";
+  return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
 }
 
-export const fmt = (n: number) => Math.round(n).toLocaleString("en-US");
+export const clock = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
+
+export function duration(sec?: number | null) {
+  if (!sec) return "";
+  const h = Math.floor(sec / 3600), m = Math.round((sec % 3600) / 60);
+  return h ? `${h}h ${String(m).padStart(2, "0")}m` : `${m}m`;
+}

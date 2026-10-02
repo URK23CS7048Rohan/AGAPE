@@ -50,7 +50,7 @@
     try {
       await S.save(C);
       saved = JSON.stringify(C);
-      toast(S.live ? "Published. The website and app are updated." : "Saved. Open the site in this browser to see it.");
+      toast("Published. The website and app are updated.");
     } catch (e) {
       toast("Couldn't save: " + e.message, true);
     }
@@ -113,13 +113,15 @@
     const wrap = document.createElement("label");
     wrap.className = "field" + (def.wide ? " span-all" : "");
     const v = obj[def.k];
-    const done = (val) => { obj[def.k] = val; onChange && onChange(); markDirty(); };
+    const done = (val) => { obj[def.k] = val; onChange && onChange(); if (!def.db) markDirty(); };
     let control = "";
-    if (def.type === "textarea") control = `<textarea rows="${def.rows || 3}">${esc(v)}</textarea>`;
+    if (def.type === "bool") { def = { ...def, type: "select", options: [["true", "Yes"], ["false", "No"]], bool: true }; }
+    if (def.type === "date") control = `<input type="datetime-local" value="${esc(v ? new Date(new Date(v).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "")}" />`;
+    else if (def.type === "textarea") control = `<textarea rows="${def.rows || 3}">${esc(v)}</textarea>`;
     else if (def.type === "select") control = `<select>${def.options.map(([val, lab]) => `<option value="${esc(val)}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`).join("")}</select>`;
     else if (def.type === "color") control = `<div class="color-in"><input type="color" value="${esc(v || "#FF5A1F")}" /><input type="text" value="${esc(v)}" maxlength="9" /><span class="swatches">${(def.soft ? SOFT : PALETTE).map((c) => `<button type="button" style="background:${c}" data-c="${c}" title="${c}"></button>`).join("")}</span></div>`;
     else if (def.type === "tags") control = `<div class="tags">${(v || []).map((t, i) => `<span>${esc(t)}<button type="button" data-i="${i}">${ic("x")}</button></span>`).join("")}<input placeholder="${esc(def.ph || "Type and press Enter")}" /></div>`;
-    else control = `<input type="${def.type === "number" ? "number" : "text"}" value="${esc(v)}" placeholder="${esc(def.ph || "")}" ${def.type === "number" ? 'step="any"' : ""} />`;
+    else if (def.type !== "date") control = `<input type="${def.type === "number" ? "number" : "text"}" value="${esc(v)}" placeholder="${esc(def.ph || "")}" ${def.type === "number" ? 'step="any"' : ""} />`;
     wrap.innerHTML = `<span>${esc(def.label)}</span>${control}${def.hint ? `<small>${esc(def.hint)}</small>` : ""}`;
     if (def.type === "color") {
       const [c, t] = $$("input", wrap);
@@ -130,13 +132,13 @@
       const input = $("input", wrap);
       const rerender = () => { const n = field(def, obj, onChange); wrap.replaceWith(n); $("input", n).focus(); };
       input.addEventListener("keydown", (e) => {
-        if ((e.key === "Enter" || e.key === ",") && input.value.trim()) { e.preventDefault(); obj[def.k] = [...(obj[def.k] || []), input.value.trim()]; markDirty(); onChange && onChange(); rerender(); }
-        if (e.key === "Backspace" && !input.value && (obj[def.k] || []).length) { obj[def.k] = obj[def.k].slice(0, -1); markDirty(); rerender(); }
+        if ((e.key === "Enter" || e.key === ",") && input.value.trim()) { e.preventDefault(); obj[def.k] = [...(obj[def.k] || []), input.value.trim()]; if (!def.db) markDirty(); onChange && onChange(); rerender(); }
+        if (e.key === "Backspace" && !input.value && (obj[def.k] || []).length) { obj[def.k] = obj[def.k].slice(0, -1); if (!def.db) markDirty(); onChange && onChange(); rerender(); }
       });
-      $$(".tags span button", wrap).forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); obj[def.k].splice(+b.dataset.i, 1); markDirty(); rerender(); }));
+      $$(".tags span button", wrap).forEach((b) => b.addEventListener("click", (e) => { e.preventDefault(); obj[def.k].splice(+b.dataset.i, 1); if (!def.db) markDirty(); onChange && onChange(); rerender(); }));
     } else {
       const inp = $("input,textarea,select", wrap);
-      inp.addEventListener("input", () => done(def.type === "number" ? (inp.value === "" ? 0 : Number(inp.value)) : def.type === "select" && def.num ? Number(inp.value) : inp.value));
+      inp.addEventListener("input", () => done(def.type === "number" ? (inp.value === "" ? (def.nullable ? null : 0) : Number(inp.value)) : def.type === "date" ? (inp.value ? new Date(inp.value).toISOString() : null) : def.bool ? inp.value === "true" : def.type === "select" && def.num ? Number(inp.value) : inp.value));
     }
     return wrap;
   }
@@ -217,6 +219,119 @@
     return root;
   }
 
+  /* ================= database list editor (app content: sermons, courses, groups…) ================= */
+  const COLORS = [["#FF5A1F", "Flame"], ["#FFD23F", "Sun"], ["#FF7AB6", "Rose"], ["#9B7BFF", "Violet"], ["#3C8D5E", "Green"], ["#8FA4FF", "Sky"], ["#FFB547", "Orange"], ["#141414", "Ink"]];
+  /** YouTube link or id → id */
+  const ytId = (v) => {
+    const s = String(v || "").trim();
+    const m = s.match(/(?:youtu\.be\/|v=|embed\/|shorts\/|live\/)([\w-]{11})/);
+    return m ? m[1] : /^[\w-]{11}$/.test(s) ? s : s ? null : "";
+  };
+  /**
+   * Rows of a Supabase table as an accordion list. Each row saves on its own (Save button),
+   * so these edits never mix with the website's "Save & publish".
+   */
+  function dbEditor({ table, query, fields, image, imageShape, title, sub, thumbColor, thumb, template, addLabel, positions, beforeSave, toForm, extra, empty }) {
+    const root = document.createElement("div");
+    root.className = "list";
+    let rows = [];
+    let openKey = null;
+    const keyOf = (r) => r.id || r._new;
+    const load = async () => {
+      root.innerHTML = `<div class="empty">Loading…</div>`;
+      try { rows = (await S.select(query)).map((r) => (toForm ? toForm(r) : r)); render(); }
+      catch (e) { root.innerHTML = `<div class="empty">Couldn't load: ${esc(e.message)}</div>`; }
+    };
+    const clean = (r) => {
+      const out = {};
+      fields.forEach((f) => { if (f.k in r) out[f.k] = r[f.k]; });
+      if (image) out[image] = r[image] || null;
+      Object.keys(template || {}).forEach((k) => { if (!(k in out) && k in r) out[k] = r[k]; });
+      if (positions && !r.id) out.position = r.position ?? rows.length;
+      return beforeSave ? beforeSave(out, r) : out;
+    };
+    const save = async (r, btn) => {
+      let data;
+      try { data = clean(r); } catch (e) { return toast(e.message, true); }
+      btn.disabled = true;
+      try {
+        if (r.id) Object.assign(r, toForm ? toForm(await S.updateRow(table, { id: r.id }, data)) : await S.updateRow(table, { id: r.id }, data));
+        else { const saved = await S.insertRow(table, data); delete r._new; Object.assign(r, toForm ? toForm(saved) : saved); openKey = r.id; }
+        r._dirty = false;
+        toast("Saved. It's live in the app.");
+        render();
+      } catch (e) { toast(e.message, true); btn.disabled = false; }
+    };
+    const swap = async (i, j) => {
+      [rows[i], rows[j]] = [rows[j], rows[i]];
+      render();
+      if (!positions) return;
+      try { await Promise.all(rows.map((r, k) => (r.id && r.position !== k ? S.updateRow(table, { id: r.id }, { position: k }).then(() => (r.position = k)) : null))); }
+      catch (e) { toast(e.message, true); }
+    };
+    function render() {
+      root.innerHTML = "";
+      if (!rows.length && empty) { const e = document.createElement("div"); e.className = "empty"; e.textContent = empty; root.appendChild(e); }
+      rows.forEach((it, i) => {
+        const k = keyOf(it);
+        const el = document.createElement("div");
+        el.className = "item" + (k === openKey ? " is-open" : "");
+        const pic = (image && it[image]) || (thumb && thumb(it));
+        const letter = [...String(title(it) || "?").replace(/^[^\p{L}\p{N}]+/u, "")][0] || "?";
+        const th = pic ? `<img src="${esc(src(pic))}" alt="" />` : `<span style="color:${esc(thumbColor ? thumbColor(it) : "#999")}">${esc(letter)}</span>`;
+        el.innerHTML = `<div class="item__head"><div class="item__thumb" style="${thumbColor && !pic ? `background:${esc(thumbColor(it))}22` : ""}">${th}</div><div class="item__text"><b>${esc(title(it) || "Untitled")}${it.id ? "" : ` <span class="badge badge--requested">new</span>`}${it._dirty ? ` <span class="badge badge--open">unsaved</span>` : ""}</b><small>${esc(sub ? sub(it) : "")}</small></div><div class="item__tools">${positions ? `<button class="icon-btn" data-a="up" title="Move up" ${i === 0 ? "disabled" : ""}>${ic("arrow-up")}</button><button class="icon-btn" data-a="down" title="Move down" ${i === rows.length - 1 ? "disabled" : ""}>${ic("arrow-down")}</button>` : ""}<button class="icon-btn is-danger" data-a="del" title="Delete">${ic("trash")}</button></div><span class="icon-btn item__chev">${ic("chevron-down")}</span></div><div class="item__body"></div>`;
+        $(".item__head", el).addEventListener("click", async (e) => {
+          const b = e.target.closest("button[data-a]");
+          if (b) {
+            e.stopPropagation();
+            if (b.dataset.a === "up") return swap(i, i - 1);
+            if (b.dataset.a === "down") return swap(i, i + 1);
+            if (b.dataset.a === "del") {
+              if (!confirm(`Delete “${title(it) || "this item"}”? This can't be undone.`)) return;
+              try { if (it.id) await S.deleteRow(table, { id: it.id }); rows.splice(i, 1); toast("Deleted"); render(); } catch (err) { toast(err.message, true); }
+            }
+            return;
+          }
+          openKey = openKey === k ? null : k;
+          render();
+        });
+        if (k === openKey) {
+          const body = $(".item__body", el);
+          const touch = () => { if (!it._dirty) { it._dirty = true; $(".item__text b", el).insertAdjacentHTML("beforeend", ` <span class="badge badge--open">unsaved</span>`); } $(".item__text small", el).textContent = sub ? sub(it) : ""; };
+          const fwrap = document.createElement("div");
+          fwrap.className = "item__fields";
+          fields.forEach((f) => fwrap.appendChild(field({ ...f, db: true }, it, touch)));
+          if (image) {
+            const g = document.createElement("div"); g.className = "grid";
+            const iw = document.createElement("div");
+            iw.appendChild(imgPicker(it[image], (v) => { it[image] = v; touch(); const t = $(".item__thumb", el); t.innerHTML = v ? `<img src="${esc(src(v))}" alt="" />` : ""; }, imageShape || ""));
+            g.appendChild(iw); g.appendChild(fwrap); body.appendChild(g);
+          } else body.appendChild(fwrap);
+          const bar = document.createElement("div");
+          bar.style.cssText = "display:flex;gap:10px;margin-top:14px;align-items:center";
+          bar.innerHTML = `<button class="btn btn--brand btn--sm"><span>${it.id ? "Save changes" : "Save"}</span><i>${ic("check")}</i></button><small class="muted">Saves straight to the app.</small>`;
+          $("button", bar).addEventListener("click", (e) => save(it, e.currentTarget));
+          body.appendChild(bar);
+          if (extra && it.id) { const x = extra(it); if (x) body.appendChild(x); }
+        }
+        root.appendChild(el);
+      });
+      const add = document.createElement("button");
+      add.className = "add-row";
+      add.innerHTML = `${ic("plus")}${esc(addLabel || "Add")}`;
+      add.addEventListener("click", () => {
+        const r = { ...clone(template || {}), _new: "n" + Date.now(), position: rows.length };
+        rows.push(r); openKey = r._new; render();
+        setTimeout(() => root.querySelector(".item.is-open")?.scrollIntoView({ behavior: "smooth", block: "center" }), 50);
+      });
+      root.appendChild(add);
+    }
+    load();
+    root.reload = load;
+    return root;
+  }
+  const subCard = (title, text, body) => { const c = document.createElement("div"); c.style.cssText = "margin-top:18px;padding-top:16px;border-top:1px dashed var(--line)"; c.innerHTML = `<h3 style="margin:0 0 4px;font-size:16px">${esc(title)}</h3>${text ? `<p class="muted" style="margin:0 0 12px;font-size:13.5px">${text}</p>` : ""}`; c.appendChild(body); return c; };
+
   /* ================= views ================= */
   const intro = (title, text, right = "") => `<div class="section-intro"><p>${text}</p>${right}</div>`;
   const card = (title, text, body) => { const c = document.createElement("section"); c.className = "card"; c.innerHTML = `<div class="card__head"><div><h2>${title}</h2>${text ? `<p>${text}</p>` : ""}</div></div>`; if (body) c.appendChild(body); return c; };
@@ -242,17 +357,17 @@
       v.innerHTML = `
         <div class="hello"><img src="${esc(src(C.hero.slides[0]?.image))}" alt="" /><div><span class="eyebrow" style="color:rgba(255,255,255,.75)">${esc(C.church.name)}</span><h2>Good ${h < 12 ? "morning" : h < 17 ? "afternoon" : "evening"}, <em>${esc((S.session()?.user?.email || "friend").split("@")[0])}.</em></h2><p>Everything on the website and in the app is managed here: photos, promotions, events, giving, prayer, rides and members.</p></div></div>
         <div class="stats">
-          <div class="stat"><small>Members</small><b>${fmt(st.members)}</b><i>+18 this month</i></div>
+          <div class="stat"><small>Members</small><b>${fmt(st.members)}</b><i>+${fmt(st.new_members)} this month</i></div>
           <div class="stat"><small>Active learners</small><b>${fmt(st.active_learners)}</b><i>last 30 days</i></div>
-          <div class="stat"><small>Sermon views</small><b>${fmt(st.total_views)}</b><i>all time</i></div>
-          <div class="stat"><small>Rides completed</small><b>${fmt(st.rides_completed)}</b><i>ride ministry</i></div>
-          <div class="stat"><small>Giving this month</small><b>${esc(C.church.currency)} ${fmt(st.giving_this_month)}</b><i>all funds</i></div>
+          <div class="stat"><small>Sermon views</small><b>${fmt(st.total_views)}</b><i>in the app</i></div>
+          <div class="stat"><small>Rides</small><b>${fmt(st.rides_waiting)}</b><i>waiting · ${fmt(st.rides_completed)} completed</i></div>
+          <div class="stat"><small>Pastoral care</small><b>${fmt(st.care_open)}</b><i>open requests</i></div>
         </div>
         <div class="quick">
           <a href="#images"><span class="qi" style="background:var(--brand)">${ic("image")}</span><b>Change photos</b><small>Every image on the site, in one place</small></a>
           <a href="#promos"><span class="qi" style="background:var(--rose)">${ic("megaphone")}</span><b>Promotions</b><small>${C.promos.length} cards in the carousel</small></a>
           <a href="#events"><span class="qi" style="background:var(--violet)">${ic("calendar")}</span><b>Events</b><small>${C.events.length} upcoming</small></a>
-          <a href="#prayer"><span class="qi" style="background:var(--mint)">${ic("hand-heart")}</span><b>Prayer wall</b><small>${prayers.filter((p) => !p.hidden).length} requests</small></a>
+          <a href="#sermons"><span class="qi" style="background:var(--mint)">${ic("youtube-play")}</span><b>Sermons</b><small>Add messages to the app</small></a>
         </div>
         <div class="two">
           <section class="card"><div class="card__head"><div><h2>Latest prayer requests</h2><p>Moderate them from the Prayer wall page.</p></div><a class="btn btn--ghost btn--sm" href="#prayer">Open</a></div>
@@ -421,6 +536,161 @@
     } },
 
     /* ---------------------------------------------------------- CHURCH INFO */
+    /* ---------------------------------------------------------- APP: SERMONS */
+    sermons: { title: "Sermons", crumb: "App", icon: "youtube-play", group: "App", async render(v) {
+      v.innerHTML = intro("", "Messages in the app's Watch tab. Paste a YouTube link for each one. Mark a message as <b>Live</b> while you're streaming and it appears at the top with live chat.");
+      let series = [];
+      try { series = await S.select("series?select=id,title&order=position,created_at.desc"); } catch (e) { toast(e.message, true); }
+      v.appendChild(card("Series", "Group messages into series (by book of the Bible or by topic).", dbEditor({
+        table: "series", query: "series?select=id,title,book,topic,color,cover_url,position&order=position,created_at.desc", positions: true,
+        image: "cover_url", imageShape: "imgpick--wide", addLabel: "Add a series", empty: "No series yet.",
+        title: (s) => s.title, sub: (s) => [s.book, s.topic].filter(Boolean).join(" · "), thumbColor: (s) => s.color || "#9B7BFF",
+        template: { title: "New series", book: "", topic: "", color: "#9B7BFF", cover_url: "" },
+        fields: [{ k: "title", label: "Series title", wide: true }, { k: "book", label: "Book of the Bible", ph: "Romans" }, { k: "topic", label: "…or topic", ph: "Faith" }, { k: "color", label: "Card colour", type: "color" }],
+      })));
+      v.appendChild(card("Messages", "Newest first. The thumbnail comes from YouTube unless you add your own photo.", dbEditor({
+        table: "videos", query: "videos?select=id,title,speaker,series_id,youtube_id,description,is_live,published_at,duration_sec,cover_url,views&order=published_at.desc.nullslast&limit=300",
+        image: "cover_url", imageShape: "imgpick--wide", addLabel: "Add a message", empty: "No messages yet.",
+        title: (m) => (m.is_live ? "🔴 " : "") + (m.title || ""), sub: (m) => [m.speaker, m.published_at ? String(m.published_at).slice(0, 10) : "", m.views ? `${fmt(m.views)} views` : ""].filter(Boolean).join(" · "),
+        thumbColor: () => "#FF5A1F", thumb: (m) => (m.youtube_id ? `https://i.ytimg.com/vi/${m.youtube_id}/mqdefault.jpg` : null),
+        template: { title: "New message", speaker: "", series_id: "", youtube: "", description: "", is_live: false, published_at: new Date().toISOString(), minutes: null, cover_url: "" },
+        toForm: (r) => ({ ...r, series_id: r.series_id || "", youtube: r.youtube_id ? `https://youtu.be/${r.youtube_id}` : "", minutes: r.duration_sec ? Math.round(r.duration_sec / 60) : null }),
+        beforeSave: (out, r) => {
+          const id = ytId(r.youtube);
+          if (id === null) throw new Error("That doesn't look like a YouTube link.");
+          out.youtube_id = id || null; delete out.youtube;
+          out.duration_sec = r.minutes ? Math.round(r.minutes * 60) : null; delete out.minutes;
+          out.series_id = r.series_id || null;
+          return out;
+        },
+        fields: [
+          { k: "title", label: "Title", wide: true }, { k: "speaker", label: "Speaker", ph: "Ps. John Mathew" },
+          { k: "series_id", label: "Series", type: "select", options: [["", "No series"], ...series.map((s) => [s.id, s.title])] },
+          { k: "youtube", label: "YouTube link", wide: true, ph: "https://youtu.be/…", hint: "Leave empty for a live service: the app then plays the channel's live stream." },
+          { k: "published_at", label: "Date", type: "date" }, { k: "minutes", label: "Length (minutes)", type: "number", nullable: true },
+          { k: "is_live", label: "Live now?", type: "bool" },
+          { k: "description", label: "Description", type: "textarea", wide: true },
+        ],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: COURSES */
+    courses: { title: "Courses", crumb: "App", icon: "graduation-cap", group: "App", render(v) {
+      v.innerHTML = intro("", "Courses in the app's Grow tab. Open a course to add its lessons. Members tick off lessons in order, and their progress is saved. Only <b>published</b> courses are shown.");
+      v.appendChild(card("Courses", "", dbEditor({
+        table: "courses", query: "courses?select=id,title,category,description,color,cover_url,published,position&order=position,created_at", positions: true,
+        image: "cover_url", imageShape: "imgpick--wide", addLabel: "Add a course", empty: "No courses yet.",
+        title: (c) => c.title, sub: (c) => `${c.published ? "Published" : "Draft"}${c.category ? ` · ${c.category}` : ""}`, thumbColor: (c) => c.color || "#9B7BFF",
+        template: { title: "New course", category: "Bible", description: "", color: "#9B7BFF", cover_url: "", published: false },
+        fields: [{ k: "title", label: "Course title", wide: true }, { k: "category", label: "Category", ph: "Bible, Explore, Leadership" }, { k: "published", label: "Published in the app?", type: "bool" }, { k: "color", label: "Colour", type: "color" }, { k: "description", label: "Description", type: "textarea", wide: true }],
+        extra: (c) => subCard("Lessons", "Each lesson can link to a YouTube video, a PDF or any page, and have notes to read.", dbEditor({
+          table: "lessons", query: `lessons?select=id,title,kind,minutes,url,body,position,course_id&course_id=eq.${c.id}&order=position`, positions: true,
+          addLabel: "Add a lesson", empty: "No lessons yet.",
+          title: (l) => l.title, sub: (l) => [l.kind, l.minutes ? `${l.minutes} min` : ""].filter(Boolean).join(" · "), thumbColor: () => c.color || "#9B7BFF",
+          template: { title: "New lesson", kind: "video", minutes: 15, url: "", body: "", course_id: c.id },
+          beforeSave: (out, r) => ({ ...out, course_id: c.id, position: r.position ?? 0, url: out.url || null, body: out.body || null }),
+          fields: [{ k: "title", label: "Lesson title", wide: true }, { k: "kind", label: "Type", type: "select", options: [["video", "Video"], ["pdf", "PDF / reading"], ["quiz", "Quiz / reflection"]] }, { k: "minutes", label: "Minutes", type: "number", nullable: true }, { k: "url", label: "Link (YouTube, PDF or page)", wide: true, ph: "https://…" }, { k: "body", label: "Notes shown in the app", type: "textarea", wide: true }],
+        })),
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: STUDY GUIDES */
+    guides: { title: "Study guides", crumb: "App", icon: "file-text", group: "App", render(v) {
+      v.innerHTML = intro("", "PDFs shown under Grow → Study guides. Upload the PDF anywhere public (Google Drive “anyone with the link”, Supabase Storage, your website) and paste the link.");
+      v.appendChild(card("Study guides", "", dbEditor({
+        table: "documents", query: "documents?select=id,title,url,pages,color,position&order=position,created_at.desc", positions: true,
+        addLabel: "Add a study guide", empty: "No study guides yet.",
+        title: (d) => d.title, sub: (d) => [d.pages ? `${d.pages} pages` : "", d.url].filter(Boolean).join(" · "), thumbColor: (d) => d.color || "#FF5A1F",
+        template: { title: "New study guide", url: "", pages: null, color: "#FF5A1F" },
+        beforeSave: (out) => { if (!/^https?:\/\//.test(out.url || "")) throw new Error("Add the PDF link (https://…)."); return out; },
+        fields: [{ k: "title", label: "Title", wide: true }, { k: "url", label: "PDF link", wide: true, ph: "https://…" }, { k: "pages", label: "Pages", type: "number", nullable: true }, { k: "color", label: "Colour", type: "color" }],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: GAMES */
+    games: { title: "Bible games", crumb: "App", icon: "gamepad-2", group: "App", render(v) {
+      v.innerHTML = intro("", "Question packs for <b>Trivia</b> and <b>Verse Match</b>. Open a pack to edit its questions. Only <b>published</b> packs are played in the app.");
+      v.appendChild(card("Packs", "", dbEditor({
+        table: "question_packs", query: "question_packs?select=id,title,game,published&order=created_at",
+        addLabel: "Add a pack", empty: "No packs yet.",
+        title: (p) => p.title, sub: (p) => `${p.game === "trivia" ? "Trivia" : "Verse Match"} · ${p.published ? "Published" : "Draft"}`, thumbColor: (p) => (p.game === "trivia" ? "#8FA4FF" : "#9B7BFF"),
+        template: { title: "New pack", game: "trivia", published: false },
+        fields: [{ k: "title", label: "Pack name" }, { k: "game", label: "Game", type: "select", options: [["trivia", "Trivia"], ["verse_match", "Verse Match"]] }, { k: "published", label: "Published?", type: "bool" }],
+        extra: (p) => p.game === "trivia"
+          ? subCard("Questions", "Add the answers, then say which one is right (1 = the first answer).", dbEditor({
+              table: "questions", query: `questions?select=id,prompt,options,answer,reference&pack_id=eq.${p.id}&order=id`,
+              addLabel: "Add a question", empty: "No questions yet.",
+              title: (q) => q.prompt, sub: (q) => (q.options || []).join(" · "), thumbColor: () => "#8FA4FF",
+              template: { prompt: "New question?", options: [], correct: 1, reference: "" },
+              toForm: (r) => ({ ...r, correct: Number(r.answer) + 1 }),
+              beforeSave: (out, r) => {
+                if ((r.options || []).length < 2) throw new Error("Add at least two answers.");
+                const n = Number(r.correct);
+                if (!(n >= 1 && n <= r.options.length)) throw new Error(`The right answer must be a number from 1 to ${r.options.length}.`);
+                return { prompt: r.prompt, options: r.options, answer: n - 1, reference: r.reference || null, pack_id: p.id };
+              },
+              fields: [{ k: "prompt", label: "Question", wide: true }, { k: "options", label: "Answers (press Enter after each)", type: "tags", wide: true }, { k: "correct", label: "Right answer number", type: "number" }, { k: "reference", label: "Bible reference (optional)", ph: "Genesis 6" }],
+            }))
+          : subCard("Verses", "Write the verse with ___ for each missing word, then list the missing words in order, and a few wrong words to mix in.", dbEditor({
+              table: "questions", query: `questions?select=id,prompt,options,answer,reference&pack_id=eq.${p.id}&order=id`,
+              addLabel: "Add a verse", empty: "No verses yet.",
+              title: (q) => q.prompt, sub: (q) => q.reference || "", thumbColor: () => "#9B7BFF",
+              template: { prompt: "The Lord is my ___.", answer: ["shepherd"], options: ["king", "rock"], reference: "" },
+              beforeSave: (out, r) => {
+                const blanks = (String(r.prompt).match(/___/g) || []).length;
+                if (!blanks) throw new Error("Put ___ where each missing word goes.");
+                if ((r.answer || []).length !== blanks) throw new Error(`The verse has ${blanks} blank${blanks > 1 ? "s" : ""}, so list exactly ${blanks} missing word${blanks > 1 ? "s" : ""}.`);
+                return { prompt: r.prompt, answer: r.answer, options: r.options || [], reference: r.reference || null, pack_id: p.id };
+              },
+              fields: [{ k: "prompt", label: "Verse with ___ blanks", wide: true }, { k: "answer", label: "Missing words, in order", type: "tags", wide: true }, { k: "options", label: "Wrong words to mix in", type: "tags", wide: true }, { k: "reference", label: "Reference", ph: "Psalm 23:1" }],
+            })),
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: GROUPS */
+    groups: { title: "Groups & chats", crumb: "App", icon: "users", group: "App", render(v) {
+      v.innerHTML = intro("", "Groups in the app's Family tab. Every group gets its own group chat; members join from the app. (The Ministries page above is the website's showcase.)");
+      v.appendChild(card("Groups", "", dbEditor({
+        table: "ministries", query: "ministries?select=id,name,meets,description,color,cover_url,position&order=position,name", positions: true,
+        image: "cover_url", addLabel: "Add a group", empty: "No groups yet.",
+        title: (g) => g.name, sub: (g) => g.meets || "", thumbColor: (g) => g.color || "#FF7AB6",
+        template: { name: "New group", meets: "Weekly", description: "", color: "#FF7AB6", cover_url: "" },
+        fields: [{ k: "name", label: "Group name" }, { k: "meets", label: "When / who", ph: "Fridays · Youth" }, { k: "color", label: "Colour", type: "color" }, { k: "description", label: "Description", type: "textarea", wide: true }],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: RSVPS */
+    rsvps: { title: "RSVPs & check-in", crumb: "App", icon: "calendar", group: "App", async render(v) {
+      const rows = await S.rpc("staff_rsvps").catch((e) => (toast(e.message, true), []));
+      v.innerHTML = intro("", "Who's coming to each event (RSVPs from the app). Tick people off as they arrive.");
+      const groups = {};
+      rows.forEach((r) => (groups[r.event_key] = groups[r.event_key] || { title: r.event_title || r.event_key, list: [] }).list.push(r));
+      if (!rows.length) { v.appendChild(card("No RSVPs yet", "They appear here when members tap RSVP in the app.", null)); return; }
+      Object.entries(groups).forEach(([key, g]) => {
+        const c = card(`${esc(g.title)} <small class="muted">· ${g.list.length} going · ${g.list.filter((r) => r.checked_in_at).length} checked in</small>`, "", null);
+        const t = document.createElement("div");
+        t.innerHTML = `<table class="table"><thead><tr><th>Name</th><th>Email</th><th>Phone</th><th>RSVP'd</th><th>Checked in</th></tr></thead><tbody>${g.list.map((r) => `<tr data-u="${esc(r.user_id)}"><td><div class="who"><span class="avatar">${esc((r.full_name || "?")[0])}</span>${esc(r.full_name || "Member")}</div></td><td class="muted">${esc(r.email || "—")}</td><td class="muted">${esc(r.phone || "—")}</td><td class="muted">${esc(String(r.created_at).slice(0, 10))}</td><td><input type="checkbox" ${r.checked_in_at ? "checked" : ""} /></td></tr>`).join("")}</tbody></table>`;
+        t.addEventListener("change", async (e) => {
+          const box = e.target.closest("input"); if (!box) return;
+          try { await S.updateRow("rsvps", { event_key: key, user_id: box.closest("tr").dataset.u }, { checked_in_at: box.checked ? new Date().toISOString() : null }); toast(box.checked ? "Checked in" : "Check-in removed"); }
+          catch (err) { box.checked = !box.checked; toast(err.message, true); }
+        });
+        c.appendChild(t); v.appendChild(c);
+      });
+    } },
+
+    /* ---------------------------------------------------------- APP: PASTORAL CARE */
+    care: { title: "Pastoral care", crumb: "App", icon: "shield-check", group: "App", async render(v) {
+      const rows = await S.rpc("staff_care").catch((e) => (toast(e.message, true), []));
+      v.innerHTML = intro("", "Private requests from Me → Pastoral care in the app. Only staff can see these.");
+      const c = document.createElement("section"); c.className = "card"; v.appendChild(c);
+      c.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Member</th><th>Request</th><th>Contact</th><th>When</th><th>Status</th></tr></thead><tbody>${rows.map((r) => `<tr data-id="${esc(r.id)}"><td><div class="who"><span class="avatar">${esc((r.full_name || "?")[0])}</span><b>${esc(r.full_name || "Member")}</b></div></td><td style="max-width:380px"><b>${esc(r.kind)}</b><div class="muted">${esc(r.details || "")}</div></td><td class="muted">${esc(r.email || "")}<br>${esc(r.phone || "")}</td><td class="muted">${esc(String(r.created_at).slice(0, 10))}</td><td><select>${["open", "in progress", "closed"].map((s) => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>` : `<div class="empty">No requests. 🙏</div>`;
+      c.addEventListener("change", async (e) => {
+        const sel = e.target.closest("select"); if (!sel) return;
+        try { await S.update("care_requests", sel.closest("tr").dataset.id, { status: sel.value }); toast("Updated"); } catch (err) { toast(err.message, true); }
+      });
+    } },
+
     church: { title: "Church info", crumb: "Settings", icon: "church", group: "Settings", render(v) {
       v.innerHTML = intro("", "Name, contact details, service times, the announcement bar and the numbers shown around the site.");
       v.appendChild(card("Announcement bar", "The thin strip at the very top of every page.", fieldsGrid([{ k: "title", label: "Bold text" }, { k: "text", label: "Message" }, { k: "cta", label: "Link text" }, { k: "link", label: "Link" }], C.announcement, 4)));
@@ -431,6 +701,9 @@
         { k: "email", label: "Email" }, { k: "instagram", label: "Instagram link" },
         { k: "facebook", label: "Facebook link" }, { k: "currency", label: "Currency", ph: "KWD" },
         { k: "tzOffsetHours", label: "Time zone (hours from UTC)", type: "number", hint: "Kuwait = 3. Used by the live countdown." },
+        { k: "givingUrl", label: "Online giving page", ph: "https://…", hint: "The app's Give button opens this page with the amount and fund. Leave empty to show “coming soon”." },
+        { k: "lat", label: "Church latitude", type: "number", nullable: true, hint: "For the ride map. In Google Maps, right-click the church → copy the numbers." },
+        { k: "lng", label: "Church longitude", type: "number", nullable: true },
       ], C.church)));
       v.appendChild(card("Service times", "Shown in the “Plan a visit” section and used for the live countdown.", listEditor({
         items: C.services, addLabel: "Add a service",
@@ -480,18 +753,19 @@
       v.innerHTML = intro("", "Every ride request. Volunteers accept rides in the app; you can also assign a driver or change a status here.");
       const c = document.createElement("section"); c.className = "card"; v.appendChild(c);
       const STAT = ["requested", "accepted", "enroute", "arrived", "completed", "cancelled"];
-      c.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Member</th><th>Pickup</th><th>When</th><th>Seats</th><th>Driver</th><th>Status</th></tr></thead><tbody>${rows.map((r) => `<tr data-id="${esc(r.id)}"><td><div class="who"><span class="avatar" style="background:linear-gradient(135deg,var(--mint),var(--sky))">${esc((r.member || "?")[0])}</span>${esc(r.member)}</div></td><td>${esc(r.pickup_label)}</td><td>${esc(r.requested_for)}</td><td>${esc(r.seats)}</td><td>${S.live ? esc(r.volunteer || "—") : `<select data-k="volunteer"><option value="">Unassigned</option>${drivers.map((d) => `<option ${d.full_name === r.volunteer ? "selected" : ""}>${esc(d.full_name)}</option>`).join("")}</select>`}</td><td><select data-k="status">${STAT.map((s) => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>` : `<div class="empty">No rides yet.</div>`;
+      c.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Member</th><th>Phone</th><th>Pickup</th><th>When</th><th>Seats</th><th>Driver</th><th>Status</th></tr></thead><tbody>${rows.map((r) => `<tr data-id="${esc(r.id)}"><td><div class="who"><span class="avatar" style="background:linear-gradient(135deg,var(--mint),var(--sky))">${esc((r.member || "?")[0])}</span>${esc(r.member)}</div></td><td class="muted">${esc(r.member_phone || "—")}</td><td>${esc(r.pickup_label)}${r.notes ? `<div class="muted" style="font-size:12px">${esc(r.notes)}</div>` : ""}</td><td>${esc(r.requested_for)}</td><td>${esc(r.seats)}</td><td><select data-k="volunteer_id"><option value="">Unassigned</option>${drivers.map((d) => `<option value="${esc(d.id)}" ${d.id === r.volunteer_id ? "selected" : ""}>${esc(d.full_name)}</option>`).join("")}</select></td><td><select data-k="status">${STAT.map((s) => `<option ${s === r.status ? "selected" : ""}>${s}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>` : `<div class="empty">No rides yet.</div>`;
       c.addEventListener("change", async (e) => {
         const sel = e.target.closest("select"); if (!sel) return;
         const id = sel.closest("tr").dataset.id;
-        try { await S.update("rides", id, { [sel.dataset.k]: sel.value }); toast("Ride updated"); } catch (err) { toast(err.message, true); }
+        const patch = sel.dataset.k === "volunteer_id" ? { volunteer_id: sel.value || null, ...(sel.value ? { status: "accepted" } : { status: "requested" }) } : { status: sel.value };
+        try { await S.update("rides", id, patch); toast("Ride updated"); go("rides"); } catch (err) { toast(err.message, true); }
       });
     } },
 
     /* ---------------------------------------------------------- MEMBERS */
     members: { title: "Members & roles", crumb: "Community", icon: "user-cog", group: "Community", async render(v) {
       const rows = await S.list("profiles").catch((e) => (toast(e.message, true), []));
-      v.innerHTML = intro("", "People who've signed up in the app. <b>Volunteers</b> can accept rides. <b>Staff</b> can use this admin.", `<label class="search">${ic("search")}<input placeholder="Search members" id="msearch" /></label>`);
+      v.innerHTML = intro("", "People who've signed up in the app. <b>Volunteers</b> can accept rides. <b>Staff</b> can use this admin. Only an <b>admin</b> can make or remove admins.", `<label class="search">${ic("search")}<input placeholder="Search members" id="msearch" /></label>`);
       const c = document.createElement("section"); c.className = "card"; v.appendChild(c);
       const paint = (q = "") => {
         const list = rows.filter((r) => `${r.full_name} ${r.email || ""}`.toLowerCase().includes(q.toLowerCase()));
@@ -606,8 +880,7 @@
     const email = S.session()?.user?.email || "staff";
     $(".js-user-name").textContent = email;
     $(".js-user-initial").textContent = email[0].toUpperCase();
-    $(".js-mode-label").textContent = S.live ? "Live · Supabase" : "Demo mode";
-    $(".js-demo-banner").hidden = S.live;
+    $(".js-mode-label").textContent = S.session()?.role === "admin" ? "Admin" : "Staff";
     if (window.AGAPE_SITE_HTML) { $(".js-view-site").hidden = true; }
     buildNav();
     go(location.hash.slice(1) || "dashboard");
@@ -615,7 +888,8 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     loginArt();
-    $(".js-login-mode").textContent = S.live ? "Sign in with your staff account." : "Demo mode: any email and password will do.";
+    $(".js-login-mode").textContent = S.live ? "Sign in with your staff account (the same email and password as the app)." : "Not connected yet: add the Supabase project URL and anon key to assets/js/config.js.";
+    if (!S.live) $$("#loginForm input, #loginForm button").forEach((x) => (x.disabled = true));
     $("#loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -640,6 +914,6 @@
     $("#closePreview").addEventListener("click", () => { pvOn = false; $("#app").classList.remove("has-preview"); });
     $("#deviceSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; $$("#deviceSeg button").forEach((x) => x.classList.toggle("is-on", x === b)); setDevice(+b.dataset.w); loadPreview(); });
     addEventListener("resize", () => pvOn && setDevice(+$("#deviceSeg .is-on").dataset.w));
-    if (S.session()) enter();
+    S.restore().then((ok) => ok && enter());
   });
 })();

@@ -3,10 +3,10 @@ import { ScrollView, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, LinearTransition, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
-import { Avatar, BackHeader, Bar, Body, Confetti, ConfettiHandle, Display, Label, Press, Segmented, Sticker } from "@/components/ui";
-import { LEADERBOARD, TRIVIA, VERSE_MATCH } from "@/data/mock";
-import { useStore } from "@/lib/store";
-import { submitScore } from "@/lib/api";
+import { Async, Avatar, BackHeader, Bar, Body, Confetti, ConfettiHandle, Display, Empty, Label, Press, Segmented, Sticker } from "@/components/ui";
+import { useAuth } from "@/lib/auth";
+import { useQuery } from "@/lib/query";
+import { leaderboard, listQuestions, myPoints, submitScore, Trivia as TriviaQ, VerseQ } from "@/lib/api";
 import { fmt } from "@/lib/time";
 
 const shuffle = <T,>(a: T[]) => [...a].sort(() => Math.random() - 0.5);
@@ -25,13 +25,15 @@ function WordButton({ w, used, onPress }: { w: string; used: boolean; onPress: (
   );
 }
 
-function VerseMatch({ onPoints, burst }: { onPoints: (n: number) => void; burst: (y: number, n: number) => void }) {
+function VerseMatch({ items, onPoints, burst }: { items: VerseQ[]; onPoints: (n: number) => void; burst: (y: number, n: number) => void }) {
   const [vi, setVi] = useState(0);
   const [filled, setFilled] = useState(0);
   const [streak, setStreak] = useState(0);
   const [msg, setMsg] = useState("Tap the missing words in order.");
-  const v = VERSE_MATCH[vi];
-  const opts = useMemo(() => shuffle([...v.a, ...v.x]), [vi]);
+  const deck = useMemo(() => shuffle(items), [items]);
+  const q = deck[vi % deck.length];
+  const v = { t: q.prompt, a: q.answer, x: q.options, r: q.reference || "" };
+  const opts = useMemo(() => shuffle([...v.a, ...v.x]), [vi, deck]);
   const parts = v.t.split("___");
 
   const tap = (w: string, shake: () => void) => {
@@ -48,7 +50,7 @@ function VerseMatch({ onPoints, burst }: { onPoints: (n: number) => void; burst:
         Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
         setMsg(streak >= 3 ? `Streak ×${streak + 1}! Next verse…` : "Beautiful. Next verse…");
         burst(300, 80);
-        setTimeout(() => { setVi((i) => (i + 1) % VERSE_MATCH.length); setFilled(0); setMsg("Tap the missing words in order."); }, 1700);
+        setTimeout(() => { setVi((i) => (i + 1) % deck.length); setFilled(0); setMsg("Tap the missing words in order."); }, 1700);
       }
     } else {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
@@ -61,10 +63,10 @@ function VerseMatch({ onPoints, burst }: { onPoints: (n: number) => void; burst:
   return (
     <View style={card}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <View style={{ backgroundColor: C.violet, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Verse Match · {vi + 1}/{VERSE_MATCH.length}</Body></View>
+        <View style={{ backgroundColor: C.violet, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Verse Match · {(vi % deck.length) + 1}/{deck.length}</Body></View>
         <Body size={13} weight="semi">🔥 Streak {streak}</Body>
       </View>
-      <View style={{ marginTop: 16 }}><Bar progress={(vi + filled / v.a.length) / VERSE_MATCH.length} color={C.mint} height={8} delay={0} /></View>
+      <View style={{ marginTop: 16 }}><Bar progress={((vi % deck.length) + filled / v.a.length) / deck.length} color={C.mint} height={8} delay={0} /></View>
       <Animated.View key={vi} entering={FadeIn.duration(500)}>
         <Text style={{ fontFamily: F.display, fontSize: 26, lineHeight: 38, letterSpacing: -0.6, color: C.ink, marginTop: 20 }}>
           {parts.map((p, i) => (
@@ -93,22 +95,24 @@ function VerseMatch({ onPoints, burst }: { onPoints: (n: number) => void; burst:
   );
 }
 
-function Trivia({ onPoints, burst }: { onPoints: (n: number) => void; burst: (y: number, n: number) => void }) {
+function Trivia({ items, onPoints, burst }: { items: TriviaQ[]; onPoints: (n: number) => void; burst: (y: number, n: number) => void }) {
   const [qi, setQi] = useState(0);
   const [picked, setPicked] = useState<number | null>(null);
   const [right, setRight] = useState(0);
-  const q = TRIVIA[qi];
+  const deck = useMemo(() => shuffle(items), [items]);
+  const t = deck[qi % deck.length];
+  const q = { q: t.prompt, o: t.options, a: Number(t.answer) };
   const pick = (i: number) => {
     if (picked !== null) return;
     setPicked(i);
     if (i === q.a) { onPoints(150); setRight((r) => r + 1); burst(320, 50); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }
     else Haptics.notificationAsync(Haptics.NotificationFeedbackType.Error).catch(() => {});
-    setTimeout(() => { setPicked(null); setQi((x) => (x + 1) % TRIVIA.length); }, 1300);
+    setTimeout(() => { setPicked(null); setQi((x) => (x + 1) % deck.length); }, 1300);
   };
   return (
     <View style={card}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <View style={{ backgroundColor: C.sky, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Trivia · Pack 1</Body></View>
+        <View style={{ backgroundColor: C.sky, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Trivia · {(qi % deck.length) + 1}/{deck.length}</Body></View>
         <Body size={13} weight="semi">✓ {right} correct</Body>
       </View>
       <Animated.View key={qi} entering={FadeInDown.springify().damping(16)}>
@@ -134,16 +138,26 @@ function Trivia({ onPoints, burst }: { onPoints: (n: number) => void; burst: (y:
 
 export default function Games() {
   const [mode, setMode] = useState(0);
-  const { score, addScore } = useStore();
+  const { signedIn, session } = useAuth();
+  const [session_pts, setSessionPts] = useState(0);
+  const verses = useQuery("games:verse_match", () => listQuestions("verse_match") as Promise<VerseQ[]>, 300_000);
+  const trivia = useQuery("games:trivia", () => listQuestions("trivia") as Promise<TriviaQ[]>, 300_000);
+  const board = useQuery(signedIn ? "points:board" : null, leaderboard);
+  const total = useQuery(signedIn ? "points:mine" : null, myPoints);
   const confetti = useRef<ConfettiHandle>(null);
-  const onPoints = (n: number) => { addScore(n); submitScore(mode === 0 ? "verse_match" : "trivia", n); };
+  const onPoints = (n: number) => {
+    setSessionPts((p) => p + n);
+    if (signedIn) submitScore(mode === 0 ? "verse_match" : "trivia", n).catch(() => {});
+  };
   const burst = (y: number, n: number) => confetti.current?.burst(undefined, y, n);
-  const board = [...LEADERBOARD, { name: "You", points: 1180 + score, color: C.ink }].sort((a, b) => b.points - a.points);
-  const max = board[0].points;
+  const pts = signedIn ? (total.data ?? 0) : session_pts;
+  const rows = board.data ?? [];
+  const max = Math.max(1, ...rows.map((r) => r.points));
+  const COLORS = [C.violet, C.rose, C.mint, C.flame, C.sky];
 
   return (
     <View style={{ flex: 1, backgroundColor: C.sun }}>
-      <BackHeader title="Bible games" right={<View style={{ backgroundColor: C.ink, paddingHorizontal: 12, height: 44, borderRadius: 14, justifyContent: "center" }}><Body size={13} weight="bold" color={C.sun}>{fmt(1180 + score)} pts</Body></View>} />
+      <BackHeader title="Bible games" right={<View style={{ backgroundColor: C.ink, paddingHorizontal: 12, height: 44, borderRadius: 14, justifyContent: "center" }}><Body size={13} weight="bold" color={C.sun}>{fmt(pts)} pts</Body></View>} />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: 20, marginTop: 6 }}>
           <Display size={34}>Play. Learn.{"\n"}Remember.</Display>
@@ -155,26 +169,42 @@ export default function Games() {
           <Segmented items={["Verse Match", "Trivia"]} value={mode} onChange={setMode} />
         </View>
         <Animated.View key={mode} entering={FadeInDown.springify().damping(18)} style={{ marginHorizontal: 16, marginTop: 14 }}>
-          {mode === 0 ? <VerseMatch onPoints={onPoints} burst={burst} /> : <Trivia onPoints={onPoints} burst={burst} />}
+          {mode === 0 ? (
+            <Async q={verses} empty={(d) => (d.length ? null : <View style={card}><Empty icon="book" title="No verses yet" body="The team will add Verse Match packs soon." /></View>)}>
+              {(d) => <VerseMatch items={d} onPoints={onPoints} burst={burst} />}
+            </Async>
+          ) : (
+            <Async q={trivia} empty={(d) => (d.length ? null : <View style={card}><Empty icon="help-circle" title="No questions yet" body="The team will add trivia packs soon." /></View>)}>
+              {(d) => <Trivia items={d} onPoints={onPoints} burst={burst} />}
+            </Async>
+          )}
+          {!signedIn ? <Label color={C.ink} style={{ textAlign: "center", marginTop: 10 }}>Playing as a guest. Sign in to save your points and join the leaderboard.</Label> : null}
         </Animated.View>
 
-        <View style={[card, { marginHorizontal: 16, marginTop: 14, minHeight: 0, padding: 16 }]}>
-          <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-            <Display size={20}>Leaderboard</Display>
-            <Label>This week · church-wide</Label>
+        {signedIn ? (
+          <View style={[card, { marginHorizontal: 16, marginTop: 14, minHeight: 0, padding: 16 }]}>
+            <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
+              <Display size={20}>Leaderboard</Display>
+              <Label>This week · church-wide</Label>
+            </View>
+            {rows.length === 0 ? <Label style={{ paddingVertical: 12 }}>No scores yet this week. Be the first!</Label> : null}
+            {rows.map((p, i) => {
+              const me = p.user_id === session?.user.id;
+              const color = COLORS[i % COLORS.length];
+              return (
+                <Animated.View key={p.user_id} layout={LinearTransition.springify().damping(16)} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, paddingHorizontal: me ? 10 : 0, marginHorizontal: me ? -10 : 0, backgroundColor: me ? C.sunSoft : "transparent", borderRadius: 14 }}>
+                  <Body weight="bold" color={i < 3 ? C.ink : C.muted} style={{ width: 20 }}>{i + 1}</Body>
+                  <Avatar name={p.full_name || "?"} color={color} size={36} />
+                  <View style={{ flex: 1 }}>
+                    <Body weight="semi" numberOfLines={1}>{me ? "You" : p.full_name || "Member"}</Body>
+                    <Bar progress={p.points / max} color={color} height={6} delay={100} />
+                  </View>
+                  <Body weight="bold" style={{ width: 56, textAlign: "right" }}>{fmt(p.points)}</Body>
+                </Animated.View>
+              );
+            })}
           </View>
-          {board.map((p, i) => (
-            <Animated.View key={p.name} layout={LinearTransition.springify().damping(16)} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, paddingHorizontal: p.name === "You" ? 10 : 0, marginHorizontal: p.name === "You" ? -10 : 0, backgroundColor: p.name === "You" ? C.sunSoft : "transparent", borderRadius: 14 }}>
-              <Body weight="bold" color={i < 3 ? C.ink : C.muted} style={{ width: 20 }}>{i + 1}</Body>
-              <Avatar name={p.name} color={p.color} size={36} />
-              <View style={{ flex: 1 }}>
-                <Body weight="semi">{p.name}</Body>
-                <Bar progress={p.points / max} color={p.color} height={6} delay={100} />
-              </View>
-              <Body weight="bold" style={{ width: 56, textAlign: "right" }}>{fmt(p.points)}</Body>
-            </Animated.View>
-          ))}
-        </View>
+        ) : null}
       </ScrollView>
       <Confetti ref={confetti} />
     </View>

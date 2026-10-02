@@ -7,6 +7,7 @@ import { C, F, IMG, R } from "@/theme";
 import { Body, Button, Dashes, DigitTiles, Display, Icon, Label, LiveDot, Sticker, Starburst, Ticket } from "./ui";
 import { HeroContent } from "@/lib/content";
 import { nextService } from "@/lib/time";
+import { useSiteContent } from "@/lib/content";
 
 function Slide({ source, active }: { source: any; active: boolean }) {
   const o = useSharedValue(active ? 1 : 0);
@@ -76,7 +77,7 @@ export function HeroStage({ hero }: { hero: HeroContent; y?: any }) {
         </View>
 
         <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-          <Button label="Watch live" icon="play" trail={null} small onPress={() => router.push("/sermon/power-of-grace")} style={{ flex: 1 }} />
+          <Button label="Watch" icon="play" trail={null} small onPress={() => router.push("/watch")} style={{ flex: 1 }} />
           <Button label="Get a ride" icon="car-side" trail={null} variant="light" small onPress={() => router.push("/rides")} style={{ flex: 1 }} />
         </View>
       </View>
@@ -89,11 +90,15 @@ export function HeroStage({ hero }: { hero: HeroContent; y?: any }) {
 
 /** Green ticket with a split-flap countdown to the next service. */
 export function NextService() {
-  const [n, setN] = useState(nextService());
+  const { services, church } = useSiteContent();
+  const calc = () => nextService(services, church.tzOffsetHours ?? 3);
+  const [n, setN] = useState(calc);
   useEffect(() => {
-    const t = setInterval(() => setN(nextService()), 1000);
+    setN(calc());
+    const t = setInterval(() => setN(calc()), 1000);
     return () => clearInterval(t);
-  }, []);
+  }, [services, church.tzOffsetHours]);
+  if (!n) return null;
   return (
     <Animated.View entering={FadeIn.delay(150).duration(600)} style={{ marginHorizontal: 16 }}>
       <Ticket color={C.mint} at={0.62}>
@@ -105,7 +110,7 @@ export function NextService() {
           <Body size={18} weight="semi" color="#fff" style={{ marginTop: 4, marginRight: 50 }} numberOfLines={1}>{n.live || n.label} · {n.time}</Body>
           <Dashes color="rgba(255,255,255,0.4)" style={{ marginVertical: 14 }} />
           {n.live ? (
-            <Button label="Join the stream" icon="play" variant="light" block onPress={() => router.push("/sermon/power-of-grace")} />
+            <Button label="Join the stream" icon="play" variant="light" block onPress={() => router.push("/watch")} />
           ) : (
             <DigitTiles groups={[["Days", n.d], ["Hours", n.h], ["Minutes", n.m], ["Seconds", n.s]]} />
           )}

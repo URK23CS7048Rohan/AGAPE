@@ -1,12 +1,13 @@
 /**
- * Site content edited in the web admin (/admin) → used by the app.
- * Reads the `site_content` row from Supabase; falls back to the same defaults the website uses.
+ * Church content edited in /admin (the `site_content` row), shared with the website.
+ * Until staff publish their first edit, the app shows the website's own defaults
+ * (src/data/site-defaults.json, synced from website/assets/js/content.js).
  * Image values can be bundled paths ("assets/img/…"), uploaded Storage URLs, or data URLs.
  */
 import { useEffect, useState } from "react";
 import { C, IMG } from "@/theme";
-import { supabase } from "./supabase";
-import { EVENTS, GROUPS, PROMOS, Promo } from "@/data/mock";
+import { supabase, isConfigured } from "./supabase";
+import DEFAULTS from "@/data/site-defaults.json";
 
 const BUNDLED: Record<string, any> = {
   "assets/img/agape-families.jpg": require("../../assets/images/agape-families.jpg"),
@@ -26,7 +27,7 @@ const BUNDLED: Record<string, any> = {
 const SITE_URL = (process.env.EXPO_PUBLIC_SITE_URL || "").replace(/\/$/, "");
 
 /** Turns a stored image value into an expo-image source. */
-export function imageSource(p?: string, fallback: any = IMG.homeWorship) {
+export function imageSource(p?: string | null, fallback: any = IMG.homeWorship) {
   if (!p) return fallback;
   if (/^(https?:|data:)/.test(p)) return { uri: p };
   if (BUNDLED[p]) return BUNDLED[p];
@@ -34,88 +35,87 @@ export function imageSource(p?: string, fallback: any = IMG.homeWorship) {
   return fallback;
 }
 
+export type Service = { day: number; h: number; m: number; label: string; time: string; note?: string };
+export type Church = {
+  name: string; short: string; address: string; mapsUrl: string; phone: string; whatsapp: string; email: string;
+  youtube: string; youtubeChannelId: string; tzOffsetHours: number; currency: string;
+  givingUrl?: string; lat?: number | null; lng?: number | null;
+};
 export type HeroContent = { kicker: string; line1: string; words: string[]; slides: { image: any; caption: string }[] };
-export type EventItem = (typeof EVENTS)[number];
-export type GroupItem = (typeof GROUPS)[number];
-export type AppContent = { hero: HeroContent; promos: Promo[]; events: EventItem[]; groups: GroupItem[]; announcement?: { title: string; text: string; link: string }; gallery: { image: any; caption: string }[] };
-
-const DEFAULT: AppContent = {
-  hero: {
-    kicker: "An international family of faith",
-    line1: "Love that",
-    words: ["shows up.", "prays.", "sings.", "serves.", "stays."],
-    slides: [
-      { image: IMG.homeWorship, caption: "Prayer & Worship at home" },
-      { image: IMG.squadBand, caption: "Agape Squad leading worship" },
-      { image: IMG.familyDay, caption: "Church family day" },
-      { image: IMG.kidsChurch, caption: "Kids church" },
-      { image: IMG.institute, caption: "Agape Institute graduates" },
-    ],
-  },
-  promos: PROMOS,
-  events: EVENTS,
-  groups: GROUPS,
-  gallery: [],
+export type Promo = { id: string; kicker: string; title: string; accent: string; body: string; cta: string; route: string; url?: string; image: any; accentColor: string; sticker?: [string, string] };
+export type EventItem = { key: string; title: string; day: string; month: string; weekday: string; time: string; tags: string[]; image: any; color: string; link: string };
+export type Campaign = { id: string; title: string; accent: string; body: string; raised: number; goal: number; image: any; color: string };
+export type AppContent = {
+  church: Church; services: Service[]; stats: Record<string, number>; hero: HeroContent; promos: Promo[]; events: EventItem[]; campaigns: Campaign[];
+  announcement?: { title: string; text: string; cta?: string; link?: string };
 };
 
-const route = (link?: string) => {
-  const l = (link || "").toLowerCase();
-  if (l.includes("event")) return "/events";
-  if (l.includes("give")) return "/give";
-  if (l.includes("app") || l.includes("course")) return "/grow";
-  if (l.includes("community") || l.includes("squad")) return "/community";
-  if (l.includes("watch") || l.includes("youtube")) return "/watch";
-  if (l.includes("ride")) return "/rides";
-  if (l.includes("pray")) return "/prayer";
-  return "/events";
-};
+const slug = (s: string) => s.toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "").slice(0, 80);
+/** Stable id for an event published in /admin; RSVPs are stored against it. */
+export const eventKey = (e: { title?: string; day?: string; month?: string }) => slug(`${e.title || "event"}-${e.day || ""}-${e.month || ""}`);
 
-export function mapSite(d: any): AppContent {
-  if (!d || typeof d !== "object") return DEFAULT;
-  const out: AppContent = { ...DEFAULT };
-  if (d.hero) {
-    out.hero = {
-      kicker: d.hero.kicker || DEFAULT.hero.kicker,
-      line1: d.hero.line1 || DEFAULT.hero.line1,
-      words: Array.isArray(d.hero.words) && d.hero.words.length ? d.hero.words : DEFAULT.hero.words,
-      slides: Array.isArray(d.hero.slides) && d.hero.slides.length ? d.hero.slides.map((s: any) => ({ image: imageSource(s.image), caption: s.caption || "" })) : DEFAULT.hero.slides,
-    };
-  }
-  if (Array.isArray(d.promos) && d.promos.length) {
-    out.promos = d.promos.map((p: any, i: number) => ({
-      id: `p${i}`, kicker: p.kicker || "", title: p.title || "", accent: p.accent || "", body: p.body || "", cta: p.cta || "Learn more",
-      route: route(p.link), image: imageSource(p.image), accentColor: p.color || C.flame,
-      sticker: p.sticker1 || p.sticker2 ? [p.sticker1 || "", p.sticker2 || ""] : undefined,
-    }));
-  }
-  if (Array.isArray(d.events) && d.events.length) {
-    out.events = d.events.map((e: any, i: number) => ({
-      id: `e${i}-${(e.title || "").toLowerCase().replace(/[^a-z0-9]+/g, "-")}`, title: e.title || "Event", day: e.day || "", month: String(e.month || "").toUpperCase(), weekday: e.weekday || "",
-      time: e.meta || "", place: "", tags: String(e.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean), image: imageSource(e.image), color: [C.flame, C.violet, C.rose, C.sun, C.mint][i % 5],
-    }));
-  }
-  if (Array.isArray(d.ministries) && d.ministries.length) {
-    out.groups = d.ministries.map((m: any, i: number) => ({ id: `g${i}`, name: m.name || "", meets: m.chip || "", members: 0, color: m.color || C.flame, image: imageSource(m.image) }));
-  }
-  if (Array.isArray(d.gallery)) out.gallery = d.gallery.map((g: any) => ({ image: imageSource(g.image), caption: g.caption || "" }));
-  if (d.announcement) out.announcement = d.announcement;
-  return out;
+/** Maps a website link (#events, #give, https://…) to an app screen or an external URL. */
+function linkTarget(link?: string): { route: string; url?: string } {
+  const l = (link || "").trim();
+  if (/^https?:/i.test(l)) return { route: "", url: l };
+  const k = l.toLowerCase();
+  if (k.includes("event")) return { route: "/events" };
+  if (k.includes("give")) return { route: "/give" };
+  if (k.includes("course") || k.includes("app") || k.includes("institute")) return { route: "/grow" };
+  if (k.includes("community") || k.includes("squad") || k.includes("ministr")) return { route: "/community" };
+  if (k.includes("watch") || k.includes("youtube") || k.includes("live")) return { route: "/watch" };
+  if (k.includes("ride")) return { route: "/rides" };
+  if (k.includes("pray")) return { route: "/prayer" };
+  return { route: "/events" };
 }
 
-let cache: AppContent | null = null;
+const EVENT_COLORS = [C.flame, C.violet, C.rose, C.sun, C.mint];
+
+export function mapSite(d: any): AppContent {
+  const D: any = DEFAULTS;
+  const pick = (k: string) => (d && d[k] !== undefined ? d[k] : D[k]);
+  const hero = { ...D.hero, ...(pick("hero") || {}) };
+  return {
+    church: { ...D.church, ...(pick("church") || {}) },
+    services: Array.isArray(pick("services")) ? pick("services") : [],
+    stats: pick("stats") || {},
+    hero: {
+      kicker: hero.kicker || "",
+      line1: hero.line1 || "",
+      words: Array.isArray(hero.words) && hero.words.length ? hero.words : [""],
+      slides: (Array.isArray(hero.slides) ? hero.slides : []).map((s: any) => ({ image: imageSource(s.image), caption: s.caption || "" })),
+    },
+    promos: (pick("promos") || []).map((p: any, i: number) => ({
+      id: `p${i}`, kicker: p.kicker || "", title: p.title || "", accent: p.accent || "", body: p.body || "", cta: p.cta || "Learn more",
+      ...linkTarget(p.link), image: imageSource(p.image), accentColor: p.color || C.flame,
+      sticker: p.sticker1 || p.sticker2 ? [p.sticker1 || "", p.sticker2 || ""] : undefined,
+    })),
+    events: (pick("events") || []).map((e: any, i: number) => ({
+      key: eventKey(e), title: e.title || "Event", day: String(e.day || ""), month: String(e.month || "").toUpperCase(), weekday: e.weekday || "",
+      time: e.meta || "", tags: String(e.tags || "").split(",").map((t: string) => t.trim()).filter(Boolean), image: imageSource(e.image),
+      color: EVENT_COLORS[i % EVENT_COLORS.length], link: e.link || "",
+    })),
+    campaigns: (pick("campaigns") || []).map((c: any, i: number) => ({
+      id: `c${i}`, title: c.title || "", accent: c.accent || "", body: c.body || "", raised: Number(c.raised) || 0, goal: Number(c.goal) || 0,
+      image: imageSource(c.image, IMG.handsTogether), color: c.color || C.flame,
+    })),
+    announcement: pick("announcement"),
+  };
+}
+
+const DEFAULT = mapSite(null);
+let cache: AppContent = DEFAULT;
 const listeners = new Set<(c: AppContent) => void>();
 
 async function fetchContent() {
-  if (!supabase) return;
-  const { data } = await supabase.from("site_content").select("data").eq("key", "site").maybeSingle();
-  if (data?.data) {
-    cache = mapSite(data.data);
-    listeners.forEach((l) => l(cache!));
-  }
+  const { data, error } = await supabase.from("site_content").select("data").eq("key", "site").maybeSingle();
+  if (error) throw error;
+  cache = mapSite(data?.data ?? null);
+  listeners.forEach((l) => l(cache));
 }
 let subscribed = false;
 function ensureLive() {
-  if (subscribed || !supabase) return;
+  if (subscribed || !isConfigured) return;
   subscribed = true;
   fetchContent().catch(() => {});
   // Staff edits in /admin appear in the app without a reload.
@@ -125,9 +125,9 @@ function ensureLive() {
     .subscribe();
 }
 
-/** Admin-managed content with live updates. */
+/** Admin-managed church content with live updates. */
 export function useSiteContent(): AppContent {
-  const [c, setC] = useState<AppContent>(cache || DEFAULT);
+  const [c, setC] = useState<AppContent>(cache);
   useEffect(() => {
     listeners.add(setC);
     ensureLive();

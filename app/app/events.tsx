@@ -1,28 +1,24 @@
 import React, { useState } from "react";
-import { ScrollView, StyleSheet, View } from "react-native";
+import { Linking, ScrollView, StyleSheet, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, ZoomIn } from "react-native-reanimated";
 import { Image } from "expo-image";
-import * as Haptics from "expo-haptics";
+import QRCode from "react-native-qrcode-svg";
 import { C, R, onColor } from "@/theme";
-import { BackHeader, Body, Button, Dashes, Display, Icon, Label, Press, Sticker, Ticket } from "@/components/ui";
-import { USER } from "@/data/mock";
+import { BackHeader, Body, Button, Dashes, Display, Empty, Icon, Label, Press, Sticker, Ticket } from "@/components/ui";
 import { useSiteContent } from "@/lib/content";
-import { useStore } from "@/lib/store";
-import { rsvp } from "@/lib/api";
+import { useAuth } from "@/lib/auth";
+import { useRsvps } from "@/lib/hooks";
 
 export default function Events() {
-  const { rsvps, toggleRsvp } = useStore();
-  const EVENTS = useSiteContent().events;
+  const { events } = useSiteContent();
+  const { profile, session } = useAuth();
+  const rsvp = useRsvps();
   const [ticket, setTicket] = useState<string | null>(null);
-  const hero = EVENTS[0];
-  if (!hero) return <View style={{ flex: 1, backgroundColor: C.bg }}><BackHeader title="Events" /><Body center color={C.muted} style={{ marginTop: 40 }}>No upcoming events yet.</Body></View>;
-  const t = EVENTS.find((e) => e.id === ticket);
+  const hero = events[0];
+  const t = events.find((e) => e.key === ticket);
 
-  const toggle = (id: string) => {
-    const on = toggleRsvp(id);
-    rsvp(id, on);
-    Haptics.notificationAsync(on ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Warning).catch(() => {});
-  };
+  if (!hero) return <View style={{ flex: 1, backgroundColor: C.bg }}><BackHeader title="Events" /><Empty icon="calendar" title="No upcoming events" body="New events appear here as soon as the team publishes them." /></View>;
+  const heroGoing = rsvp.going(hero.key);
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
@@ -40,41 +36,46 @@ export default function Events() {
             </View>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 8, paddingTop: 16 }}>
               <View style={{ flex: 1 }}>
-                <Label color={onColor(hero.color)}>Featured · {hero.weekday} {hero.day} {hero.month}</Label>
+                <Label color={onColor(hero.color)}>Featured · {[hero.weekday, hero.day, hero.month].filter(Boolean).join(" ")}</Label>
                 <Display size={22} color={onColor(hero.color)} numberOfLines={2} style={{ marginTop: 2 }}>{hero.title}</Display>
               </View>
-              <Button label={rsvps.has(hero.id) ? "Ticket" : "RSVP"} icon={rsvps.has(hero.id) ? "maximize" : null} trail={rsvps.has(hero.id) ? null : "arrow-up-right"} variant="light" small onPress={() => (rsvps.has(hero.id) ? setTicket(hero.id) : toggle(hero.id))} />
+              <Button label={heroGoing ? "Ticket" : "RSVP"} icon={heroGoing ? "maximize" : null} trail={heroGoing ? null : "arrow-up-right"} variant="light" small onPress={() => (heroGoing ? setTicket(hero.key) : rsvp.toggle(hero))} />
             </View>
           </Ticket>
-          <View pointerEvents="none" style={{ position: "absolute", right: -4, top: -16 }}>
-            <Sticker top={hero.day} bottom={hero.month} bg={C.sun} size={74} />
-          </View>
+          {hero.day ? (
+            <View pointerEvents="none" style={{ position: "absolute", right: -4, top: -16 }}>
+              <Sticker top={hero.day} bottom={hero.month} bg={C.sun} size={74} />
+            </View>
+          ) : null}
         </Animated.View>
 
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
-          {EVENTS.map((e, i) => {
-            const on = rsvps.has(e.id);
+          {events.map((e, i) => {
+            const on = rsvp.going(e.key);
             const fg = onColor(e.color);
+            const n = rsvp.count(e.key);
             return (
-              <Animated.View key={e.id} entering={FadeInDown.delay(120 + i * 50)}>
+              <Animated.View key={e.key} entering={FadeInDown.delay(120 + i * 50)}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 12, backgroundColor: "#fff", borderRadius: R.lg, padding: 10, borderWidth: 1.5, borderColor: C.line }}>
                   <View style={{ width: 64, height: 72, borderRadius: 16, backgroundColor: e.color, alignItems: "center", justifyContent: "center" }}>
                     <Display size={26} color={fg} style={{ lineHeight: 28 }}>{e.day}</Display>
-                    <Label size={11} color={fg}>{e.month} · {e.weekday}</Label>
+                    <Label size={11} color={fg}>{[e.month, e.weekday].filter(Boolean).join(" · ")}</Label>
                   </View>
                   <View style={{ flex: 1 }}>
                     <Body weight="semi" size={15.5} numberOfLines={2}>{e.title}</Body>
-                    <Label numberOfLines={1}>{e.time}</Label>
+                    {e.time ? <Label numberOfLines={2}>{e.time}</Label> : null}
                     <View style={{ flexDirection: "row", gap: 5, marginTop: 6, flexWrap: "wrap" }}>
+                      {n ? <View style={{ paddingHorizontal: 8, height: 22, borderRadius: 7, backgroundColor: C.mintSoft, justifyContent: "center" }}><Body size={11} weight="semi">{n} going</Body></View> : null}
                       {e.tags.map((tg) => <View key={tg} style={{ paddingHorizontal: 8, height: 22, borderRadius: 7, backgroundColor: C.bg, justifyContent: "center" }}><Body size={11}>{tg}</Body></View>)}
                     </View>
                   </View>
                   <View style={{ gap: 6, alignItems: "center" }}>
-                    <Press onPress={() => toggle(e.id)} style={{ paddingHorizontal: 12, height: 36, borderRadius: 12, backgroundColor: on ? C.mint : C.ink, flexDirection: "row", alignItems: "center", gap: 5 }}>
+                    <Press onPress={() => rsvp.toggle(e)} style={{ paddingHorizontal: 12, height: 36, borderRadius: 12, backgroundColor: on ? C.mint : C.ink, flexDirection: "row", alignItems: "center", gap: 5 }}>
                       {on ? <Animated.View entering={ZoomIn}><Icon name="check" size={14} color="#fff" /></Animated.View> : null}
                       <Body size={12.5} weight="bold" color="#fff">{on ? "Going" : "RSVP"}</Body>
                     </Press>
-                    {on ? <Press onPress={() => setTicket(e.id)}><Body size={12} weight="bold" color={C.flame}>Ticket</Body></Press> : null}
+                    {on ? <Press onPress={() => setTicket(e.key)}><Body size={12} weight="bold" color={C.flame}>Ticket</Body></Press> : null}
+                    {!on && /^https?:/.test(e.link) ? <Press onPress={() => Linking.openURL(e.link)}><Body size={12} weight="bold" color={C.muted}>Details</Body></Press> : null}
                   </View>
                 </View>
               </Animated.View>
@@ -91,14 +92,14 @@ export default function Events() {
                 <Image source={t.image} style={{ height: 130, borderRadius: 18 }} contentFit="cover" />
               </View>
               <View style={{ padding: 20 }}>
-                <Label>Admit one · {t.weekday} {t.day} {t.month}</Label>
+                <Label>Admit one · {[t.weekday, t.day, t.month].filter(Boolean).join(" ")}</Label>
                 <Display size={26} style={{ marginTop: 4 }}>{t.title}</Display>
-                <Label style={{ marginTop: 2 }}>{t.time}</Label>
+                {t.time ? <Label style={{ marginTop: 2 }}>{t.time}</Label> : null}
                 <Dashes style={{ marginVertical: 16 }} />
-                <View style={{ alignSelf: "center", width: 160, height: 160, borderRadius: 20, borderWidth: 1.5, borderColor: C.line, alignItems: "center", justifyContent: "center" }}>
-                  <Icon name="qrcode" size={130} />
+                <View style={{ alignSelf: "center", padding: 12, borderRadius: 20, borderWidth: 1.5, borderColor: C.line, backgroundColor: "#fff" }}>
+                  <QRCode value={`agape:rsvp:${t.key}:${session?.user.id ?? ""}`} size={140} color={C.ink} backgroundColor="#fff" />
                 </View>
-                <Label style={{ marginTop: 10, textAlign: "center" }}>{USER.name} · {USER.memberId}</Label>
+                <Label style={{ marginTop: 10, textAlign: "center" }}>{profile?.full_name || session?.user.email}</Label>
                 <Button label="Done" icon="check" trail={null} variant="ink" block onPress={() => setTicket(null)} style={{ marginTop: 16 }} />
               </View>
             </Ticket>

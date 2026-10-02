@@ -1,11 +1,11 @@
 import React from "react";
 import { Redirect, Tabs } from "expo-router";
 import { TabBar } from "@/components/TabBar";
-import { useStore } from "@/lib/store";
+import { useAuth } from "@/lib/auth";
 
 export default function TabsLayout() {
-  const { signedIn } = useStore();
-  if (!signedIn) return <Redirect href="/welcome" />;
+  const { canBrowse } = useAuth();
+  if (!canBrowse) return <Redirect href="/welcome" />;
   return (
     <Tabs tabBar={(props) => <TabBar {...props} />} screenOptions={{ headerShown: false }}>
       <Tabs.Screen name="index" options={{ title: "Home" }} />
