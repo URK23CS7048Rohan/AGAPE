@@ -1338,9 +1338,10 @@ void main(){
     // Events: each row sweeps in from the right as it reaches you, the big dates lean in
     $$(".erow").forEach((row, i) => {
       const st = { trigger: row, start: "top 100%", end: "top 60%", scrub: 0.8 };
-      gsap.fromTo($(".erow__main", row), { x: 220, opacity: 0 }, { x: 0, opacity: 1, ease: "power3.out", scrollTrigger: st });
-      gsap.fromTo($(".erow__date", row), { x: -80, skewX: -12, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, ease: "power3.out", scrollTrigger: st });
-      gsap.fromTo($$(".erow__tags, .erow__go", row), { x: 120, opacity: 0 }, { x: 0, opacity: 1, ease: "power3.out", stagger: 0.1, scrollTrigger: st });
+      const k = innerWidth < 760 ? 0.35 : 1;
+      gsap.fromTo($(".erow__main", row), { x: 220 * k, opacity: 0 }, { x: 0, opacity: 1, ease: "power3.out", scrollTrigger: st });
+      gsap.fromTo($(".erow__date", row), { x: -80 * k, skewX: -12, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, ease: "power3.out", scrollTrigger: st });
+      gsap.fromTo($$(".erow__tags, .erow__go", row), { x: 120 * k, opacity: 0 }, { x: 0, opacity: 1, ease: "power3.out", stagger: 0.1, scrollTrigger: st });
     });
 
     // Verse posters: the stack tips up out of the floor

@@ -399,16 +399,20 @@
 
     /* ---------------------------------------------------------- HERO */
     hero: { title: "Homepage hero", crumb: "Website", icon: "sparkles", group: "Website", render(v) {
-      v.innerHTML = intro("", "The first thing people see: a full-screen photo slideshow that ripples under the cursor, with a giant headline whose last word cycles through your words.");
-      v.appendChild(card("Headline", "“Love that” + a cycling word, e.g. “shows up.”, “prays.”", fieldsGrid([
+      v.innerHTML = intro("", "The website opens with a 3D story (night → dawn → the empty tomb) with three lines of Scripture, then the arch hero with your headline, a rotating verse, a countdown and the watch-live seal.");
+      if (!Array.isArray(C.story)) C.story = [];
+      v.appendChild(card("Opening story", "Three lines of Scripture shown as the 3D scene moves from night, to dawn at the cross, to the empty tomb. The third is shown huge, with its last word in italics.", listEditor({
+        items: C.story, max: 3, addLabel: "Add a line",
+        title: (s) => s.ref || "Scripture", sub: (s) => s.text, template: { text: "", ref: "" },
+        fields: [{ k: "text", label: "Scripture", type: "textarea", wide: true }, { k: "ref", label: "Reference", ph: "John 3:16" }],
+      })));
+      v.appendChild(card("Arch hero headline", "“Love that” + a cycling word, e.g. “shows up.”, “prays.” The verse beside it rotates through your Bible verses.", fieldsGrid([
         { k: "kicker", label: "Small label above the headline" },
         { k: "line1", label: "First line" },
         { k: "words", label: "Cycling words (press Enter after each)", type: "tags", wide: true },
         { k: "lead", label: "Intro paragraph", type: "textarea", wide: true },
-        { k: "revealTitle", label: "Message in the bottom bar" },
-        { k: "revealAccent", label: "…italic accent word" },
       ], C.hero)));
-      v.appendChild(card("Hero slideshow", "Full-screen photos that crossfade with a liquid transition every few seconds. Drag to reorder. Wide, landscape photos look best.", listEditor({
+      v.appendChild(card("App home slideshow", "Photos that crossfade at the top of the app's home screen. Drag to reorder. Wide, landscape photos look best.", listEditor({
         items: C.hero.slides, image: "image", imageShape: "imgpick--wide", max: 10, addLabel: "Add a slide",
         title: (s) => s.caption, sub: () => "Hero slide", template: { image: "", caption: "New slide" },
         fields: [{ k: "caption", label: "Caption shown on the photo", wide: true }],
@@ -538,6 +542,7 @@
     /* ---------------------------------------------------------- WATCH */
     watch: { title: "Watch & YouTube", crumb: "Website", icon: "youtube-play", group: "Website", render(v) {
       v.innerHTML = intro("", "The live player plays the latest uploads from your YouTube channel. Set the channel and the artwork here.");
+      v.appendChild(card("App download", "The website's download buttons. The Android link points at the newest APK built by GitHub Actions; add the App Store link once the iPhone app is published.", fieldsGrid([{ k: "androidApk", label: "Android APK link", wide: true }, { k: "iosUrl", label: "App Store link (optional)", wide: true }], C.church)));
       v.appendChild(card("YouTube channel", "Channel ID starts with “UC”. Find it on YouTube under About → Share channel → Copy channel ID.", fieldsGrid([{ k: "youtube", label: "Channel link" }, { k: "youtubeChannelId", label: "Channel ID" }], C.church)));
       const g = document.createElement("div"); g.className = "grid grid--2";
       const a = document.createElement("div"); a.innerHTML = `<div class="field"><span>Player background</span></div>`; a.appendChild(imgPicker(C.live.image, (x) => { C.live.image = x; markDirty(); }, "imgpick--wide"));

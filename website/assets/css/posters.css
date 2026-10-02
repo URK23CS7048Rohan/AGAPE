@@ -231,3 +231,7 @@
 /* separate Ask Agape from the prayer wall: a plain, slightly lighter sheet */
 .ai.ai--v4{padding-bottom:clamp(70px,8vw,110px)}
 .prayer.prayer--v4{background:#17131b!important;border-radius:clamp(28px,4vw,56px) clamp(28px,4vw,56px) 0 0;margin-top:0;box-shadow:none}
+
+/* app download */
+.store--soon{opacity:.55}
+.apk-note{margin:14px 0 0;font-size:13px;color:rgba(255,255,255,.55);max-width:380px}

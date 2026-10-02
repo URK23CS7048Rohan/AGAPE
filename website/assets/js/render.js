@@ -33,6 +33,10 @@
     set(".js-fb", C.church.facebook || "#", "href");
     set(".js-wa", C.church.whatsapp ? `https://wa.me/${String(C.church.whatsapp).replace(/\D/g, "")}` : "#", "href");
     document.title = C.church.name;
+    /* app download */
+    $$(".js-apk").forEach((a) => { a.href = C.church.androidApk || "#download"; });
+    $$(".js-ios").forEach((a) => { const live = !!C.church.iosUrl; a.href = live ? C.church.iosUrl : "#download"; a.classList.toggle("store--soon", !live); if (live) { a.target = "_blank"; a.rel = "noopener"; } });
+    $$(".js-ios-k").forEach((k) => (k.textContent = C.church.iosUrl ? "Download on the" : "Coming soon"));
 
     /* announcement bar */
     const ann = $(".nav__promo");
@@ -59,6 +63,15 @@
     const mf = $(".menu__foot");
     if (mf) mf.innerHTML = svc.slice(0, 2).map((s) => `<span>${esc(s.label)} ${esc(s.time)}</span>`).join("");
 
+    /* opening story captions (the last one is shown big: last word in italics) */
+    const caps = $$(".st__cap");
+    (C.story || []).slice(0, caps.length).forEach((c, i) => {
+      if (!c || !c.text) return;
+      const q = $("blockquote", caps[i]);
+      if (caps[i].classList.contains("st__cap--big")) { const w = c.text.trim().split(/\s+/), last = w.pop(); q.innerHTML = `${w.length ? `<b>${esc(w.join(" "))}</b> ` : ""}<em>${esc(last)}</em>`; }
+      else q.textContent = c.text;
+      $("figcaption", caps[i]).textContent = c.ref || "";
+    });
     /* hero */
     const H = C.hero;
     set(".js-hero-kicker", H.kicker);

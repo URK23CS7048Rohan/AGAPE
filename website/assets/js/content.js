@@ -8,6 +8,9 @@ window.AGAPE_DEFAULT = {
   church: {
     name: "Agape International Ministries",
     short: "Agape",
+    // the Android app (built by GitHub Actions on every app change); add the App Store link once the iPhone app is live
+    androidApk: "https://github.com/URK23CS7048Rohan/AGAPE/releases/download/app-latest/agape.apk",
+    iosUrl: "",
     tagline: "A church, a family, a mission. Real people, real faith, real community.",
     address: "Agape International Ministries",
     mapsUrl: "https://maps.google.com/?q=Agape+International+Ministries",
@@ -28,6 +31,12 @@ window.AGAPE_DEFAULT = {
     { day: 3, h: 19, m: 30, label: "Wednesday Prayer", time: "7:30 PM", note: "Prayer & worship" },
   ],
   announcement: { title: "Prayer & Worship", text: "Intercessory prayer sessions · now on YouTube", cta: "Watch now", link: "https://www.youtube.com/@agapeinternationalmedia" },
+  // the 3D opening: three lines of Scripture as the story moves from night to dawn to the empty tomb
+  story: [
+    { text: "In the beginning, God created the heavens and the earth.", ref: "Genesis 1:1" },
+    { text: "For God so loved the world, that he gave his one and only Son.", ref: "John 3:16" },
+    { text: "He is risen.", ref: "Matthew 28:6" },
+  ],
   hero: {
     kicker: "An international family of faith",
     line1: "Love that",
