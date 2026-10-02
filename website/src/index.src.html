@@ -14,6 +14,7 @@
 <link rel="stylesheet" href="assets/css/style.css" />
 <link rel="stylesheet" href="assets/css/v3.css" />
 <link rel="stylesheet" href="assets/css/v4.css" />
+<link rel="stylesheet" href="assets/css/arcade.css" />
 </head>
 <body class="is-loading" data-page="site">
 <!--SPRITE-->
@@ -74,52 +75,72 @@
 <main id="top">
 
 <!-- ============ HERO ============ -->
-<section class="hx" id="hero" data-page-bg="#0B0710" >
-  <div class="hx__media" data-cursor="Move">
-    <div class="hx__imgs js-hero-slides"></div>
-    <canvas class="hx__gl" aria-hidden="true"></canvas>
-    <div class="hx__shade" aria-hidden="true"></div>
-  </div>
-
-  <div class="hx__top">
-    <a href="#" target="_blank" rel="noopener" class="nav__promo hx__ann">
-      <span class="hx__ann-new">New</span>
-      <span class="hx__ann-text js-ann"></span>
-      <span class="hx__ann-cta"><span class="js-ann-cta">Watch now</span><svg class="ic"><use href="#i-arrow-right"/></svg></span>
-    </a>
-    <div class="hx__count"><b class="js-hx-idx">01</b><i></i><span class="js-hx-total">05</span></div>
-  </div>
-
-  <div class="hx__main">
-    <p class="hx__kicker"><span class="live-dot"></span><span class="js-hero-kicker">An international family of faith</span></p>
-    <h1 class="hx__title">
-      <span class="hx__l1 js-hero-line1">Love that</span>
-      <span class="hx__l2"><span class="hx__word js-hero-word">shows up.</span></span>
-    </h1>
-    <div class="hx__row">
-      <p class="hx__lead js-hero-lead"></p>
-      <div class="hx__ctas">
-        <a href="#visit" class="xbtn xbtn--fire" data-magnetic><span class="xbtn__t" data-roll>Plan your visit</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
-        <a href="#watch" class="xbtn xbtn--glass" data-magnetic><span class="live-dot"></span><span class="xbtn__t" data-roll>Watch live</span></a>
+<section class="hx hx--arc" id="hero" data-page-bg="#0B0710" >
+  <!-- the arcade: a row of church arches, the great door in the middle -->
+  <div class="arc" aria-label="Welcome">
+    <div class="arc__a arc__a--3l" data-d="3" aria-hidden="true">
+      <div class="arc__rings"><i></i><i></i><i></i><i></i></div>
+      <span class="arc__tag">Wed · Prayer</span>
+    </div>
+    <div class="arc__a arc__a--2l" data-d="2" aria-hidden="true">
+      <div class="arc__roll"><div><b>Pray</b><em>worship</em><b>Belong</b><em>serve</em><b>Grow</b><em>love</em><b>Pray</b><em>worship</em><b>Belong</b><em>serve</em><b>Grow</b><em>love</em></div></div>
+    </div>
+    <div class="arc__a arc__a--1l" data-d="1">
+      <svg class="arc__star arc__star--sm" viewBox="0 0 100 100" aria-hidden="true"><use href="#arc-star"/></svg>
+      <div class="arc__cd">
+        <span class="arc__tag js-hero-next">Next service</span>
+        <p><b class="js-h-d">00</b><small>days</small></p>
+        <p><b class="js-h-h">00</b><small>hrs</small></p>
+        <p><b class="js-h-m">00</b><small>min</small></p>
+        <p><b class="js-h-s">00</b><small>sec</small></p>
       </div>
     </div>
+
+    <div class="arc__a arc__door" data-d="0">
+      <div class="arc__rays" aria-hidden="true"></div>
+      <div class="arc__glow" aria-hidden="true"></div>
+      <svg class="arc__emblem" viewBox="0 0 100 100" aria-hidden="true"><use href="#arc-star"/><path d="M46 26h8v16h14v8H54v26h-8V50H32v-8h14z" fill="var(--door)"/></svg>
+      <div class="hx__main">
+        <a href="#" target="_blank" rel="noopener" class="nav__promo hx__ann">
+          <span class="hx__ann-new">New</span>
+          <span class="hx__ann-text js-ann"></span>
+          <span class="hx__ann-cta"><span class="js-ann-cta">Watch now</span><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+        </a>
+        <p class="hx__kicker"><span class="js-hero-kicker">An international family of faith</span></p>
+        <h1 class="hx__title">
+          <span class="hx__l1 js-hero-line1">Love that</span>
+          <span class="hx__l2"><span class="hx__word js-hero-word">shows up.</span></span>
+        </h1>
+        <p class="hx__lead js-hero-lead"></p>
+        <div class="hx__ctas">
+          <a href="#visit" class="xbtn xbtn--ink" data-magnetic><span class="xbtn__t" data-roll>Plan your visit</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
+          <a href="#watch" class="xbtn xbtn--line" data-magnetic><span class="live-dot"></span><span class="xbtn__t" data-roll>Watch live</span></a>
+        </div>
+      </div>
+    </div>
+
+    <a href="#watch" class="arc__a arc__a--1r" data-d="1" aria-label="Watch live">
+      <div class="arc__seal" aria-hidden="true">
+        <svg class="arc__star" viewBox="0 0 100 100"><use href="#arc-star"/></svg>
+        <svg class="arc__ring" viewBox="0 0 200 200"><defs><path id="arcRingP" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs><text><textPath href="#arcRingP" textLength="462" lengthAdjust="spacing">WATCH LIVE · EVERY SUNDAY · WATCH LIVE · EVERY SUNDAY ·</textPath></text></svg>
+        <span class="arc__play"><svg class="ic"><use href="#i-play"/></svg></span>
+      </div>
+      <span class="arc__tag"><span class="live-dot"></span> <span class="js-live-label2">Sundays 10:00</span></span>
+    </a>
+    <div class="arc__a arc__a--2r" data-d="2">
+      <div class="arc__stats">
+        <p><b data-stat="members" data-suffix="+">0</b><small>members</small></p>
+        <p><b data-stat="nations">0</b><small>nations</small></p>
+        <p><b data-stat="prayers" data-sep>0</b><small>prayers this year</small></p>
+      </div>
+    </div>
+    <div class="arc__a arc__a--3r" data-d="3" aria-hidden="true">
+      <div class="arc__burst"></div>
+      <svg class="arc__cross" viewBox="0 0 40 60"><path d="M16 0h8v18h16v8H24v34h-8V26H0v-8h16z"/></svg>
+    </div>
   </div>
-
-  <a href="#watch" class="hx__seal" aria-label="Watch Prayer and Worship">
-    <svg viewBox="0 0 200 200" class="hx__seal-ring" aria-hidden="true"><defs><path id="sealPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs><text><textPath href="#sealPath" class="js-seal-text" textLength="488" lengthAdjust="spacing">PRAYER &amp; WORSHIP · LIVE EVERY WEEK · AGAPE · </textPath></text></svg>
-    <span class="hx__seal-core"><svg class="ic"><use href="#i-play"/></svg></span>
-  </a>
-
-  <div class="hx__thumbs js-hx-thumbs" aria-label="Photos"></div>
-
-  <div class="hx__foot">
-    <div class="hx__stat hx__stat--next"><span class="live-dot"></span><span class="js-hero-next">Next service</span><span class="hx__cd"><b class="js-h-d">00</b>d <b class="js-h-h">00</b>h <b class="js-h-m">00</b>m <b class="js-h-s">00</b>s</span></div>
-    <div class="hx__stat"><b data-stat="members" data-suffix="+">0</b><span>members</span></div>
-    <div class="hx__stat"><b data-stat="nations">0</b><span>nations</span></div>
-    <div class="hx__stat"><b data-stat="prayers" data-sep>0</b><span>prayers this year</span></div>
-    <p class="hx__belong"><span class="js-reveal-title">You belong</span> <em class="js-reveal-accent">here.</em></p>
-  </div>
-  <span class="js-hero-dots" hidden></span><span class="js-hero-caption" hidden></span>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><path id="arc-star" d="M50 0 L57 21 L75 7 L71 29 L93 25 L79 43 L100 50 L79 57 L93 75 L71 71 L75 93 L57 79 L50 100 L43 79 L25 93 L29 71 L7 75 L21 57 L0 50 L21 43 L7 25 L29 29 L25 7 L43 21 Z"/></defs></svg>
+  <span class="js-hero-dots" hidden></span><span class="js-hero-caption" hidden></span><span class="js-reveal-title" hidden></span><span class="js-reveal-accent" hidden></span>
 </section>
 
 <!-- ============ MARQUEE ============ -->
@@ -787,6 +808,7 @@
 <script src="assets/js/vendor/SplitText.min.js"></script>
 <script src="assets/js/vendor/Draggable.min.js"></script>
 <script src="assets/js/vendor/InertiaPlugin.min.js"></script>
+
 <script src="assets/js/main.js"></script>
 <script src="assets/js/v3.js"></script>
 <script src="assets/js/v4.js"></script>

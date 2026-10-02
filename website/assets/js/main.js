@@ -74,6 +74,7 @@ window.AgapeBoot = (SITE) => {
     onUpdate: (self) => {
       if (document.body.classList.contains("menu-open")) return;
       nav.classList.toggle("is-hidden", self.direction === 1 && self.scroll() > 240);
+      nav.classList.toggle("is-solid", self.scroll() > 40);
     },
   });
   $(".nav__burger").addEventListener("click", () => {
@@ -342,40 +343,60 @@ void main(){
   const nl = $(".nav__links");
   if (nl && !isTouch) {
     const hl = document.createElement("span"); hl.className = "nav__hl"; nl.prepend(hl);
-    $$("a", nl).forEach((a) => a.addEventListener("mouseenter", () => { hl.style.width = a.offsetWidth + "px"; hl.style.transform = `translateX(${a.offsetLeft}px)`; hl.style.opacity = 1; }));
+    const HL = ["#FFC23D", "#FF7AA8", "#2ED3A0", "#B7A5FF", "#FF5A1F", "#8FD8FF"];
+    $$("a", nl).forEach((a, i) => a.addEventListener("mouseenter", () => { hl.style.setProperty("--hl", HL[i % HL.length]); hl.style.width = a.offsetWidth + "px"; hl.style.transform = `translateX(${a.offsetLeft}px)`; hl.style.opacity = 1; }));
     nl.addEventListener("mouseleave", () => (hl.style.opacity = 0));
   }
 
-  // ---------- intro + scroll ----------
-  const HX_IN = "inset(14% 10% 20% 10% round 48px)", HX_FULL = "inset(0% 0% 0% 0% round 0px)";
-  gsap.set(".hx__media", { scale: 1.12 });
+  // ---------- intro + scroll: the arcade ----------
+  const arcs = $$(".arc__a").sort((x, y) => (+x.dataset.d || 0) - (+y.dataset.d || 0));
+  const door = $(".arc__door");
   gsap.set(".hx .pl", { yPercent: 110 });
-  gsap.set(".hx__word, .hx__kicker, .hx__lead, .hx__ctas > *, .hx__top > *, .hx__seal, .hx__thumbs, .hx__foot", { opacity: 0, y: 30 });
+  gsap.set(".hx__word, .hx__kicker, .hx__lead, .hx__ctas > *, .hx__ann, .arc__emblem", { opacity: 0, y: 30 });
   gsap.set(".hx__word", { filter: "blur(14px)" });
+  if (!reduce) gsap.set(arcs, { yPercent: 104 });
   const heroIntro = () => {
     const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: () => { if (WORDS.length > 1 && !reduce) setInterval(() => !document.hidden && heroVis && cycleWord(), 3000); } });
-    tl.fromTo(".hx__media", { clipPath: HX_IN }, { clipPath: HX_FULL, scale: 1, duration: 1.8, ease: "expo.inOut", immediateRender: true }, 0)
-      .to(".hx .pl", { yPercent: 0, duration: 1.3, stagger: 0.045 }, 0.75)
-      .to(".hx__word", { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4 }, 1.05)
-      .to(".hx__kicker, .hx__lead", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 1.1)
-      .to(".hx__ctas > *", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 1.2)
-      .to(".hx__top > *, .hx__seal, .hx__thumbs", { opacity: 1, y: 0, duration: 1.2, stagger: 0.06 }, 1.25)
-      .to(".hx__foot", { opacity: 1, y: 0, duration: 1.1 }, 1.4)
+    // the arches rise out of the floor, the great door first, then outward
+    tl.to(arcs, { yPercent: 0, duration: 1.6, stagger: { each: 0.1 } }, 0)
+      .to(".arc__emblem", { opacity: 1, y: 0, duration: 1.2 }, 0.55)
+      .to(".hx__ann, .hx__kicker", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 0.5)
+      .to(".hx .pl", { yPercent: 0, duration: 1.3, stagger: 0.045 }, 0.6)
+      .to(".hx__word", { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4 }, 0.9)
+      .to(".hx__lead", { opacity: 1, y: 0, duration: 1.1 }, 1)
+      .to(".hx__ctas > *", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 1.1)
       .add(() => heroEl.classList.add("is-in"), 2.2)
       .add(() => $$(".hx [data-count]").forEach((el) => {
         const target = parseFloat(el.dataset.count) || 0, suf = el.dataset.suffix || "", o = { v: 0 };
         gsap.to(o, { v: target, duration: 2.2, ease: "power3.out", onUpdate: () => (el.textContent = fmt(o.v) + suf) });
-      }), 1.4);
-    if (!reduce) {
-      gsap.timeline({ scrollTrigger: { trigger: heroEl, start: "top top", end: "bottom top", scrub: true } })
-        .fromTo(".hx__media", { clipPath: HX_FULL }, { clipPath: "inset(6% 4% 16% 4% round 44px)", ease: "none", immediateRender: false }, 0)
-        .to(".hx__main", { yPercent: -35, ease: "none" }, 0)
-        .to(".hx__seal", { rotate: 180, yPercent: -80, ease: "none" }, 0)
-        .to(".hx__foot, .hx__top, .hx__thumbs", { opacity: 0, ease: "none" }, 0);
-      if (HX.gl) ScrollTrigger.create({ trigger: heroEl, start: "top top", end: "bottom top", onUpdate: (s) => (HX.gl.st.scroll = s.progress) });
-    }
+      }), 1);
     return tl;
   };
+  if (!reduce && door) {
+    // scrolling walks you through the great door: the side arches part, the door swallows the screen
+    const cover = () => { const r = door.getBoundingClientRect(); return Math.max(innerWidth / r.width, innerHeight / r.height) * 2.4; };
+    const side = (dir) => arcs.filter((a) => a.classList.contains(`arc__a--${a.dataset.d}${dir}`));
+    const st = gsap.timeline({ scrollTrigger: { trigger: heroEl, start: "top top", end: "+=110%", pin: true, scrub: 0.8, refreshPriority: 10, invalidateOnRefresh: true } });
+    st.to(".hx--arc .hx__main", { y: () => -innerHeight * 0.12, opacity: 0, ease: "power1.in", duration: 0.35 }, 0)
+      .to(".arc__emblem", { scale: 0.4, opacity: 0, duration: 0.3 }, 0)
+      .to(side("l"), { xPercent: (i, el) => -(80 + el.dataset.d * 60), y: (i, el) => innerHeight * 0.05 * el.dataset.d, ease: "power2.in", duration: 0.75 }, 0)
+      .to(side("r"), { xPercent: (i, el) => 80 + el.dataset.d * 60, y: (i, el) => innerHeight * 0.05 * el.dataset.d, ease: "power2.in", duration: 0.75 }, 0)
+      .to(door, { scale: cover, transformOrigin: "50% 62%", ease: "power2.in", duration: 1 }, 0.05)
+      .to(door, { backgroundColor: "#0B0710", ease: "none", duration: 0.35 }, 0.7)
+      .to(".arc__rays, .arc__glow", { opacity: 0, duration: 0.3 }, 0.7);
+    // the arcade leans toward the pointer
+    if (!isTouch) {
+      const movers = arcs.map((a) => ({ d: +a.dataset.d || 0, a, qx: gsap.quickTo(a, "x", { duration: 1.1, ease: "power3.out" }) }));
+      heroEl.addEventListener("pointermove", (e) => {
+        const nx = e.clientX / innerWidth - 0.5;
+        movers.forEach((m) => m.qx(-nx * (m.d ? 10 + m.d * 12 : 8)));
+      });
+      $$(".arc__a:not(.arc__door)").forEach((a) => {
+        a.addEventListener("mouseenter", () => gsap.to(a, { scale: 1.04, duration: 0.6, ease: "back.out(2)" }));
+        a.addEventListener("mouseleave", () => gsap.to(a, { scale: 1, duration: 0.6, ease: "power3.out" }));
+      });
+    }
+  }
 
   const runLoader = () => {
     const loader = $(".loader");
@@ -601,6 +622,7 @@ void main(){
         $(".js-hero-next").textContent = liveNow ? `Live now · ${liveNow.name}` : best.sv.label;
       }
       navLbl.textContent = liveNow ? "Live now" : `Live ${best.sv.short}`;
+      const l2 = $(".js-live-label2"); if (l2) l2.textContent = navLbl.textContent;
     };
     tick(); setInterval(tick, 1000);
   })();
