@@ -1,0 +1,35 @@
+
+> test
+> node --test --test-concurrency=1 --test-timeout=90000 --test-reporter=spec
+
+✔ accounts: sign-up creates a profile, member number and family chat (780.879581ms)
+✔ accounts: members can rename themselves but not promote themselves (15.780315ms)
+✔ auth: e-mail one-time code sign-in works end to end (174.773887ms)
+✔ content: visitors read sermons, courses and games; can't edit them (16.907408ms)
+✔ admin: staff publish site content; members and visitors can't (23.812005ms)
+✔ admin: staff upload images to the media bucket; members can't (60.399324ms)
+✔ prayer: website visitors post requests that wait for review (14.617925ms)
+✔ prayer: members post instantly, pray once, and the requester is told (44.905995ms)
+✔ rides: request → volunteer accepts → live location → status updates (4916.91932ms)
+✔ community: join a group, chat in realtime, unread counts, DMs (1066.486393ms)
+✔ announcements: staff post, everyone is notified (8.745527ms)
+✔ events, games, courses, notes, saved sermons (50.800347ms)
+✔ care, visitor cards, volunteer applications and the staff dashboard (36.600271ms)
+✔ functions: giving checkout → webhook → campaign total and thank-you (215.554347ms)
+✔ functions: notifications reach phones through the push function (763.737519ms)
+✔ functions: Ask Agape requires an account (119.334387ms)
+✔ v2 content: song book, reading plans, Kids/Teens/Squad posts are public; only staff edit (16.943493ms)
+✔ v2 Bible: highlights, reading-plan progress and the journal are private (17.361501ms)
+✔ v2 testimonies: shared → reviewed → live, Amen once, author told (20.076204ms)
+✔ v2 home prayer meetings: address only after RSVP, capacity, host told, cancel notifies (25.275242ms)
+✔ v2 serve board, QR check-in and the new-member checklist (225.65499ms)
+✔ v2 push campaigns reach the right audience; daily challenge once a day; per-game boards (30.464248ms)
+✔ accounts: members can delete their account (App Store rule) (205.438623ms)
+ℹ tests 23
+ℹ suites 0
+ℹ pass 23
+ℹ fail 0
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 21165.278651

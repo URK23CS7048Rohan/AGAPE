@@ -1,0 +1,178 @@
+---- functions
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+Setting up Edge Functions runtime...
+2026-10-02T08:07:30.248734893Z Serving functions on http://127.0.0.1:54321/functions/v1/<function-name>
+2026-10-02T08:07:30.248821203Z  - http://127.0.0.1:54321/functions/v1/ask-agape
+2026-10-02T08:07:30.248825018Z  - http://127.0.0.1:54321/functions/v1/create-checkout
+2026-10-02T08:07:30.248827552Z  - http://127.0.0.1:54321/functions/v1/payment-webhook
+2026-10-02T08:07:30.248830076Z  - http://127.0.0.1:54321/functions/v1/push
+2026-10-02T08:07:30.248832810Z Using supabase-edge-runtime-1.77.1 (compatible with Deno v2.1.4)
+2026-10-02T08:07:31.686042198Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:07:34.576104060Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:34.578161625Z serving the request with supabase/functions/push
+2026-10-02T08:07:34.760695108Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:34.761587204Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:34.762364782Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:34.763059560Z serving the request with supabase/functions/push
+2026-10-02T08:07:34.763722100Z serving the request with supabase/functions/push
+2026-10-02T08:07:34.764434195Z serving the request with supabase/functions/push
+2026-10-02T08:07:39.498179395Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:39.498507913Z serving the request with supabase/functions/push
+2026-10-02T08:07:39.519745921Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:39.520359603Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:39.520649228Z serving the request with supabase/functions/push
+2026-10-02T08:07:39.521241778Z serving the request with supabase/functions/push
+2026-10-02T08:07:39.523194932Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:39.524020081Z serving the request with supabase/functions/push
+2026-10-02T08:07:39.527737646Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:39.528167772Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:39.529174775Z serving the request with supabase/functions/push
+2026-10-02T08:07:39.529671832Z serving the request with supabase/functions/push
+2026-10-02T08:07:40.567685729Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:40.568413683Z serving the request with supabase/functions/push
+2026-10-02T08:07:40.674271466Z serving the request with supabase/functions/create-checkout
+2026-10-02T08:07:40.832063763Z serving the request with supabase/functions/create-checkout
+2026-10-02T08:07:40.835629750Z serving the request with supabase/functions/create-checkout
+2026-10-02T08:07:40.846535773Z serving the request with supabase/functions/create-checkout
+2026-10-02T08:07:40.854352961Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:07:40.874549841Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:07:40.883923001Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:07:41.579087336Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:41.579232228Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:41.579448583Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:41.580005460Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:41.581073214Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:41.583990887Z serving the request with supabase/functions/push
+2026-10-02T08:07:41.584009575Z serving the request with supabase/functions/push
+2026-10-02T08:07:41.584013440Z serving the request with supabase/functions/push
+2026-10-02T08:07:41.584016355Z serving the request with supabase/functions/push
+2026-10-02T08:07:41.584018939Z serving the request with supabase/functions/push
+2026-10-02T08:07:41.653434028Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:41.653693993Z serving the request with supabase/functions/ask-agape
+2026-10-02T08:07:42.613554504Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:42.613687539Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:42.613870669Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:42.613987535Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:42.614320180Z serving the request with supabase/functions/push
+2026-10-02T08:07:42.614805764Z serving the request with supabase/functions/push
+2026-10-02T08:07:42.615288715Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:42.615440172Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:07:42.615567053Z serving the request with supabase/functions/push
+2026-10-02T08:07:42.615759842Z serving the request with supabase/functions/push
+2026-10-02T08:07:42.617088648Z serving the request with supabase/functions/push
+2026-10-02T08:07:42.618211044Z serving the request with supabase/functions/push
+---- mock expo
+mock expo push on :9999
+[{"to":"ExponentPushToken[test-muqok6rz]","sound":"default","title":"Revival Nights muqok6rz","body":"Doors open 6:30 PM","data":{"route":"/community","kind":"announcement","id":"0ed380e5-b43d-4c4c-852c-5cf6602ca376"},"channelId":"default"}]
+[{"to":"ExponentPushToken[test-muqok6rz]","sound":"default","title":"Bob Kumar","body":"Ping muqok6rz","data":{"route":"/chat/f05facdd-732e-4565-acb0-93e294e7bfce","kind":"message","id":"05553b9a-8f3d-4f1a-b864-9ebab7d35945","conversation_id":"f05facdd-732e-4565-acb0-93e294e7bfce"},"channelId":"default"}]
+[{"to":"ExponentPushToken[test-muqok6rz]","sound":"default","title":"Welcome to the team!","body":"You can now see and accept ride requests in the app.","data":{"route":"/rides","kind":"volunteer","id":"8205661d-60cb-4e7d-8abc-486db2428547"},"channelId":"default"}]
+[{"to":"ExponentPushToken[test-muqok6rz]","sound":"default","title":"Bob Kumar","body":"I'll pick you up at 9:15 😊","data":{"route":"/chat/f05facdd-732e-4565-acb0-93e294e7bfce","kind":"message","id":"2085ceff-9833-439f-9064-c647febeafb0","conversation_id":"f05facdd-732e-4565-acb0-93e294e7bfce"},"channelId":"default"}]
+[{"to":"ExponentPushToken[test-muqok6rz]","sound":"default","title":"Meeting cancelled","body":"Thursday prayer muqok6rz","data":{"route":"/home-prayer","kind":"meeting","id":"8b1e6a96-bb5e-400d-9280-fc3fa6a5e05c"},"channelId":"default"}]
+[{"to":"ExponentPushToken[test-muqok6rz]","sound":"default","title":"Malayalam service muqok6rz","body":"7 PM tonight","data":{"route":"/events","kind":"campaign","id":"4b62942e-3223-4bd1-b612-8de488e3690b","campaign":"89c84d9f-8535-4bc7-894d-b233ba835ee9"},"channelId":"default"}]
+---- pg_net
+ id | status_code | error_msg |          left          
+----+-------------+-----------+------------------------
+ 22 |         200 |           | {"sent":1,"removed":0}
+ 21 |         200 |           | {"sent":0,"removed":0}
+ 20 |         200 |           | {"sent":1,"removed":0}
+ 19 |         200 |           | {"sent":0,"removed":0}
+ 18 |         200 |           | {"sent":0,"removed":0}
+ 17 |         200 |           | {"sent":0,"removed":0}
+ 16 |         200 |           | {"sent":1,"removed":0}
+ 15 |         200 |           | {"sent":0,"removed":0}
+ 14 |         200 |           | {"sent":1,"removed":0}
+ 13 |         200 |           | {"sent":1,"removed":0}
+(10 rows)
+
+supabase_edge_runtime_agape
+supabase_pg_meta_agape
+supabase_storage_agape
+supabase_rest_agape
+supabase_realtime_agape
+supabase_inbucket_agape
+supabase_auth_agape
+supabase_kong_agape
+supabase_db_agape
+---- realtime
+08:07:34.678 project=realtime-dev external_id=realtime-dev [info] Creating partitions for realtime.messages
+08:07:34.678 [info] Starting Elixir.Realtime.RateCounter for: {:channel, :presence_events, "realtime-dev"}
+08:07:34.679 [info] Starting Elixir.Realtime.RateCounter for: {:channel, :db_events, "realtime-dev"}
+08:07:34.684 project=realtime-dev external_id=realtime-dev error_code=DatabaseIpVersionIsIpv4 [warning] DatabaseIpVersionIsIpv4: Tenant database host supabase_db_agape resolved to an IPv4 address
+08:07:34.684 project=realtime-dev external_id=realtime-dev error_code=DatabaseIpVersionIsIpv4 [warning] DatabaseIpVersionIsIpv4: Tenant database host supabase_db_agape resolved to an IPv4 address
+08:07:34.691 project=realtime-dev external_id=realtime-dev error_code=DatabaseIpVersionIsIpv4 [warning] DatabaseIpVersionIsIpv4: Tenant database host supabase_db_agape resolved to an IPv4 address
+08:07:34.696 [info] Starting replication for Broadcast Changes
+08:07:34.700 error_code=DatabaseIpVersionIsIpv4 [warning] DatabaseIpVersionIsIpv4: Tenant database host supabase_db_agape resolved to an IPv4 address
+08:07:34.700 project=realtime-dev external_id=realtime-dev [info] Initializing connection with the status: %Realtime.Tenants.ReplicationConnection{
+  tenant_id: "realtime-dev",
+  opts: [],
+  step: :disconnected,
+  publication_name: "supabase_realtime_messages_publication",
+  replication_slot_name: "supabase_realtime_messages_replication_slot_",
+  output_plugin: "pgoutput",
+  proto_version: 2,
+  relations: %{},
+  buffer: [],
+  monitored_pid: #PID<0.4011.0>,
+  latency_committed_at: nil,
+  query_timeout: 240000,
+  pg_version: nil
+}
+08:07:34.710 project=realtime-dev external_id=realtime-dev [info] Checking if replication slot supabase_realtime_messages_replication_slot_ exists
+08:07:34.714 project=realtime-dev external_id=realtime-dev [info] Check publication supabase_realtime_messages_publication for table realtime.messages exists
+08:07:34.715 project=realtime-dev external_id=realtime-dev [info] Create publication supabase_realtime_messages_publication for table realtime.messages
+08:07:34.717 project=realtime-dev external_id=realtime-dev [info] Create replication slot supabase_realtime_messages_replication_slot_ using plugin pgoutput
+08:07:34.781 project=realtime-dev external_id=realtime-dev [info] #PID<0.4038.0> Starting stream replication for slot supabase_realtime_messages_replication_slot_ using publication supabase_realtime_messages_publication and protocol version 2
+08:07:35.473 request_id=GNqn8QacM7ut920AAAPC [info] HEAD /api/ping
+08:07:35.473 request_id=GNqn8QacM7ut920AAAPC project=realtime-dev external_id=realtime-dev [info] GET /api/ping - Sent 200 in 0ms
+08:07:37.627 [info] Starting Elixir.Realtime.RateCounter for: {:channel, :subscription_errors, "realtime-dev"}
+08:07:39.549 project=realtime-dev [info] Billing metrics: [:realtime, :connections]
+08:07:39.681 project=realtime-dev [info] Billing metrics: [:realtime, :rate_counter, :channel, :db_events]
+08:07:44.550 project=realtime-dev [info] Billing metrics: [:realtime, :connections]
+08:07:44.682 project=realtime-dev [info] Billing metrics: [:realtime, :rate_counter, :channel, :db_events]
+08:07:45.508 request_id=GNqn81zAs2DXpxYAAATi [info] HEAD /api/ping
+08:07:45.508 request_id=GNqn81zAs2DXpxYAAATi project=realtime-dev external_id=realtime-dev [info] GET /api/ping - Sent 200 in 0ms
+08:07:49.546 [info] Muster[realtime@127.0.0.1|realtime_channels_local] status :converging -> :ready (members [:"realtime@127.0.0.1"])
+08:07:49.551 project=realtime-dev [info] Billing metrics: [:realtime, :connections]
+08:07:54.552 project=realtime-dev [info] Billing metrics: [:realtime, :connections]
+---- auth
+{"auth_audit_event":{"action":"login","actor_id":"b0130bae-b862-4969-a0c0-9db0a9ebe208","actor_name":"Sam Pastor","actor_username":"sam-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"9f46000b-2cb6-4e3d-8195-b943b20390ab","created_at":"2026-10-02T08:07:34.034462466Z","ip_address":"","log_type":"account","request_id":"3856cf1e-02cf-4ed7-b480-97dfe39c628f","traits":{"provider":"email"},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"action":"login","instance_id":"00000000-0000-0000-0000-000000000000","level":"info","login_method":"password","metering":true,"msg":"Login","provider":"email","time":"2026-10-02T08:07:34Z","user_id":"b0130bae-b862-4969-a0c0-9db0a9ebe208"}
+{"auth_event":{"action":"login","actor_id":"b0130bae-b862-4969-a0c0-9db0a9ebe208","actor_name":"Sam Pastor","actor_username":"sam-muqok6rz@agape.test","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}},"component":"api","duration":84031870,"grant_type":"password","level":"info","method":"POST","msg":"request completed","path":"/token","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"3856cf1e-02cf-4ed7-b480-97dfe39c628f","status":200,"time":"2026-10-02T08:07:34Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:34Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"audit_log_id":"dc5e7ac9-0157-447b-b1d1-b942243ea3b3","created_at":"2026-10-02T08:07:34.120607614Z","ip_address":"","log_type":"team","request_id":"a69f576a-e970-4e1c-9412-90022f7cc7ce","traits":{"provider":"email","user_email":"eve-muqok6rz@agape.test","user_id":"f988b73e-ca43-4107-8c79-a719178a87f8","user_phone":""},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"auth_event":{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"provider":"email","user_email":"eve-muqok6rz@agape.test","user_id":"f988b73e-ca43-4107-8c79-a719178a87f8","user_phone":""}},"component":"api","duration":79863228,"level":"info","method":"POST","msg":"request completed","path":"/admin/users","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"a69f576a-e970-4e1c-9412-90022f7cc7ce","status":200,"time":"2026-10-02T08:07:34Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:34Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"login","actor_id":"f988b73e-ca43-4107-8c79-a719178a87f8","actor_name":"Eve Thomas","actor_username":"eve-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"cfd6406c-d680-4860-9598-995bdafc51ac","created_at":"2026-10-02T08:07:34.209622293Z","ip_address":"","log_type":"account","request_id":"6bd080d1-5e09-4483-adda-c23e1661c088","traits":{"provider":"email"},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"action":"login","instance_id":"00000000-0000-0000-0000-000000000000","level":"info","login_method":"password","metering":true,"msg":"Login","provider":"email","time":"2026-10-02T08:07:34Z","user_id":"f988b73e-ca43-4107-8c79-a719178a87f8"}
+{"auth_event":{"action":"login","actor_id":"f988b73e-ca43-4107-8c79-a719178a87f8","actor_name":"Eve Thomas","actor_username":"eve-muqok6rz@agape.test","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}},"component":"api","duration":87823860,"grant_type":"password","level":"info","method":"POST","msg":"request completed","path":"/token","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"6bd080d1-5e09-4483-adda-c23e1661c088","status":200,"time":"2026-10-02T08:07:34Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:34Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"user_signedup","actor_id":"51965bd4-e517-4246-8473-88abb4fab80c","actor_username":"otp-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"0935893e-4b4d-4edd-8ce3-af8be916f9cf","created_at":"2026-10-02T08:07:34.346427966Z","ip_address":"","log_type":"team","request_id":"fef068f0-8ea3-4133-be5c-4fd0f6458c63","traits":{"provider":"email"},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"auth_audit_event":{"action":"login","actor_id":"51965bd4-e517-4246-8473-88abb4fab80c","actor_username":"otp-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"60685ad1-9109-4c51-a65f-3cacc7e3bcd6","created_at":"2026-10-02T08:07:34.353065772Z","ip_address":"","log_type":"account","request_id":"fef068f0-8ea3-4133-be5c-4fd0f6458c63","traits":{"provider":"email"},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"action":"login","immediate_login_after_signup":true,"instance_id":"00000000-0000-0000-0000-000000000000","level":"info","login_method":"password","metering":true,"msg":"Login","provider":"email","time":"2026-10-02T08:07:34Z","user_id":"51965bd4-e517-4246-8473-88abb4fab80c"}
+{"auth_audit_event":{"action":"user_recovery_requested","actor_id":"51965bd4-e517-4246-8473-88abb4fab80c","actor_username":"otp-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"920fad56-e0d0-4d67-8fbe-2420b5ffce97","created_at":"2026-10-02T08:07:34.383678657Z","ip_address":"","log_type":"user","request_id":"fef068f0-8ea3-4133-be5c-4fd0f6458c63","user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"auth_event":{"action":"user_recovery_requested","actor_id":"51965bd4-e517-4246-8473-88abb4fab80c","actor_username":"otp-muqok6rz@agape.test","actor_via_sso":false,"log_type":"user"},"component":"api","duration":132437371,"level":"info","method":"POST","msg":"request completed","path":"/otp","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"fef068f0-8ea3-4133-be5c-4fd0f6458c63","status":200,"time":"2026-10-02T08:07:34Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:34Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"login","actor_id":"51965bd4-e517-4246-8473-88abb4fab80c","actor_username":"otp-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"c5249126-2b49-438c-94a6-003722dd18d1","created_at":"2026-10-02T08:07:34.410467083Z","ip_address":"","log_type":"account","request_id":"dad50fa9-b49a-4e53-b7bd-a30e195c682e","user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:34Z"}
+{"action":"login","instance_id":"00000000-0000-0000-0000-000000000000","level":"info","login_method":"otp","metering":true,"msg":"Login","provider":"email","time":"2026-10-02T08:07:34Z","user_id":"51965bd4-e517-4246-8473-88abb4fab80c"}
+{"auth_event":{"action":"login","actor_id":"51965bd4-e517-4246-8473-88abb4fab80c","actor_username":"otp-muqok6rz@agape.test","actor_via_sso":false,"log_type":"account"},"component":"api","duration":15911796,"level":"info","method":"POST","msg":"request completed","path":"/verify","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"dad50fa9-b49a-4e53-b7bd-a30e195c682e","status":200,"time":"2026-10-02T08:07:34Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:40Z","x_forwarded_host":"kong","x_forwarded_proto":"http"}
+{"component":"api","duration":28837779,"level":"info","method":"GET","msg":"request completed","path":"/user","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.9","request_id":"f5ed150f-00c5-4a8c-879c-f98fbe8f1894","status":200,"time":"2026-10-02T08:07:40Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:41Z","x_forwarded_host":"kong","x_forwarded_proto":"http"}
+{"component":"api","duration":273942,"error":"403: invalid claim: missing sub claim","error_code":"bad_jwt","level":"warning","method":"GET","msg":"request completed","path":"/user","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.9","request_id":"ba22420a-bb32-4371-8a42-93e0d6c91f4c","status":403,"time":"2026-10-02T08:07:41Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:41Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"audit_log_id":"47023980-53bf-4016-aa33-a76f75a47e5b","created_at":"2026-10-02T08:07:41.961849619Z","ip_address":"","log_type":"team","request_id":"6acbf218-7db5-45ab-896c-5aa84f3f7f59","traits":{"provider":"email","user_email":"zed-muqok6rz@agape.test","user_id":"c5d0a92d-6593-432b-99c9-5f563772a34a","user_phone":""},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:41Z"}
+{"auth_event":{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"provider":"email","user_email":"zed-muqok6rz@agape.test","user_id":"c5d0a92d-6593-432b-99c9-5f563772a34a","user_phone":""}},"component":"api","duration":82561563,"level":"info","method":"POST","msg":"request completed","path":"/admin/users","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"6acbf218-7db5-45ab-896c-5aa84f3f7f59","status":200,"time":"2026-10-02T08:07:41Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:41Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"login","actor_id":"c5d0a92d-6593-432b-99c9-5f563772a34a","actor_name":"Zed Member","actor_username":"zed-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"6d4b597e-8cc1-443e-b5c2-77f86fa14f7b","created_at":"2026-10-02T08:07:42.049570958Z","ip_address":"","log_type":"account","request_id":"406433f1-4e21-4859-8def-1877fde04d81","traits":{"provider":"email"},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:42Z"}
+{"action":"login","instance_id":"00000000-0000-0000-0000-000000000000","level":"info","login_method":"password","metering":true,"msg":"Login","provider":"email","time":"2026-10-02T08:07:42Z","user_id":"c5d0a92d-6593-432b-99c9-5f563772a34a"}
+{"auth_event":{"action":"login","actor_id":"c5d0a92d-6593-432b-99c9-5f563772a34a","actor_name":"Zed Member","actor_username":"zed-muqok6rz@agape.test","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}},"component":"api","duration":87537507,"grant_type":"password","level":"info","method":"POST","msg":"request completed","path":"/token","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"406433f1-4e21-4859-8def-1877fde04d81","status":200,"time":"2026-10-02T08:07:42Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:42Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"audit_log_id":"41f45a06-584e-417f-863d-f7f78729dc26","created_at":"2026-10-02T08:07:42.186843657Z","ip_address":"","log_type":"team","request_id":"1ae9e828-19b4-48a9-b0c0-8f6d63e1e169","traits":{"provider":"email","user_email":"del-muqok6rz@agape.test","user_id":"190025ab-2ff2-46d5-803f-eb1c544f04cf","user_phone":""},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:42Z"}
+{"auth_event":{"action":"user_signedup","actor_id":"00000000-0000-0000-0000-000000000000","actor_username":"service_role","actor_via_sso":false,"log_type":"team","traits":{"provider":"email","user_email":"del-muqok6rz@agape.test","user_id":"190025ab-2ff2-46d5-803f-eb1c544f04cf","user_phone":""}},"component":"api","duration":80975915,"level":"info","method":"POST","msg":"request completed","path":"/admin/users","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"1ae9e828-19b4-48a9-b0c0-8f6d63e1e169","status":200,"time":"2026-10-02T08:07:42Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:42Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"auth_audit_event":{"action":"login","actor_id":"190025ab-2ff2-46d5-803f-eb1c544f04cf","actor_name":"Delete Me","actor_username":"del-muqok6rz@agape.test","actor_via_sso":false,"audit_log_id":"03a1b8fb-01f2-4348-942e-51dd558669c2","created_at":"2026-10-02T08:07:42.271139249Z","ip_address":"","log_type":"account","request_id":"17ca7c5f-6abc-4779-9713-5963dda36fdc","traits":{"provider":"email"},"user_agent":"node"},"level":"info","msg":"audit_event","time":"2026-10-02T08:07:42Z"}
+{"action":"login","instance_id":"00000000-0000-0000-0000-000000000000","level":"info","login_method":"password","metering":true,"msg":"Login","provider":"email","time":"2026-10-02T08:07:42Z","user_id":"190025ab-2ff2-46d5-803f-eb1c544f04cf"}
+{"auth_event":{"action":"login","actor_id":"190025ab-2ff2-46d5-803f-eb1c544f04cf","actor_name":"Delete Me","actor_username":"del-muqok6rz@agape.test","actor_via_sso":false,"log_type":"account","traits":{"provider":"email"}},"component":"api","duration":84708747,"grant_type":"password","level":"info","method":"POST","msg":"request completed","path":"/token","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"17ca7c5f-6abc-4779-9713-5963dda36fdc","status":200,"time":"2026-10-02T08:07:42Z"}
+{"level":"info","msg":"Request received external host in X-Forwarded-Host or Host headers, but the values have not been added to GOTRUE_MAILER_EXTERNAL_HOSTS and will not be used. To suppress this message add the host, or sanitize the headers before the request reaches Auth.","time":"2026-10-02T08:07:42Z","x_forwarded_host":"127.0.0.1","x_forwarded_proto":"http"}
+{"component":"api","duration":6889506,"error":"404: User not found","error_code":"user_not_found","level":"warning","method":"GET","msg":"request completed","path":"/admin/users/190025ab-2ff2-46d5-803f-eb1c544f04cf","referer":"http://127.0.0.1:8080","remote_addr":"172.18.0.1","request_id":"190587d4-5e30-4fa7-9989-ab3495ba51ef","status":404,"time":"2026-10-02T08:07:42Z","user_id":"190025ab-2ff2-46d5-803f-eb1c544f04cf"}
