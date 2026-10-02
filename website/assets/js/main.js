@@ -1140,12 +1140,27 @@ void main(){
     const img = $("img", hov);
     const xTo = gsap.quickTo(hov, "x", { duration: 0.6, ease: "power3" }), yTo = gsap.quickTo(hov, "y", { duration: 0.6, ease: "power3" });
     const rTo = gsap.quickTo(hov, "rotation", { duration: 0.8, ease: "power3" });
-    let lx = 0;
+    let lx = 0, mx = -1, my = -1, active = null, raf = 0;
+    const show = (row) => { active = row; img.src = row.dataset.img; gsap.to(hov, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out", overwrite: "auto" }); };
+    const hide = () => { if (!active) return; active = null; gsap.to(hov, { opacity: 0, scale: 0.6, duration: 0.4, overwrite: "auto" }); };
     $$(".erow").forEach((row) => {
-      row.addEventListener("mouseenter", () => { img.src = row.dataset.img; gsap.to(hov, { opacity: 1, scale: 1, duration: 0.5, ease: "expo.out" }); });
-      row.addEventListener("mouseleave", () => gsap.to(hov, { opacity: 0, scale: 0.6, duration: 0.4 }));
+      row.addEventListener("mouseenter", () => show(row));
+      row.addEventListener("mouseleave", hide);
       row.addEventListener("mousemove", (e) => { xTo(e.clientX - 140 + 180); yTo(e.clientY - 180); rTo(Math.max(-12, Math.min(12, (e.clientX - lx) * 0.6))); lx = e.clientX; });
     });
+    // Smooth scrolling moves the rows under a still cursor without firing mouseleave,
+    // so while a photo is showing, re-check each frame what is actually under the cursor.
+    addEventListener("mousemove", (e) => { mx = e.clientX; my = e.clientY; }, { passive: true });
+    const recheck = () => {
+      raf = 0;
+      if (!active || mx < 0) return;
+      const row = document.elementFromPoint(mx, my)?.closest(".erow");
+      if (!row) hide();
+      else if (row !== active) show(row);
+    };
+    gsap.ticker.add(() => { if (active && !raf) raf = requestAnimationFrame(recheck); });
+    document.addEventListener("mouseleave", hide);
+    addEventListener("blur", hide);
   })();
 
   /* =======================================================
