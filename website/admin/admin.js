@@ -316,6 +316,7 @@
         }
         root.appendChild(el);
       });
+      if (addLabel === null) return;
       const add = document.createElement("button");
       add.className = "add-row";
       add.innerHTML = `${ic("plus")}${esc(addLabel || "Add")}`;
@@ -517,7 +518,7 @@
     } },
 
     /* ---------------------------------------------------------- TESTIMONIES */
-    testimonies: { title: "Testimonies", crumb: "Website", icon: "quote", group: "Website", render(v) {
+    testimonies: { title: "Quotes on the website", crumb: "Website", icon: "quote", group: "Website", render(v) {
       v.innerHTML = intro("", "Stories of answered prayer, shown in two moving rows. Always get permission before publishing someone's story.");
       v.appendChild(listEditor({
         items: C.testimonies, addLabel: "Add a testimony",
@@ -650,6 +651,144 @@
           { k: "published", label: "Show in the app", type: "bool" },
         ],
       })));
+    } },
+
+    /* ---------------------------------------------------------- APP: READING PLANS */
+    plans: { title: "Reading plans", crumb: "App", icon: "book-open", group: "App", render(v) {
+      v.innerHTML = intro("", "Plans under Bible → Reading plans in the app. Write the days in the box below: each day starts with ## and its title, then the Bible references on one line (separated by ;), then the devotion, and a reflection question starting with ?.");
+      v.appendChild(card("How to write the days", "", (() => { const d = document.createElement("pre"); d.className = "codehint"; d.textContent = "## The Word became flesh\nJohn 1; Psalm 19\nJohn begins before the beginning…\n? Where do I most need to remember that Jesus came close?\n\n## Water into wine\nJohn 2\n…"; return d; })()));
+      const toText = (days) => (days || []).map((d) => [`## ${d.title || ""}`, (d.refs || []).join("; "), d.devotion || "", d.prompt ? `? ${d.prompt}` : ""].filter((x, i) => i < 2 || x).join("\n")).join("\n\n");
+      const fromText = (t) => String(t || "").split(/^##\s*/m).map((b) => b.trim()).filter(Boolean).map((b) => {
+        const lines = b.split("\n"); const title = lines.shift().trim(); const refs = (lines.shift() || "").split(/;/).map((x) => x.trim()).filter(Boolean);
+        const prompt = lines.filter((l) => /^\?\s*/.test(l)).map((l) => l.replace(/^\?\s*/, "")).join(" ").trim();
+        const devotion = lines.filter((l) => !/^\?\s*/.test(l)).join("\n").trim();
+        return { title, refs, ...(devotion ? { devotion } : {}), ...(prompt ? { prompt } : {}) };
+      });
+      v.appendChild(card("Plans", "", dbEditor({
+        table: "reading_plans", query: "reading_plans?select=id,slug,title,subtitle,description,audience,image,color,days,published,position&order=position,created_at", positions: true,
+        image: "image", imageShape: "imgpick--wide", addLabel: "Add a plan", empty: "No reading plans yet.",
+        title: (d) => d.title, sub: (d) => [`${(d.days || []).length} days`, { adults: "Adults", teens: "Teens", kids: "Kids" }[d.audience], d.published === false ? "hidden" : ""].filter(Boolean).join(" · "), thumbColor: (d) => d.color || "#6E4BFF",
+        toForm: (r) => ({ ...r, days_text: toText(r.days) }),
+        template: { title: "New plan", slug: "", subtitle: "", description: "", audience: "adults", color: "#6E4BFF", days_text: "## Day one\nJohn 1\nA short devotion.\n? A question to reflect on.", published: true },
+        beforeSave: (out) => {
+          if (!out.title || !String(out.title).trim()) throw new Error("Give the plan a title.");
+          out.days = fromText(out.days_text); delete out.days_text;
+          if (!out.days.length) throw new Error("Add at least one day (a line starting with ##).");
+          if (out.days.some((d) => !d.refs.length)) throw new Error("Every day needs a Bible reference on the line after its title.");
+          out.slug = (out.slug && String(out.slug).trim()) || String(out.title).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          return out;
+        },
+        fields: [
+          { k: "title", label: "Title", wide: true }, { k: "subtitle", label: "Subtitle", ph: "21 days with Jesus" },
+          { k: "audience", label: "For", type: "select", options: [["adults", "Adults"], ["teens", "Teens"], ["kids", "Kids"]] },
+          { k: "description", label: "About this plan", type: "textarea", wide: true }, { k: "color", label: "Colour", type: "color" },
+          { k: "published", label: "Show in the app", type: "bool" },
+          { k: "days_text", label: "Days", type: "textarea", wide: true, rows: 18, mono: true },
+        ],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: KIDS / TEENS / SQUAD */
+    ministryposts: { title: "Kids, Teens & Squad", crumb: "App", icon: "star", group: "App", render(v) {
+      v.innerHTML = intro("", "What families see on the Kids, Teens and Agape Squad pages in the app: memory verses, Bible stories (with read-aloud), activities, challenges, posts and upcoming events. Pinned posts show first.");
+      ["kids", "teens", "squad"].forEach((m) => {
+        v.appendChild(card({ kids: "Kids", teens: "Teens", squad: "Agape Squad" }[m], "", dbEditor({
+          table: "ministry_posts", query: `ministry_posts?select=id,ministry,kind,title,body,ref,youtube_id,image,color,starts_at,link,pinned,published,position&ministry=eq.${m}&order=pinned.desc,position,created_at.desc`, positions: true,
+          image: "image", imageShape: "imgpick--wide", addLabel: "Add a post", empty: "Nothing posted yet.",
+          title: (d) => d.title, sub: (d) => [{ verse: "Memory verse", story: "Bible story", activity: "Make & do", challenge: "Challenge", post: "Post", event: "Event", video: "Video" }[d.kind] || d.kind, d.ref, d.pinned ? "pinned" : "", d.published === false ? "hidden" : ""].filter(Boolean).join(" · "), thumbColor: (d) => d.color || "#FFC23D",
+          template: { ministry: m, kind: "post", title: "New post", body: "", ref: "", youtube_id: "", color: "", starts_at: null, link: "", pinned: false, published: true },
+          beforeSave: (out) => { out.ministry = m; if (!String(out.title || "").trim()) throw new Error("Add a title."); if (out.youtube_id) out.youtube_id = String(out.youtube_id).replace(/^.*(?:v=|youtu\.be\/|shorts\/)([\w-]{11}).*$/, "$1"); ["ref", "youtube_id", "link", "color"].forEach((k) => { if (!out[k]) out[k] = null; }); return out; },
+          fields: [
+            { k: "title", label: "Title", wide: true },
+            { k: "kind", label: "Type", type: "select", options: [["verse", "Memory verse"], ["story", "Bible story"], ["activity", "Make & do"], ["challenge", "Challenge"], ["post", "Post"], ["event", "Event"], ["video", "Video"]] },
+            { k: "ref", label: "Bible reference", ph: "John 3:16" },
+            { k: "body", label: "Text", type: "textarea", wide: true, rows: 6 },
+            { k: "starts_at", label: "Date & time (events)", type: "date" }, { k: "youtube_id", label: "YouTube link (videos)" },
+            { k: "link", label: "Button link (optional)", ph: "https://… or /events" }, { k: "color", label: "Colour", type: "color" },
+            { k: "pinned", label: "Pin to the top", type: "bool" }, { k: "published", label: "Show in the app", type: "bool" },
+          ],
+        })));
+      });
+    } },
+
+    /* ---------------------------------------------------------- APP: TESTIMONIES */
+    testimonies2: { title: "Testimony wall", crumb: "App", icon: "star", group: "App", render(v) {
+      v.innerHTML = intro("", "Stories members share from the app. Nothing appears until you set Approved to Yes. Feature the best ones to pin them to the top. You can also add a story someone told you (put their name in “Name”).");
+      v.appendChild(card("Testimonies", "", dbEditor({
+        table: "testimonies", query: "testimonies?select=id,title,body,category,anonymous,approved,featured,amens,author_name,created_at&order=approved.asc,created_at.desc",
+        addLabel: "Add a testimony", empty: "No testimonies yet.",
+        title: (d) => d.title, sub: (d) => [d.approved ? "Approved" : "Waiting for approval", d.featured ? "featured" : "", d.amens ? `${d.amens} amens` : "", d.anonymous ? "anonymous" : d.author_name || ""].filter(Boolean).join(" · "), thumbColor: (d) => (d.approved ? "#2ED3A0" : "#FF5A1F"),
+        template: { title: "", body: "", category: "answered prayer", anonymous: false, approved: true, featured: false, author_name: "" },
+        beforeSave: (out) => { delete out.amens; if (String(out.title || "").trim().length < 2 || String(out.body || "").trim().length < 10) throw new Error("Add a title and a few sentences."); return out; },
+        fields: [
+          { k: "title", label: "Title", wide: true }, { k: "body", label: "Story", type: "textarea", wide: true, rows: 8 },
+          { k: "category", label: "Category", type: "select", options: ["answered prayer", "healing", "provision", "salvation", "family", "work & studies", "other"].map((c) => [c, c[0].toUpperCase() + c.slice(1)]) },
+          { k: "author_name", label: "Name (for stories you add)" },
+          { k: "approved", label: "Approved (shown in the app)", type: "bool" }, { k: "featured", label: "Featured", type: "bool" }, { k: "anonymous", label: "Hide the name", type: "bool" },
+        ],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: SERVE */
+    serve: { title: "Serving teams", crumb: "App", icon: "heart", group: "App", async render(v) {
+      v.innerHTML = intro("", "Openings on the Serve page in the app. Members sign up until the spots are full; you see who's coming below.");
+      const TEAMS = ["ushering", "kids", "tech", "worship", "hospitality", "driving", "prayer", "cleanup"].map((t) => [t, t[0].toUpperCase() + t.slice(1)]);
+      v.appendChild(card("Openings", "", dbEditor({
+        table: "serve_opportunities", query: "serve_opportunities?select=id,team,title,description,starts_at,ends_at,location,slots,published&order=starts_at.desc",
+        addLabel: "Add an opening", empty: "No openings yet.",
+        title: (d) => d.title, sub: (d) => [d.team, d.starts_at ? new Date(d.starts_at).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : "", `${d.slots} spots`].filter(Boolean).join(" · "), thumbColor: () => "#FF8A3D",
+        template: { team: "ushering", title: "New opening", description: "", starts_at: new Date(Date.now() + 7 * 864e5).toISOString(), ends_at: null, location: "", slots: 4, published: true },
+        beforeSave: (out) => { if (!out.starts_at) throw new Error("Pick when it starts."); if (!out.ends_at) out.ends_at = null; return out; },
+        fields: [
+          { k: "title", label: "Title", wide: true }, { k: "team", label: "Team", type: "select", options: TEAMS },
+          { k: "slots", label: "How many people", type: "number" }, { k: "starts_at", label: "Starts", type: "date" }, { k: "ends_at", label: "Ends (optional)", type: "date" },
+          { k: "location", label: "Where" }, { k: "description", label: "What they'll do", type: "textarea", wide: true }, { k: "published", label: "Show in the app", type: "bool" },
+        ],
+      })));
+      const rows = await S.rpc("staff_serve_signups").catch(() => []);
+      const ops = await S.select("serve_opportunities?select=id,title,starts_at&order=starts_at.desc").catch(() => []);
+      const by = {}; rows.forEach((r) => (by[r.opportunity_id] = by[r.opportunity_id] || []).push(r));
+      const c = document.createElement("section"); c.className = "card";
+      c.innerHTML = `<div class="card__head"><div><h2>Who signed up</h2></div></div>` + (rows.length ? ops.filter((o) => by[o.id]).map((o) => `<h3 style="margin:16px 0 6px">${esc(o.title)} <small class="muted">· ${by[o.id].length}</small></h3><table class="table"><tbody>${by[o.id].map((r) => `<tr><td>${esc(r.full_name || "Member")}</td><td>${esc(r.phone || "")}</td><td class="muted">${new Date(r.created_at).toLocaleDateString()}</td></tr>`).join("")}</tbody></table>`).join("") : `<div class="empty">No sign-ups yet.</div>`);
+      v.appendChild(c);
+    } },
+
+    /* ---------------------------------------------------------- APP: CHECK-IN */
+    checkin: { title: "Check-in & attendance", crumb: "App", icon: "check", group: "App", async render(v) {
+      v.innerHTML = intro("", "Make a code for today's service and show it on the screen (staff can also open Check in in the app to show it as a QR code). Members scan it or type it in the app, and they appear in the attendance list. A code only works on the day it's made for.");
+      const today = new Date().toLocaleDateString("en-CA", { timeZone: "Asia/Kuwait" });
+      const codes = await S.select(`checkin_codes?select=code,title,valid_on&valid_on=eq.${today}&order=created_at.desc`).catch(() => []);
+      const mk = document.createElement("div");
+      mk.innerHTML = `${codes.map((c) => `<div class="bigcode"><b>${esc(c.code)}</b><span>${esc(c.title)} · today</span></div>`).join("")}<div class="row" style="display:flex;gap:10px;margin-top:12px"><input id="ciTitle" class="input" placeholder="Service name, e.g. Sunday Celebration" value="Sunday Celebration" style="flex:1"/><button class="btn btn--brand btn--sm" id="ciMake"><span>Make today's code</span></button></div>`;
+      v.appendChild(card("Today's code", codes.length ? "Show this on the screen at church." : "No code yet for today.", mk));
+      $("#ciMake", mk).addEventListener("click", async () => { try { await S.insertRow("checkin_codes", { title: $("#ciTitle", mk).value.trim() || "Sunday service" }); toast("Code ready"); VIEWS.checkin.render(v); } catch (e) { toast(e.message, true); } });
+      const rows = await S.rpc("staff_checkins", {}).catch(() => []);
+      const days = {}; rows.forEach((r) => (days[r.day] = days[r.day] || []).push(r));
+      const c = document.createElement("div");
+      c.innerHTML = rows.length ? Object.entries(days).map(([d, list]) => `<h3 style="margin:16px 0 6px">${new Date(d).toLocaleDateString([], { weekday: "long", day: "numeric", month: "long" })} <small class="muted">· ${list.length} people</small></h3><table class="table"><tbody>${list.map((r) => `<tr><td>${esc(r.full_name || "Member")}</td><td class="muted">${esc(r.title || "")}</td><td class="muted">${new Date(r.created_at).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}</td></tr>`).join("")}</tbody></table>`).join("") : `<div class="empty">No check-ins yet.</div>`;
+      v.appendChild(card("Attendance", "", c));
+    } },
+
+    /* ---------------------------------------------------------- APP: HOME MEETINGS */
+    meetings: { title: "Home prayer meetings", crumb: "App", icon: "map-pin", group: "App", render(v) {
+      v.innerHTML = intro("", "Meetings members host from the app. You can edit or cancel any of them (people who RSVP'd are told when a meeting is cancelled).");
+      v.appendChild(card("Meetings", "", dbEditor({
+        table: "home_meetings", query: "home_meetings?select=id,title,about,kind,starts_at,area,capacity,cancelled&order=starts_at.desc",
+        addLabel: null, empty: "No home meetings yet. Members host them from the app.",
+        title: (d) => d.title, sub: (d) => [d.cancelled ? "Cancelled" : "", d.area, d.starts_at ? new Date(d.starts_at).toLocaleString([], { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" }) : ""].filter(Boolean).join(" · "), thumbColor: (d) => (d.cancelled ? "#999" : "#2ED3A0"),
+        template: {},
+        fields: [{ k: "title", label: "Title", wide: true }, { k: "area", label: "Area" }, { k: "starts_at", label: "When", type: "date" }, { k: "capacity", label: "Max people", type: "number", nullable: true }, { k: "about", label: "About", type: "textarea", wide: true }, { k: "cancelled", label: "Cancelled", type: "bool" }],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: NEXT STEPS */
+    nextsteps: { title: "Next steps", crumb: "App", icon: "arrow-up-right", group: "App", async render(v) {
+      const rows = await S.select("next_steps?select=id,kind,name,phone,details,status,created_at,profiles:profiles!next_steps_user_id_fkey(full_name)&order=created_at.desc").catch((e) => (toast(e.message, true), []));
+      v.innerHTML = intro("", "Requests from Next steps in the app: people who decided to follow Jesus, want baptism or membership, a child dedication, counselling, a wedding or a home visit. Follow up, then update the status.");
+      const K = { salvation: "Decided to follow Jesus", baptism: "Baptism", membership: "Membership", dedication: "Child dedication", counselling: "Talk to a pastor", wedding: "Wedding", visit: "Home visit" };
+      const c = document.createElement("section"); c.className = "card"; v.appendChild(c);
+      c.innerHTML = rows.length ? `<table class="table"><thead><tr><th>Who</th><th>Step</th><th>Details</th><th>When</th><th>Status</th></tr></thead><tbody>${rows.map((r) => `<tr data-id="${esc(r.id)}"><td><b>${esc(r.profiles?.full_name || r.name || "Member")}</b><br/><small class="muted">${esc(r.phone || "")}</small></td><td>${esc(K[r.kind] || r.kind)}</td><td>${esc(r.details || "")}</td><td class="muted">${new Date(r.created_at).toLocaleDateString()}</td><td><select>${["new", "contacted", "done"].map((s) => `<option value="${s}" ${s === r.status ? "selected" : ""}>${s[0].toUpperCase() + s.slice(1)}</option>`).join("")}</select></td></tr>`).join("")}</tbody></table>` : `<div class="empty">No requests yet.</div>`;
+      c.addEventListener("change", async (e) => { const sel = e.target.closest("select"); if (!sel) return; try { await S.update("next_steps", sel.closest("tr").dataset.id, { status: sel.value }); toast("Updated"); } catch (err) { toast(err.message, true); } });
     } },
 
     /* ---------------------------------------------------------- APP: GAMES */
