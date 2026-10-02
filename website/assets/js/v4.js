@@ -187,66 +187,68 @@ window.AGAPE_V4_ENGINES.push(function cinema() {
 });
 
 /* =========================================================
-   ENGINE: sermon library — convex 3D cylinder with inertia
+   ENGINE: sermon library — a flat strip that drifts forever,
+   can be dragged or thrown, and speeds up with the scroll
    ========================================================= */
 window.AGAPE_V4_ENGINES.push(function library() {
-  const { $, $$, reduce, isTouch, onView } = window.AGAPE_V4;
-  const stage = $(".lib__stage"), ring = $(".js-lib-ring");
-  if (!stage || !ring) return;
-  const cards = $$(".lcard", ring), n = cards.length;
-  const S = { rot: 0, vel: reduce ? 0 : 0.06, auto: reduce ? 0 : 0.06, drag: false, tilt: -5, R: 600, vis: false, target: null };
-  const layout = () => {
-    const mob = innerWidth < 900;
-    const cw = mob ? 190 : Math.max(210, Math.min(270, innerWidth * 0.17)), ch = Math.round(cw * 1.36);
-    ring.style.setProperty("--cw", cw + "px"); ring.style.setProperty("--ch", ch + "px");
-    S.R = (n * (cw + (mob ? 18 : 30))) / (2 * Math.PI);
-    cards.forEach((c, i) => { c.dataset.a = (360 / n) * i; c.style.transform = `rotateY(${(360 / n) * i}deg) translateZ(${S.R}px)`; });
+  const { $, $$, reduce, onView } = window.AGAPE_V4;
+  const stage = $(".lib__stage"), track = $(".js-lib-ring");
+  if (!stage || !track) return;
+  const orig = $$(".lcard", track);
+  // repeat the set until it is at least twice the screen wide, so the loop never shows a gap
+  const fill = () => {
+    $$(".lcard.is-clone", track).forEach((c) => c.remove());
+    let copies = 0;
+    while (track.scrollWidth < innerWidth * 2.2 + 400 && copies < 6) { orig.forEach((c) => { const k = c.cloneNode(true); k.classList.add("is-clone"); k.setAttribute("aria-hidden", "true"); k.tabIndex = -1; track.appendChild(k); }); copies++; }
+    orig.forEach((c) => { const k = c.cloneNode(true); k.classList.add("is-clone"); k.setAttribute("aria-hidden", "true"); k.tabIndex = -1; track.appendChild(k); });
   };
-  layout(); addEventListener("resize", layout);
+  fill();
+  let setW = 0;
+  const measure = () => { const gap = parseFloat(getComputedStyle(track).columnGap) || 0; setW = orig.reduce((w, c) => w + c.offsetWidth + gap, 0); };
+  measure();
+  addEventListener("resize", () => { fill(); measure(); });
+  const S = { x: 0, vel: 0, auto: reduce ? 0 : 0.55, drag: false, vis: false };
   onView(stage, (v) => (S.vis = v), "100px");
   let lx = 0, lt = 0, moved = 0;
-  stage.addEventListener("pointerdown", (e) => { S.drag = true; S.target = null; moved = 0; lx = e.clientX; lt = performance.now(); stage.classList.add("is-drag"); stage.setPointerCapture(e.pointerId); });
+  stage.addEventListener("pointerdown", (e) => { S.drag = true; moved = 0; lx = e.clientX; lt = performance.now(); stage.classList.add("is-drag"); stage.setPointerCapture(e.pointerId); });
   stage.addEventListener("pointermove", (e) => {
-    if (!isTouch) S.tilt = ((e.clientY - stage.getBoundingClientRect().top) / stage.clientHeight - 0.5) * -8;
     if (!S.drag) return;
     const dx = e.clientX - lx, now = performance.now();
-    moved += Math.abs(dx);
-    S.rot -= dx * 0.16; S.vel = (-dx * 0.16) / Math.max(1, (now - lt) / 16.7);
+    moved += Math.abs(dx); S.x += dx; S.vel = dx / Math.max(1, (now - lt) / 16.7);
     lx = e.clientX; lt = now;
   });
   const end = () => { S.drag = false; stage.classList.remove("is-drag"); };
   stage.addEventListener("pointerup", end); stage.addEventListener("pointercancel", end);
   stage.addEventListener("click", (e) => { const c = e.target.closest(".lcard"); if (!c) return; e.preventDefault(); if (moved > 8) return; const url = (window.AGAPE_SITE && window.AGAPE_SITE.church.youtube) || "#"; window.open(url, "_blank", "noopener"); }, true);
-  let boost = 0;
-  ScrollTrigger.create({ trigger: stage, start: "top bottom", end: "bottom top", onUpdate: (s) => (boost = s.getVelocity() / 1400) });
-  const norm = (a) => ((a % 360) + 540) % 360 - 180;
+  let boost = 0, hover = false;
+  stage.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && (hover = true));
+  stage.addEventListener("pointerleave", () => (hover = false));
+  ScrollTrigger.create({ trigger: stage, start: "top bottom", end: "bottom top", onUpdate: (st) => (boost = Math.abs(st.getVelocity()) / 260) });
+  const cards = () => $$(".lcard", track);
   gsap.ticker.add(() => {
-    if (!S.vis || document.hidden) return;
-    if (S.target != null && !S.drag) {
-      const d = norm(S.target - S.rot);
-      S.rot += d * 0.08; S.vel = 0;
-      if (Math.abs(d) < 0.2) { S.target = null; S.vel = 0; }
-    } else if (!S.drag) {
-      S.vel += (S.auto + boost * 0.4 - S.vel) * 0.025; S.rot += S.vel;
+    if (!S.vis || document.hidden || !setW) return;
+    if (!S.drag) {
+      const want = -(hover ? S.auto * 0.25 : S.auto) - boost;
+      S.vel += (want - S.vel) * 0.04;
+      S.x += S.vel;
     }
-    boost *= 0.9;
-    ring.style.transform = `translateZ(${-S.R}px) rotateX(${S.tilt}deg) rotateY(${-S.rot}deg)`;
-    cards.forEach((c) => {
-      const a = norm(+c.dataset.a - S.rot);
-      const k = Math.cos((a * Math.PI) / 180);
-      c.style.opacity = k < -0.1 ? 0 : Math.min(1, 0.25 + k * 0.9).toFixed(3);
-    });
+    boost *= 0.92;
+    if (S.x <= -setW) S.x += setW; else if (S.x > 0) S.x -= setW;
+    track.style.transform = `translate3d(${S.x}px,0,0)`;
+    // a gentle lean while it moves fast
+    const skew = Math.max(-6, Math.min(6, S.vel * 0.6));
+    track.style.setProperty("--lean", skew.toFixed(2) + "deg");
   });
-  // filters rotate to first match
+  // filters: matching sermons stay lit, the strip glides to the first one
   $$(".lib__chips .fchip").forEach((chip) => chip.addEventListener("click", () => {
     $$(".lib__chips .fchip").forEach((c) => c.classList.toggle("is-on", c === chip));
     const q = chip.textContent.trim().toLowerCase();
-    let first = null;
-    cards.forEach((c) => { const m = q === "all" || c.dataset.book === q; c.classList.toggle("is-dim", !m); if (m && first == null) first = +c.dataset.a; });
-    if (q !== "all" && first != null) { S.target = first; S.auto = 0; setTimeout(() => (S.auto = reduce ? 0 : 0.06), 4000); }
+    cards().forEach((c) => c.classList.toggle("is-dim", !(q === "all" || c.dataset.book === q)));
+    const first = orig.find((c) => q !== "all" && c.dataset.book === q);
+    if (first) { const target = -(first.offsetLeft - stage.clientWidth / 2 + first.offsetWidth / 2); const o = { x: S.x }; S.auto = 0; gsap.to(o, { x: target, duration: 1.2, ease: "expo.inOut", onUpdate: () => { S.x = o.x; S.vel = 0; } }); setTimeout(() => (S.auto = reduce ? 0 : 0.55), 4500); }
   }));
   gsap.from(".lib__head > *", { y: 50, opacity: 0, stagger: 0.1, duration: 1.1, ease: "expo.out", scrollTrigger: { trigger: ".lib", start: "top 75%", once: true } });
-  gsap.from(stage, { scale: 0.8, opacity: 0, duration: 1.6, ease: "expo.out", scrollTrigger: { trigger: stage, start: "top 85%", once: true } });
+  gsap.from(orig, { y: 80, opacity: 0, rotate: 4, stagger: 0.06, duration: 1.2, ease: "expo.out", scrollTrigger: { trigger: stage, start: "top 85%", once: true }, clearProps: "transform" });
 });
 
 /* ENGINE: ride map cursor light */

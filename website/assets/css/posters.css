@@ -133,3 +133,12 @@
   font-family:var(--f-mono);font-size:11.5px;font-weight:500;letter-spacing:.32em;text-transform:uppercase;color:inherit!important;opacity:.78}
 .eyebrow::before{content:"";flex:none;width:34px;height:1px;background:currentColor;opacity:.6}
 .eyebrow__dot{display:none!important}
+
+/* sermon library: a flat strip instead of a ring */
+.lib__stage{height:auto!important;perspective:none!important;overflow:visible;padding:20px 0 30px}
+.lib__ring{position:relative!important;left:auto!important;top:auto!important;width:max-content!important;height:auto!important;display:flex;gap:22px;transform-style:flat;will-change:transform}
+.lib__ring .lcard{position:relative!important;flex:none;margin:0!important;width:clamp(230px,21vw,300px)!important;height:auto!important;aspect-ratio:3/4;opacity:1!important;transform:skewX(var(--lean,0deg))!important;transition:filter .4s}
+.lib__ring .lcard:nth-child(even){translate:0 34px}
+.lib__ring .lcard:hover{filter:brightness(1.08)}
+.lib__foot p{max-width:420px}
+@media (max-width:760px){.lib__ring{gap:14px}.lib__ring .lcard{width:62vw!important}.lib__ring .lcard:nth-child(even){translate:0 22px}}
