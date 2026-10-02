@@ -596,7 +596,24 @@ void main(){
     const live = $("#watch");
     let on = false;
     watch(live, (v) => (on = v));
-    // (no invented viewer counts or chat messages: the real chat lives on YouTube)
+    // sample chat to show how the live chat feels (no viewer counts)
+    const people = [["Priya", "#FF5A1F"], ["Rahul", "#6E4BFF"], ["Anjali", "#2ED3A0"], ["Joseph", "#FFC23D"], ["Sneha", "#FF3D7F"], ["Arun", "#4CC3FF"], ["Deepa", "#FF5A1F"], ["Vijay", "#6E4BFF"], ["Meera", "#2ED3A0"], ["Samuel", "#FF3D7F"], ["Kavya", "#FFC23D"], ["Thomas", "#4CC3FF"]];
+    const lines = ["Amen! 🙌", "Praise the Lord! Good morning church family", "Hallelujah!", "Joining from Kerala 🙏", "Watching from Chennai with my parents", "This worship is so beautiful", "Please pray for my exams this week", "Glory to God! 🙌", "Joining from Bangalore", "Thank you Pastor 🙏", "Such a blessed message today", "Kids are singing along at home 😊", "God is good all the time!", "Watching from Hyderabad, God bless everyone"];
+    const list = $(".js-chat");
+    let lastN = "", lastL = "";
+    const add = () => {
+      let n, c, line;
+      do { [n, c] = pick(people); } while (n === lastN);
+      do { line = pick(lines); } while (line === lastL);
+      lastN = n; lastL = line;
+      const m = document.createElement("div");
+      m.className = "cmsg";
+      m.innerHTML = `<span class="cmsg__ava" style="--c:${c}">${n[0]}</span><div><b>${n}</b><p>${line}</p></div>`;
+      list.appendChild(m);
+      gsap.from(m, { y: 24, opacity: 0, duration: 0.6, ease: "expo.out" });
+      while (list.children.length > 9) list.firstElementChild.remove();
+    };
+    if (list) { for (let i = 0; i < 6; i++) add(); const loop = () => { if (on) add(); setTimeout(loop, rand(1600, 3200)); }; loop(); }
     // hearts
     const hearts = $(".hearts");
     const heart = () => {
