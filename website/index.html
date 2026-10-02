@@ -15,6 +15,7 @@
 <link rel="stylesheet" href="assets/css/v3.css" />
 <link rel="stylesheet" href="assets/css/v4.css" />
 <link rel="stylesheet" href="assets/css/arcade.css" />
+<link rel="stylesheet" href="assets/css/story.css" />
 </head>
 <body class="is-loading" data-page="site">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -152,6 +153,21 @@
 <div id="smooth-wrapper">
 <div id="smooth-content">
 <main id="top">
+
+<!-- ============ THE STORY (3D opening) ============ -->
+<section class="st" id="story" data-page-bg="#0B0710" aria-label="The story of God's love">
+  <div class="st__stage"></div>
+  <div class="st__flat" aria-hidden="true"><svg viewBox="0 0 100 40" preserveAspectRatio="xMidYMax slice"><path d="M0 40V30q15-4 30-2t20-6q4-1 8 2t12 4q16 2 30-3v15z" fill="#0d1530"/><path d="M49.3 9h1.4v4h3v1.2h-3v8.3h-1.4v-8.3h-3V13h3z" fill="#0d1530"/></svg></div>
+  <div class="st__shade" aria-hidden="true"></div>
+  <div class="st__caps">
+    <figure class="st__cap" data-act="1"><blockquote>In the beginning, God created the heavens and the earth.</blockquote><figcaption>Genesis 1:1</figcaption></figure>
+    <figure class="st__cap" data-act="2"><blockquote>For God so loved the world, that he gave his one and only Son.</blockquote><figcaption>John 3:16</figcaption></figure>
+    <figure class="st__cap st__cap--big" data-act="3"><blockquote><b>He is</b> <em>risen.</em></blockquote><figcaption>Matthew 28:6</figcaption></figure>
+  </div>
+  <ol class="st__acts" aria-hidden="true"><li class="is-on"><i></i>Creation</li><li><i></i>The cross</li><li><i></i>Risen</li></ol>
+  <div class="st__cue" aria-hidden="true"><span>Scroll</span><i></i></div>
+  <div class="st__flash" aria-hidden="true"></div>
+</section>
 
 <!-- ============ HERO ============ -->
 <section class="hx hx--arc" id="hero" data-page-bg="#0B0710" >
@@ -915,6 +931,8 @@
 <script src="assets/js/vendor/Draggable.min.js"></script>
 <script src="assets/js/vendor/InertiaPlugin.min.js"></script>
 
+<script src="assets/js/vendor/three.min.js"></script>
+<script src="assets/js/story3d.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/v3.js"></script>
 <script src="assets/js/v4.js"></script>

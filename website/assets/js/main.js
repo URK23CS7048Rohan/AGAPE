@@ -419,13 +419,50 @@ void main(){
     }
   }
 
+  // ---------- the opening: the story in 3D ----------
+  const stEl = $(".st");
+  const story = stEl && !reduce && window.Story3D ? window.Story3D.create($(".st__stage")) : null;
+  if (stEl && !story) { stEl.classList.add("st--flat"); }
+  const caps = $$(".st__cap");
+  // split each caption into words so they can rise one by one
+  caps.forEach((c) => { const q = $("blockquote", c); $$("b, em", q).length ? $$("b, em", q).forEach((el) => (el.innerHTML = el.textContent.split(" ").map((w) => `<span class="w">${w}</span>`).join(" "))) : (q.innerHTML = q.textContent.split(" ").map((w) => `<span class="w">${w}</span>`).join(" ")); });
+  const acts = $$(".st__acts li");
+  const setAct = (n) => acts.forEach((li, i) => li.classList.toggle("is-on", i === n));
+  const showCap = (c) => gsap.timeline()
+    .set(c, { opacity: 1 })
+    .fromTo($$(".w", c), { yPercent: 60, opacity: 0, filter: "blur(10px)" }, { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 1.2, stagger: 0.06, ease: "expo.out" }, 0)
+    .fromTo($("figcaption", c), { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.9, ease: "expo.out" }, 0.4);
+  const storyScroll = () => {
+    if (!stEl || reduce) return;
+    // a scrubbed timeline: the scene, the captions and the final flood of light follow the scroll
+    const tl = gsap.timeline({ defaults: { ease: "none" }, scrollTrigger: { trigger: stEl, start: "top top", end: "+=260%", pin: true, scrub: 1, refreshPriority: 20,
+      onUpdate: (st) => setAct(st.progress < 0.17 ? 0 : st.progress < 0.48 ? 1 : 2) } });
+    if (story) tl.to(story.S, { p: 1, duration: 1 }, 0);
+    const out = (c, at) => tl.to(c, { opacity: 0, y: -30, filter: "blur(8px)", duration: 0.06 }, at);
+    const inn = (c, at) => tl.fromTo(c, { opacity: 0, y: 30, filter: "blur(8px)" }, { opacity: 1, y: 0, filter: "blur(0px)", duration: 0.07, immediateRender: false }, at);
+    out(caps[0], 0.1); inn(caps[1], 0.18); out(caps[1], 0.42); inn(caps[2], 0.5);
+    tl.to(".st__cue", { opacity: 0, duration: 0.05 }, 0)
+      .to(".st__flash", { opacity: 1, duration: 0.14 }, 0.84)
+      .to(".st__shade, .st__acts", { opacity: 0, duration: 0.1 }, 0.8);
+  };
+  storyScroll();
+  // the arcade now opens as you reach it
+  const openingIntro = (instant) => {
+    if (instant) { if (story) story.S.intro = 1; gsap.set(caps[0], { opacity: 1 }); gsap.set(".st__cue", { opacity: 1 }); heroIntro().progress(1); return; }
+    if (story) gsap.to(story.S, { intro: 1, duration: 3.4, ease: "power2.out" });
+    gsap.delayedCall(story ? 1.5 : 0.3, () => showCap(caps[0]));
+    gsap.to(".st__cue", { opacity: 1, duration: 1, delay: 2.6 });
+    if (stEl) ScrollTrigger.create({ trigger: heroEl, start: "top 70%", once: true, onEnter: () => heroIntro() });
+    else heroIntro();
+  };
+
   const runLoader = () => {
     const loader = $(".loader");
     const count = $(".js-count");
     const letters = $$(".loader__word span");
     const done = () => { document.body.classList.remove("is-loading"); ScrollTrigger.refresh(); };
-    if (reduce) { loader.remove(); done(); heroIntro().progress(1); return; }
-    if (window.AGAPE_PREVIEW || /[?&]preview=1/.test(location.search)) { loader.remove(); done(); heroIntro().progress(1); return; }
+    if (reduce) { loader.remove(); done(); openingIntro(true); return; }
+    if (window.AGAPE_PREVIEW || /[?&]preview=1/.test(location.search)) { loader.remove(); done(); openingIntro(true); return; }
     const c = { v: 0 };
     const fontsReady = Promise.race([document.fonts ? document.fonts.ready : Promise.resolve(), new Promise((r) => setTimeout(r, 1600))]);
     const firstImg = hxImgs[0] ? new Promise((r) => (hxImgs[0].complete ? r() : (hxImgs[0].onload = hxImgs[0].onerror = r))) : Promise.resolve();
@@ -438,7 +475,7 @@ void main(){
         .to(letters, { yPercent: -110, opacity: 0, duration: 0.5, stagger: 0.03, ease: "power3.in" })
         .to(".loader__meaning, .loader__count", { opacity: 0, duration: 0.3 }, 0)
         .to(loader, { opacity: 0, duration: 0.7, ease: "power2.inOut" }, 0.3)
-        .add(() => { done(); heroIntro(); }, 0.35);
+        .add(() => { done(); openingIntro(false); }, 0.35);
     });
   };
   gsap.set(".loader__word span", { yPercent: 110 });
