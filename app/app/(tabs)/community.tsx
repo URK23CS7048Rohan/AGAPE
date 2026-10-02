@@ -6,7 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, IMG, R } from "@/theme";
-import { Avatar, Body, Display, Icon, IconButton, Label, Press, Segmented, Serif } from "@/components/ui";
+import { Avatar, Body, Button, Display, Icon, IconButton, Label, LargeTitle, Press, Segmented, Tile } from "@/components/ui";
+import { t } from "@/lib/i18n";
 import { useSiteContent } from "@/lib/content";
 import { useAnnouncements, useCounts, useInbox, usePrayers } from "@/lib/data";
 import { useStore } from "@/lib/store";
@@ -32,25 +33,26 @@ export default function Community() {
   const join = async (g: { key: string; name: string; color: string }) => {
     if (!live) { setDemoJoined((s) => new Set(s).add(g.key)); return; }
     if (joinedConv[g.key]) { router.push(`/chat/${joinedConv[g.key]}`); return; }
-    if (needsAccount("join a group")) return;
+    if (needsAccount(t("join a group"))) return;
     setBusy(g.key);
     try { const id = await joinGroup(g.key, g.name, g.color); await inbox.reload(); groupCounts.reload(); if (id) router.push(`/chat/${id}`); }
-    catch (e: any) { Alert.alert("Couldn't join", e?.message || "Please try again."); }
+    catch (e: any) { Alert.alert(t("Couldn't join"), e?.message || t("Please try again.")); }
     finally { setBusy(null); }
   };
   const prayerTotal = prayers.reduce((a, p) => a + (p.count || 0), 0) || site.stats.prayers;
 
   return (
-    <View style={{ flex: 1, backgroundColor: C.mintSoft }}>
-      <View pointerEvents="none" style={{ position: "absolute", width: 320, height: 320, borderRadius: 160, backgroundColor: "#9BE8CD", opacity: 0.5, top: -120, left: -100 }} />
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 150 }}>
-        <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: 20, flexDirection: "row", alignItems: "flex-end" }}>
-          <View style={{ flex: 1 }}>
-            <Label>Real people · Real faith</Label>
-            <Display size={56} style={{ marginTop: 8, lineHeight: 54 }}>Real{"\n"}<Serif size={62} color="#0E9F74">community.</Serif></Display>
-          </View>
-          <IconButton name="bell" bg={C.ink} color="#fff" onPress={() => router.push("/notifications")} />
-        </Animated.View>
+    <View style={{ flex: 1, backgroundColor: C.cream }}>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: 120 }}>
+        <LargeTitle label={t("Real people · Real faith")} title={t("Community")} right={<IconButton name="bell" onPress={() => router.push("/notifications")} label={t("Notifications")} />} />
+
+        {/* Connect */}
+        <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16, marginTop: 16 }}>
+          <Tile style={{ width: "48.4%" }} icon="sun" color="#E08A00" label={t("Testimonies")} sub={t("Stories of answered prayer")} onPress={() => router.push("/testimonies" as any)} />
+          <Tile style={{ width: "48.4%" }} icon="home" color="#16A37B" label={t("Home groups")} sub={t("Host or join a meeting")} onPress={() => router.push("/home-prayer" as any)} />
+          <Tile style={{ width: "48.4%" }} icon="zap" color="#2F7DE1" label={t("Agape Teens")} sub={t("Youth night & chat")} onPress={() => router.push("/ministry/teens" as any)} />
+          <Tile style={{ width: "48.4%" }} icon="music" color={C.rose} label={t("Agape Squad")} sub={t("Worship band & dance")} onPress={() => router.push("/ministry/squad" as any)} />
+        </View>
 
         {/* Prayer wall entry */}
         <Animated.View entering={FadeInDown.delay(100)}>
@@ -58,26 +60,26 @@ export default function Community() {
             <Image source={IMG.homeWorship} style={StyleSheet.absoluteFill} contentFit="cover" />
             <LinearGradient colors={["rgba(29,18,51,0.95)", "rgba(29,18,51,0.4)"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 0 }} style={StyleSheet.absoluteFill} />
             <View style={{ flex: 1, padding: 18, justifyContent: "center" }}>
-              <Label color="rgba(244,238,228,0.7)">Prayer wall · {fmt(prayerTotal)} prayers</Label>
-              <Display size={30} color={C.cream} style={{ marginTop: 6 }}>Share a <Serif size={32} color="#FF9EC2">request</Serif></Display>
+              <Label color="rgba(244,238,228,0.7)">{t("Prayer wall")} · {t("{n} prayers", { n: fmt(prayerTotal) })}</Label>
+              <Display size={28} color={C.cream} style={{ marginTop: 6 }}>{t("Share a request")}</Display>
             </View>
           </Press>
         </Animated.View>
 
         <View style={{ marginHorizontal: 16, marginTop: 18 }}>
-          <Segmented items={["Chats", "Groups", "News"]} value={tab} onChange={setTab} accent={C.ink} />
+          <Segmented items={[t("Chats"), t("Groups"), t("News")]} value={tab} onChange={setTab} accent={C.ink} />
         </View>
 
         {tab === 0 && live && !member ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, backgroundColor: "#fff", borderRadius: R.xl, padding: 20 }}>
-            <Display size={28}>Your <Serif size={30} color="#0E9F74">chats</Serif> live here</Display>
-            <Body color={C.muted} style={{ marginTop: 6 }}>Sign in to chat with your groups, your ride driver and the whole Agape family.</Body>
-            <Press onPress={() => router.push("/welcome")} style={{ marginTop: 14, alignSelf: "flex-start", paddingHorizontal: 18, height: 44, borderRadius: R.pill, backgroundColor: C.ink, justifyContent: "center" }}><Body weight="semi" color="#fff">Sign in</Body></Press>
+            <Display size={28}>{t("Your chats live here")}</Display>
+            <Body color={C.muted} style={{ marginTop: 6 }}>{t("Sign in to chat with your groups, your ride driver and the whole Agape family.")}</Body>
+            <Button small variant="ink" label={t("Sign in")} onPress={() => router.push("/welcome")} style={{ marginTop: 14 }} />
           </Animated.View>
         ) : null}
         {tab === 0 && (!live || member) ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, backgroundColor: "#fff", borderRadius: R.xl, paddingVertical: 6 }}>
-            {CHATS.length === 0 ? <Body color={C.muted} center style={{ padding: 20 }}>{inbox.loading ? "Loading your chats…" : "Join a group to start chatting."}</Body> : null}
+            {CHATS.length === 0 ? <Body color={C.muted} center style={{ padding: 20 }}>{inbox.loading ? t("Loading your chats…") : t("Join a group to start chatting.")}</Body> : null}
             {CHATS.map((c, i) => (
               <Animated.View key={c.id} entering={FadeInDown.delay(i * 50)}>
                 <Press onPress={() => router.push(`/chat/${c.id}`)} scaleTo={0.985} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingHorizontal: 14, paddingVertical: 12 }}>
@@ -112,12 +114,9 @@ export default function Community() {
                     <View style={{ position: "absolute", left: 18, right: 18, bottom: 16, flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
                       <View>
                         <Display size={34} color="#fff" style={{ textTransform: "uppercase" }}>{g.name}</Display>
-                        <Body size={13} color="rgba(255,255,255,0.8)">{n ? `${n} member${n === 1 ? "" : "s"} · ` : ""}{g.meets}</Body>
+                        <Body size={13} color="rgba(255,255,255,0.8)">{n ? `${n === 1 ? t("1 member") : t("{n} members", { n })} · ` : ""}{g.meets}</Body>
                       </View>
-                      <Press onPress={() => join(g)} disabled={busy === g.key} style={{ paddingHorizontal: 16, height: 40, borderRadius: R.pill, backgroundColor: on ? "#fff" : g.color, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 6 }}>
-                        {on ? <Icon name="message-circle" size={14} color={C.ink} /> : null}
-                        <Body size={13.5} weight="bold" color={on ? C.ink : g.color === C.sun ? C.ink : "#fff"}>{busy === g.key ? "Joining…" : on ? "Open chat" : "Join"}</Body>
-                      </Press>
+                      <Button small variant={on ? "white" : "flame"} icon={on ? "message-circle" : null} label={busy === g.key ? t("Joining…") : on ? t("Open chat") : t("Join")} onPress={() => join(g)} disabled={busy === g.key} />
                     </View>
                   </View>
                 </Animated.View>
@@ -128,11 +127,11 @@ export default function Community() {
 
         {tab === 2 ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, gap: 12 }}>
-            {ANNOUNCEMENTS.length === 0 ? <Body color={C.muted} center style={{ padding: 20 }}>No announcements yet.</Body> : null}
+            {ANNOUNCEMENTS.length === 0 ? <Body color={C.muted} center style={{ padding: 20 }}>{t("No announcements yet.")}</Body> : null}
             {ANNOUNCEMENTS.map((a, i) => (
               <Animated.View key={a.id} entering={FadeInDown.delay(i * 70)} style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 18, borderLeftWidth: 6, borderLeftColor: a.color }}>
                 <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-                  <Label>Announcement</Label>
+                  <Label>{t("Announcement")}</Label>
                   <Body size={12} color={C.muted}>{a.time}</Body>
                 </View>
                 <Body size={17} weight="semi" style={{ marginTop: 8 }}>{a.title}</Body>

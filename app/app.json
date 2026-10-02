@@ -3,7 +3,7 @@
     "name": "Agape",
     "slug": "agape-international",
     "scheme": "agape",
-    "version": "1.0.0",
+    "version": "2.0.0",
     "orientation": "portrait",
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
@@ -34,7 +34,8 @@
         "ACCESS_COARSE_LOCATION",
         "ACCESS_FINE_LOCATION",
         "POST_NOTIFICATIONS",
-        "USE_BIOMETRIC"
+        "USE_BIOMETRIC",
+        "CAMERA"
       ]
     },
     "web": {
@@ -72,6 +73,13 @@
         {
           "color": "#FF5A1F",
           "defaultChannel": "default"
+        }
+      ],
+      [
+        "expo-camera",
+        {
+          "cameraPermission": "Agape uses the camera to scan check-in QR codes at church.",
+          "recordAudioAndroid": false
         }
       ]
     ],

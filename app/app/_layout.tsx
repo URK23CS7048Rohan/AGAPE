@@ -6,7 +6,9 @@ import { StatusBar } from "expo-status-bar";
 import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import { C, fontMap } from "@/theme";
-import { StoreProvider } from "@/lib/store";
+import { StoreProvider, useStore } from "@/lib/store";
+import { I18nProvider, normalizeLang } from "@/lib/i18n";
+import { TextScale } from "@/components/ui";
 import { listenForTaps } from "@/lib/push";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
@@ -24,6 +26,21 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1, backgroundColor: C.ink }}>
       <SafeAreaProvider>
         <StoreProvider>
+          <Shell />
+        </StoreProvider>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
+  );
+}
+
+/** Language + text size wrap everything, so changing either in Settings re-renders the whole app. */
+function Shell() {
+  const { settings } = useStore();
+  const lang = normalizeLang(settings.language);
+  return (
+    <I18nProvider language={lang}>
+      <TextScale.Provider value={settings.largeText ? 1.18 : 1}>
+        <React.Fragment key={lang}>
           <StatusBar style="dark" />
           <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.cream }, animation: "slide_from_right" }}>
             <Stack.Screen name="(tabs)" />
@@ -35,10 +52,13 @@ export default function RootLayout() {
             <Stack.Screen name="assistant" options={{ animation: "slide_from_bottom" }} />
             <Stack.Screen name="rides" options={{ contentStyle: { backgroundColor: C.ink } }} />
             <Stack.Screen name="prayer" options={{ contentStyle: { backgroundColor: C.deepViolet } }} />
-            <Stack.Screen name="games" options={{ contentStyle: { backgroundColor: C.sun } }} />
+            <Stack.Screen name="games/index" options={{ contentStyle: { backgroundColor: C.cream } }} />
+            <Stack.Screen name="kids" options={{ animation: "fade", gestureEnabled: false }} />
+            <Stack.Screen name="bible/read" options={{ animation: "slide_from_bottom", contentStyle: { backgroundColor: C.paper } }} />
+            <Stack.Screen name="songs/[slug]" options={{ contentStyle: { backgroundColor: C.paper } }} />
           </Stack>
-        </StoreProvider>
-      </SafeAreaProvider>
-    </GestureHandlerRootView>
+        </React.Fragment>
+      </TextScale.Provider>
+    </I18nProvider>
   );
 }

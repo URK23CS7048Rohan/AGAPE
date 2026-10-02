@@ -148,6 +148,31 @@ await step("admin sees visitor cards and gifts", async () => {
   await shot("admin-giving");
 });
 
+await step("admin: app song book, plans, check-in code and a push notification", async () => {
+  await page.evaluate(() => (location.hash = "songs"));
+  await page.getByText("Amazing Grace").first().waitFor({ timeout: 10000 });
+  await shot("admin-songs");
+  await page.evaluate(() => (location.hash = "plans"));
+  await page.getByText("The Gospel of John").first().waitFor({ timeout: 10000 });
+  await page.evaluate(() => (location.hash = "ministry"));
+  await page.waitForTimeout(1500);
+  await shot("admin-kids-teens-squad");
+  await page.evaluate(() => (location.hash = "checkin"));
+  await page.waitForTimeout(1500);
+  await page.locator(".js-new").click();
+  await waitFor(async () => (await admin.from("checkin_codes").select("code").eq("title", "Sunday worship")).data?.length, 10000, "code created");
+  await page.waitForTimeout(1500);
+  await shot("admin-checkin-code");
+  await page.evaluate(() => (location.hash = "push"));
+  await page.waitForTimeout(1500);
+  await page.getByPlaceholder("Small group starts in 1 hour").fill(`Small group tonight ${stamp}`);
+  await page.locator("#view textarea").first().fill("7:30 PM at the church hall.");
+  await page.getByText("Send", { exact: true }).click();
+  const c = await waitFor(async () => (await admin.from("push_campaigns").select("sent_count, sent_at").eq("title", `Small group tonight ${stamp}`).single()).data, 10000, "campaign saved");
+  if (!c.sent_at) throw new Error("campaign not sent");
+  await shot("admin-push");
+});
+
 await step("admin publishes a website edit", async () => {
   await page.evaluate(() => (location.hash = "hero"));
   await page.waitForTimeout(1500);

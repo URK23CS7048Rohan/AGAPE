@@ -3,10 +3,11 @@ import { ScrollView, View } from "react-native";
 import Animated, { FadeInDown } from "react-native-reanimated";
 import { router } from "expo-router";
 import { C, R } from "@/theme";
-import { BackHeader, Body, Display, Icon, Label, Press, Serif } from "@/components/ui";
+import { BackHeader, Body, Button, Display, Icon, Label, Press } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { useNotifications } from "@/lib/data";
 import { markNotificationsSeen } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 const KIND: Record<string, { icon: string; color: string }> = {
   ride: { icon: "car-side", color: C.mint }, ride_request: { icon: "steering", color: C.mint }, message: { icon: "message-circle", color: C.violet },
@@ -22,16 +23,16 @@ export default function Notifications() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.paper }}>
-      <BackHeader title="Notifications" />
+      <BackHeader title={t("Notifications")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 10 }} showsVerticalScrollIndicator={false}>
-        <Display size={52} style={{ lineHeight: 50, marginBottom: 6, marginLeft: 4 }}>What's <Serif size={56} color={C.flame}>new.</Serif></Display>
+        <Display size={34} style={{ marginBottom: 6, marginLeft: 4 }}>{t("What's new.")}</Display>
         {!session ? (
           <View style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 18 }}>
-            <Body weight="semi">{live ? "Sign in to get ride updates, chat messages and church news here." : "Notifications appear here in the live app."}</Body>
-            {live ? <Press onPress={() => router.push("/welcome")} style={{ marginTop: 12, alignSelf: "flex-start", paddingHorizontal: 18, height: 42, borderRadius: R.pill, backgroundColor: C.ink, justifyContent: "center" }}><Body weight="semi" color="#fff">Sign in</Body></Press> : null}
+            <Body weight="semi">{live ? t("Sign in to get ride updates, chat messages and church news here.") : t("Notifications appear here in the live app.")}</Body>
+            {live ? <Button small variant="ink" label={t("Sign in")} onPress={() => router.push("/welcome")} style={{ marginTop: 12 }} /> : null}
           </View>
         ) : null}
-        {session && !loading && data.length === 0 ? <Body color={C.muted} center style={{ marginTop: 30 }}>You're all caught up.</Body> : null}
+        {session && !loading && data.length === 0 ? <Body color={C.muted} center style={{ marginTop: 30 }}>{t("You're all caught up.")}</Body> : null}
         {data.map((n, i) => {
           const k = KIND[n.kind] || { icon: "bell", color: C.ink };
           const fresh = seen ? n.createdAt > seen : false;

@@ -1,178 +1,178 @@
-import React from "react";
-import { Alert, ScrollView, Switch, View } from "react-native";
-import Animated, { FadeInDown, useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
+import React, { useState } from "react";
+import { Alert, Modal, ScrollView, Switch, View } from "react-native";
+import Animated, { useAnimatedStyle, useSharedValue, withSpring } from "react-native-reanimated";
 import { LinearGradient } from "expo-linear-gradient";
 import { Image } from "expo-image";
 import { router } from "expo-router";
 import * as LocalAuthentication from "expo-local-authentication";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { Gesture, GestureDetector } from "react-native-gesture-handler";
-import { C, IMG, R, shadow } from "@/theme";
-import { Body, Display, Icon, Label, Press, Serif } from "@/components/ui";
+import { C, F, IMG } from "@/theme";
+import { Avatar, Body, Button, Group, Icon, Label, ListRow, Press } from "@/components/ui";
 import { useStore, streakOf } from "@/lib/store";
 import { isLive } from "@/lib/supabase";
+import { TRANSLATIONS, translation } from "@/lib/bible";
+import { LANGS, langInfo, normalizeLang, t } from "@/lib/i18n";
 import { fmt } from "@/lib/time";
+import { colorFor } from "@/lib/data";
 
-const TOOLS = [
-  { icon: "car-side", label: "Ride ministry", sub: "Request or give a ride", color: C.mint, route: "/rides" },
-  { icon: "heart", label: "Give", sub: "Tithes, offerings & campaigns", color: C.flame, route: "/give" },
-  { icon: "calendar", label: "Events", sub: "RSVP & check in", color: C.violet, route: "/events" },
-  { icon: "gamepad-variant", label: "Bible games", sub: "Verse Match & trivia", color: C.sun, route: "/games" },
-  { icon: "creation", label: "Ask Agape", sub: "AI Bible assistant", color: C.sky, route: "/assistant" },
-  { icon: "hands-pray", label: "Prayer wall", sub: "Pray with the family", color: C.rose, route: "/prayer" },
-  { icon: "bell", label: "Notifications", sub: "Rides, chats & news", color: C.ink, route: "/notifications" },
-  { icon: "shield", label: "Pastoral care", sub: "Private, to the pastors", color: "#B98AFF", route: "/care" },
-];
-const ROLE: Record<string, string> = { member: "Member", volunteer: "Volunteer", staff: "Staff", admin: "Admin" };
-
-/** Membership card — tilts as you drag it (wallet-pass style). */
+/** Membership card — tilts as you drag it (wallet-pass style). Tap for the QR check-in card. */
 function MemberCard({ name, no, since, role }: { name: string; no: string; since: string; role: string }) {
-  const rx = useSharedValue(0);
-  const ry = useSharedValue(0);
+  const rx = useSharedValue(0), ry = useSharedValue(0);
   const pan = Gesture.Pan()
-    .onUpdate((e) => { ry.value = Math.max(-18, Math.min(18, e.translationX / 8)); rx.value = Math.max(-14, Math.min(14, -e.translationY / 8)); })
+    .onUpdate((e) => { ry.value = Math.max(-14, Math.min(14, e.translationX / 9)); rx.value = Math.max(-10, Math.min(10, -e.translationY / 9)); })
     .onEnd(() => { rx.value = withSpring(0); ry.value = withSpring(0); });
   const st = useAnimatedStyle(() => ({ transform: [{ perspective: 800 }, { rotateX: `${rx.value}deg` }, { rotateY: `${ry.value}deg` }] }));
   return (
     <GestureDetector gesture={pan}>
-      <Animated.View style={[{ marginHorizontal: 16, marginTop: 20, borderRadius: R.xl, overflow: "hidden" }, shadow(24, 30, 0.35, C.violet), st]}>
-        <LinearGradient colors={[C.flame, C.rose, C.violet]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 22, height: 210, justifyContent: "space-between" }}>
-          <View style={{ position: "absolute", right: -50, top: -60, width: 200, height: 200, borderRadius: 100, backgroundColor: "rgba(255,255,255,0.14)" }} />
-          <View style={{ position: "absolute", left: -40, bottom: -90, width: 220, height: 220, borderRadius: 110, backgroundColor: "rgba(0,0,0,0.12)" }} />
-          <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-            <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
-              <Image source={IMG.logoMarkLight} style={{ width: 30, height: 38 }} contentFit="contain" />
-              <View>
-                <Display size={22} color="#fff">Agape</Display>
-                <Label color={C.sun} size={8.5}>International Ministries</Label>
+      <Animated.View style={[{ marginHorizontal: 16, marginTop: 18, borderRadius: 18, overflow: "hidden" }, st]}>
+        <Press onPress={() => router.push("/checkin" as any)} scaleTo={0.99}>
+          <LinearGradient colors={["#1B1424", "#2C1F3F"]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ padding: 18, height: 180, justifyContent: "space-between" }}>
+            <View style={{ position: "absolute", right: -60, top: -70, width: 220, height: 220, borderRadius: 110, backgroundColor: "rgba(255,90,31,0.18)" }} />
+            <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
+                <Image source={IMG.logoMarkLight} style={{ width: 22, height: 28 }} contentFit="contain" />
+                <Body weight="semi" size={14} color="#fff">Agape International</Body>
+              </View>
+              <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}>
+                <Icon name="maximize" size={14} color={C.sun} />
+                <Label color={C.sun} size={10}>{t("Tap for QR")}</Label>
               </View>
             </View>
-            <Icon name="cross" size={26} color="#fff" />
-          </View>
-          <View>
-            <Label color="rgba(255,255,255,0.8)">{since}</Label>
-            <Display size={34} color="#fff" style={{ marginTop: 4 }} numberOfLines={1}>{name}</Display>
-            <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 6 }}>
-              <Label color="#fff">{no}</Label>
-              <Label color="#fff">{role}</Label>
+            <View>
+              <Label color="rgba(255,255,255,0.6)">{since}</Label>
+              <Body style={{ fontFamily: F.displayBold, fontSize: 26, lineHeight: 32, color: "#fff", marginTop: 2 }} numberOfLines={1}>{name}</Body>
+              <View style={{ flexDirection: "row", justifyContent: "space-between", marginTop: 4 }}>
+                <Body size={13} color="rgba(255,255,255,0.8)" style={{ fontFamily: F.mono, letterSpacing: 1 }}>{no}</Body>
+                <Body size={13} weight="semi" color="rgba(255,255,255,0.8)">{role}</Body>
+              </View>
             </View>
-          </View>
-        </LinearGradient>
+          </LinearGradient>
+        </Press>
       </Animated.View>
     </GestureDetector>
   );
 }
 
-function Row({ icon, label, children, color = C.ink }: { icon: string; label: string; children?: React.ReactNode; color?: string }) {
-  return (
-    <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 12, paddingHorizontal: 16 }}>
-      <View style={{ width: 38, height: 38, borderRadius: 19, backgroundColor: color, alignItems: "center", justifyContent: "center" }}>
-        <Icon name={icon} size={18} color="#fff" />
-      </View>
-      <Body weight="medium" style={{ flex: 1 }}>{label}</Body>
-      {children}
-    </View>
-  );
-}
-
 export default function Me() {
   const insets = useSafeAreaInsets();
-  const { settings, setSetting, signOut, deleteAccount, score, guest, live, member, profile, name, firstName, saved, activeDays, isVolunteer } = useStore();
-  const since = profile?.created_at ? `Member since ${new Date(profile.created_at).getFullYear()}` : live ? "Guest" : "Member since 2024";
-  const role = profile ? ROLE[profile.role] : live ? "Guest" : "Member";
-  const tools = isVolunteer ? TOOLS : [...TOOLS.slice(0, 1), { icon: "steering", label: "Volunteer", sub: "Drive, serve, welcome", color: C.mint, route: "/volunteer" }, ...TOOLS.slice(1)];
+  const { settings, setSetting, signOut, deleteAccount, score, guest, live, member, profile, name, saved, activeDays, isVolunteer, isStaff } = useStore();
+  const [sheet, setSheet] = useState<null | "lang" | "bible">(null);
+  const ROLE: Record<string, string> = { member: t("Member"), volunteer: t("Volunteer"), staff: t("Staff"), admin: t("Admin") };
+  const since = profile?.created_at ? t("Member since {y}", { y: new Date(profile.created_at).getFullYear() }) : live ? t("Guest") : t("Member since {y}", { y: 2024 });
+  const role = profile ? ROLE[profile.role] : live ? t("Guest") : t("Member");
+  const lang = langInfo(normalizeLang(settings.language));
+  const go = (r: string) => router.push(r as any);
 
   const toggleFaceId = async (v: boolean) => {
     if (v) {
       const ok = await LocalAuthentication.hasHardwareAsync().catch(() => false);
       const enrolled = ok && (await LocalAuthentication.isEnrolledAsync().catch(() => false));
-      if (!enrolled) { Alert.alert("Not available", "Set up Face ID, Touch ID or a fingerprint on this phone first."); return; }
-      const r = await LocalAuthentication.authenticateAsync({ promptMessage: "Lock Agape with Face ID" }).catch(() => ({ success: false }));
+      if (!enrolled) { Alert.alert(t("Not available"), t("Set up Face ID, Touch ID or a fingerprint on this phone first.")); return; }
+      const r = await LocalAuthentication.authenticateAsync({ promptMessage: t("Lock Agape with Face ID") }).catch(() => ({ success: false }));
       if (!r.success) return;
     }
     setSetting("faceId", v);
   };
-  const confirmDelete = () => Alert.alert("Delete your account?", "This permanently removes your profile, notes, progress, prayer requests and messages. Gifts stay on record for the church's accounts.", [
-    { text: "Cancel", style: "cancel" },
-    { text: "Delete", style: "destructive", onPress: async () => { try { await deleteAccount(); router.replace("/welcome"); } catch (e: any) { Alert.alert("Couldn't delete", e?.message || "Please try again."); } } },
+  const confirmDelete = () => Alert.alert(t("Delete your account?"), t("This permanently removes your profile, notes, progress, prayer requests and messages. Gifts stay on record for the church's accounts."), [
+    { text: t("Cancel"), style: "cancel" },
+    { text: t("Delete"), style: "destructive", onPress: async () => { try { await deleteAccount(); router.replace("/welcome"); } catch (e: any) { Alert.alert(t("Couldn't delete"), e?.message || t("Please try again.")); } } },
   ]);
+  const sw = (v: boolean, on: (v: boolean) => void) => <Switch value={v} onValueChange={on} trackColor={{ true: C.flame, false: "#ddd" }} />;
 
   return (
     <View style={{ flex: 1, backgroundColor: C.cream }}>
-      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 150 }}>
-        <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: 20 }}>
-          <Label>{guest ? "Guest" : `${role}${profile?.email ? ` · ${profile.email}` : ""}`}</Label>
-          <Display size={52} style={{ marginTop: 8, lineHeight: 50 }}>Hi, {guest ? "friend" : firstName}{"\n"}<Serif size={56} color={C.flame}>welcome home.</Serif></Display>
-        </Animated.View>
-
-        <MemberCard name={guest ? "Guest" : name} no={profile?.member_no || (live ? "Sign in for your card" : "AGP-24-0187")} since={since} role={role} />
-        <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 12, gap: 10 }}>
-          {member || !live ? (
-            <Press onPress={() => router.push("/onboarding?edit=1")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Icon name="edit-3" size={17} color="#fff" />
-              <Body weight="semi" color="#fff" size={14}>Edit profile</Body>
-            </Press>
-          ) : (
-            <Press onPress={() => router.push("/welcome")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: C.flame, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-              <Icon name="log-in" size={17} color="#fff" />
-              <Body weight="semi" color="#fff" size={14}>Sign in</Body>
-            </Press>
-          )}
-          <Press onPress={() => router.push("/events")} style={{ flex: 1, height: 48, borderRadius: R.pill, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-            <Icon name="calendar" size={17} color={C.ink} />
-            <Body weight="semi" size={14}>My events</Body>
-          </Press>
+      <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 14, paddingBottom: 120 }}>
+        <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingHorizontal: 20 }}>
+          <Avatar name={guest ? "Guest" : name || "A"} color={colorFor(name || "a")} size={56} />
+          <View style={{ flex: 1 }}>
+            <Body style={{ fontFamily: F.displayBold, fontSize: 24, lineHeight: 29 }} numberOfLines={1}>{guest ? t("Guest") : name}</Body>
+            <Body size={13.5} color={C.muted} numberOfLines={1}>{role}{profile?.email ? ` · ${profile.email}` : ""}</Body>
+          </View>
+          {member || !live ? <Button small variant="tonal" label={t("Edit")} onPress={() => go("/onboarding?edit=1")} /> : <Button small label={t("Sign in")} onPress={() => go("/welcome")} />}
         </View>
 
-        {/* stats */}
-        <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 16, gap: 10 }}>
-          {[[String(saved.size), "sermons saved", C.peach], [String(streakOf(activeDays)), "day streak", C.sunSoft], [fmt(score), "points this week", C.lilac]].map(([v, l, bg]) => (
-            <View key={l} style={{ flex: 1, backgroundColor: bg, borderRadius: R.lg, padding: 14 }}>
-              <Display size={30}>{v}</Display>
+        <MemberCard name={guest ? t("Guest") : name} no={profile?.member_no || (live ? t("Sign in for your card") : "AGP-24-0187")} since={since} role={role} />
+
+        <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 12, backgroundColor: "#fff", borderRadius: 16, paddingVertical: 14 }}>
+          {[[String(streakOf(activeDays)), t("day streak")], [String(saved.size), t("saved sermons")], [fmt(score), t("game points")]].map(([v, l], i) => (
+            <View key={l} style={{ flex: 1, alignItems: "center", borderLeftWidth: i ? 1 : 0, borderLeftColor: "rgba(15,11,18,0.08)" }}>
+              <Body style={{ fontFamily: F.displayBold, fontSize: 22 }}>{v}</Body>
               <Body size={12} color={C.muted}>{l}</Body>
             </View>
           ))}
         </View>
 
-        {/* tools */}
-        <Label style={{ marginHorizontal: 20, marginTop: 26, marginBottom: 10 }}>Everything else</Label>
-        <View style={{ marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
-          {tools.map((t, i) => (
-            <Animated.View key={t.label} entering={FadeInDown.delay(i * 60)} style={{ width: "48.4%" }}>
-              <Press onPress={() => router.push(t.route as any)} style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 16, height: 138, justifyContent: "space-between" }}>
-                <View style={{ width: 46, height: 46, borderRadius: 23, backgroundColor: t.color, alignItems: "center", justifyContent: "center" }}>
-                  <Icon name={t.icon} size={22} color={t.color === C.sun ? C.ink : "#fff"} />
-                </View>
-                <View>
-                  <Body weight="semi" size={15.5}>{t.label}</Body>
-                  <Body size={12.5} color={C.muted} numberOfLines={1}>{t.sub}</Body>
-                </View>
-              </Press>
-            </Animated.View>
-          ))}
-        </View>
+        <Label style={{ marginHorizontal: 20, marginTop: 24, marginBottom: 8 }}>{t("My faith")}</Label>
+        <Group style={{ marginHorizontal: 16 }}>
+          <ListRow icon="calendar" color={C.flame} title={t("Reading plans")} onPress={() => go("/plans")} />
+          <ListRow icon="edit-3" color="#16A37B" title={t("Journal")} sub={t("Private")} onPress={() => go("/journal")} />
+          <ListRow icon="bookmark" color={C.rose} title={t("Highlights & notes")} onPress={() => go("/bible/marks")} />
+          <ListRow icon="flag" color={C.violet} title={t("Getting started")} onPress={() => go("/getting-started")} last />
+        </Group>
 
-        {/* settings */}
-        <Label style={{ marginHorizontal: 20, marginTop: 26, marginBottom: 10 }}>Settings</Label>
-        <View style={{ marginHorizontal: 16, backgroundColor: "#fff", borderRadius: R.xl, paddingVertical: 6 }}>
-          <Row icon="face-recognition" label="Lock with Face ID" color={C.ink}><Switch value={settings.faceId} onValueChange={toggleFaceId} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
-          <Row icon="bell" label="Push notifications" color={C.flame}><Switch value={settings.notifications} onValueChange={(v) => setSetting("notifications", v)} trackColor={{ true: C.flame, false: "#ddd" }} /></Row>
-          <Press onPress={() => router.push("/care")}>
-            <Row icon="shield" label="Confidential pastoral care" color={C.rose}><Icon name="chevron-right" size={18} color={C.muted} /></Row>
-          </Press>
-          {member ? (
-            <Press onPress={confirmDelete}>
-              <Row icon="trash-2" label="Delete my account" color="#9A93A6"><Icon name="chevron-right" size={18} color={C.muted} /></Row>
-            </Press>
-          ) : null}
-        </View>
+        <Label style={{ marginHorizontal: 20, marginTop: 24, marginBottom: 8 }}>{t("Church life")}</Label>
+        <Group style={{ marginHorizontal: 16 }}>
+          <ListRow icon="check-square" color="#16A37B" title={t("Check in")} sub={t("Member card & QR")} onPress={() => go("/checkin")} />
+          <ListRow icon="users" color={C.flame} title={t("Serve")} sub={t("Volunteer shifts")} onPress={() => go("/serve")} />
+          {!isVolunteer ? <ListRow icon="steering" color="#2F7DE1" title={t("Become a driver")} onPress={() => go("/volunteer")} /> : null}
+          <ListRow icon="calendar" color={C.violet} title={t("My events")} onPress={() => go("/events")} />
+          <ListRow icon="heart" color={C.ink} title={t("Giving")} onPress={() => go("/give")} />
+          <ListRow icon="bell" color="#E08A00" title={t("Notifications")} onPress={() => go("/notifications")} />
+          <ListRow icon="shield" color="#8B5CF6" title={t("Confidential pastoral care")} onPress={() => go("/care")} last />
+        </Group>
 
-        <Press onPress={async () => { await signOut(); router.replace("/welcome"); }} style={{ marginHorizontal: 16, marginTop: 16, height: 52, borderRadius: R.pill, borderWidth: 1.5, borderColor: "rgba(15,11,18,0.15)", alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}>
-          <Icon name="log-out" size={17} color={C.ink} />
-          <Body weight="semi">{guest ? "Leave guest mode" : "Sign out"}</Body>
-        </Press>
-        <Body size={12} color={C.muted} center style={{ marginTop: 14 }}>Agape International Ministries · v1.0 · {isLive ? "Connected" : "Demo data"}</Body>
+        <Label style={{ marginHorizontal: 20, marginTop: 24, marginBottom: 8 }}>{t("Family")}</Label>
+        <Group style={{ marginHorizontal: 16 }}>
+          <ListRow icon="smile" color="#B7791F" title={t("Agape Kids")} sub={t("Kid-safe stories, videos and games")} onPress={() => go("/kids")} />
+          <ListRow icon="shield" color="#B7791F" title={t("Kids mode")} sub={t("Locks the phone to Agape Kids with a parent PIN")} right={sw(settings.kidsMode, (v) => (v ? go("/kids") : setSetting("kidsMode", false)))} />
+          <ListRow icon="zap" color="#2F7DE1" title={t("Agape Teens")} onPress={() => go("/ministry/teens")} />
+          <ListRow icon="music" color={C.rose} title={t("Agape Squad")} onPress={() => go("/ministry/squad")} last />
+        </Group>
+
+        <Label style={{ marginHorizontal: 20, marginTop: 24, marginBottom: 8 }}>{t("Settings")}</Label>
+        <Group style={{ marginHorizontal: 16 }}>
+          <ListRow icon="globe" color={C.violet} title={t("Language")} right={<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Body color={C.muted}>{lang.name}</Body><Icon name="chevron-right" size={18} color="rgba(15,11,18,0.3)" /></View>} onPress={() => setSheet("lang")} />
+          <ListRow icon="book-open" color={C.flame} title={t("Bible translation")} right={<View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><Body color={C.muted}>{translation(settings.bible || lang.bible).short}</Body><Icon name="chevron-right" size={18} color="rgba(15,11,18,0.3)" /></View>} onPress={() => setSheet("bible")} />
+          <ListRow icon="type" color={C.ink} title={t("Larger text")} right={sw(settings.largeText, (v) => setSetting("largeText", v))} />
+          <ListRow icon="bell" color="#E08A00" title={t("Push notifications")} right={sw(settings.notifications, (v) => setSetting("notifications", v))} />
+          <ListRow icon="lock" color="#16A37B" title={t("Lock with Face ID")} right={sw(settings.faceId, toggleFaceId)} last={!member} />
+          {member ? <ListRow icon="trash-2" color="#9A93A6" title={t("Delete my account")} onPress={confirmDelete} last /> : null}
+        </Group>
+
+        {isStaff ? (
+          <>
+            <Label style={{ marginHorizontal: 20, marginTop: 24, marginBottom: 8 }}>{t("Staff")}</Label>
+            <Group style={{ marginHorizontal: 16 }}>
+              <ListRow icon="send" color={C.flame} title={t("Send a notification")} sub={t("To everyone, a group, a language…")} onPress={() => go("/staff/push")} />
+              <ListRow icon="maximize" color="#16A37B" title={t("Check people in")} onPress={() => go("/checkin")} last />
+            </Group>
+          </>
+        ) : null}
+
+        <Button label={guest ? t("Leave guest mode") : t("Sign out")} variant="outline" block onPress={async () => { await signOut(); router.replace("/welcome"); }} style={{ marginHorizontal: 16, marginTop: 24, alignSelf: "auto" }} />
+        <Body size={12} color={C.muted} center style={{ marginTop: 14 }}>Agape International Ministries · v2.0 · {isLive ? t("Connected") : t("Demo data")}</Body>
       </ScrollView>
+
+      <Modal visible={!!sheet} transparent animationType="slide" onRequestClose={() => setSheet(null)}>
+        <Press onPress={() => setSheet(null)} scaleTo={1} haptic={false} style={{ flex: 1, backgroundColor: "rgba(15,11,18,0.4)" }} />
+        <View style={{ backgroundColor: C.paper, borderTopLeftRadius: 18, borderTopRightRadius: 18, padding: 16, paddingBottom: insets.bottom + 16 }}>
+          <Body weight="semi" size={17} style={{ marginBottom: 10 }}>{sheet === "lang" ? t("Language") : t("Bible translation")}</Body>
+          <Group>
+            {sheet === "lang"
+              ? LANGS.map((l, i) => (
+                  <ListRow key={l.code} title={l.name} sub={l.english} last={i === LANGS.length - 1}
+                    right={lang.code === l.code ? <Icon name="check" size={18} color={C.flame} /> : null}
+                    onPress={() => { setSheet(null); setSetting("language", l.code); if (!settings.bible) setSetting("bible", l.bible); else if (translation(settings.bible).lang !== l.code && l.code !== "en") setSetting("bible", l.bible); setTimeout(() => router.navigate("/me" as any), 120); }} />
+                ))
+              : TRANSLATIONS.map((x, i) => (
+                  <ListRow key={x.code} title={x.short} sub={x.name} last={i === TRANSLATIONS.length - 1}
+                    right={(settings.bible || lang.bible) === x.code ? <Icon name="check" size={18} color={C.flame} /> : null}
+                    onPress={() => { setSetting("bible", x.code); setSheet(null); }} />
+                ))}
+          </Group>
+        </View>
+      </Modal>
     </View>
   );
 }

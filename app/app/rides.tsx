@@ -7,7 +7,7 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R, shadow } from "@/theme";
-import { Avatar, Body, Button, Chip, Confetti, ConfettiHandle, Display, Icon, IconButton, Label, LiveDot, Press, Segmented, Serif } from "@/components/ui";
+import { Avatar, Body, Button, Chip, Confetti, ConfettiHandle, Display, Icon, IconButton, Label, LiveDot, Press, Segmented } from "@/components/ui";
 import { LiveMap, MapMarker } from "@/components/map/LiveMap";
 import { RIDE } from "@/data/mock";
 import { useStore } from "@/lib/store";
@@ -15,16 +15,22 @@ import { useSiteContent } from "@/lib/content";
 import { Ride, colorFor, useDriverBoard, useMyRide, useRideLocation } from "@/lib/data";
 import { along, remaining, useRoute } from "@/lib/route";
 import { acceptRide, pushRideLocation, requestRide, setRideStatus, startDirect } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 type LatLng = { latitude: number; longitude: number };
 type Phase = "request" | "searching" | "enroute" | "arrived";
 const DAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+// ride slots stay English for the database ("Sun 10:00 AM"); only the day is translated on screen
+const slot = (x?: string | null) => (x ? x.replace(/^(Sun|Mon|Tue|Wed|Thu|Fri|Sat)\b/, (d) => t(d)) : "");
+const seatsLabel = (n: number) => (n > 1 ? t("{n} seats", { n }) : t("{n} seat", { n }));
+// pickup placeholders are kept in English internally (the request checks them) and translated for display
+const PICKUP_HINTS = ["Locating you…", "Drag the map to your pickup point", "Pinned location"];
 const ll = (p: LatLng | null | undefined) => (p ? { lat: p.latitude, lng: p.longitude } : null);
 
 function Radar() {
-  const t = useSharedValue(0);
-  useEffect(() => { t.value = withRepeat(withTiming(1, { duration: 1800, easing: Easing.out(Easing.quad) }), -1); }, []);
-  const ring = useAnimatedStyle(() => ({ opacity: 1 - t.value, transform: [{ scale: 0.4 + t.value * 1.6 }] }));
+  const k = useSharedValue(0);
+  useEffect(() => { k.value = withRepeat(withTiming(1, { duration: 1800, easing: Easing.out(Easing.quad) }), -1); }, []);
+  const ring = useAnimatedStyle(() => ({ opacity: 1 - k.value, transform: [{ scale: 0.4 + k.value * 1.6 }] }));
   return (
     <View style={{ width: 120, height: 120, alignItems: "center", justifyContent: "center", alignSelf: "center" }}>
       <Animated.View style={[{ position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(46,211,160,0.35)" }, ring]} />
@@ -53,8 +59,8 @@ export default function Rides() {
 
   // service times → ride slots ("Sun 10:00 AM")
   const TIMES = useMemo(() => {
-    const t = church.services.map((s) => `${DAYS[s.day]} ${s.time}`);
-    return t.length ? t : ["Sun 9:15 AM", "Sun 5:15 PM", "Wed 7:00 PM"];
+    const list = church.services.map((s) => `${DAYS[s.day]} ${s.time}`);
+    return list.length ? list : ["Sun 9:15 AM", "Sun 5:15 PM", "Wed 7:00 PM"];
   }, [church.services]);
   const [time, setTime] = useState(TIMES[0]);
   const [seats, setSeats] = useState(1);
@@ -94,16 +100,16 @@ export default function Rides() {
 
   // ---------------------------------------------------------------- demo: a real road route, driven by a simulated car
   const [demoPhase, setDemoPhase] = useState<Phase>("request");
-  const [t, setT] = useState(0);
+  const [prog, setProg] = useState(0);
   const [demoAccepted, setDemoAccepted] = useState<Set<string>>(new Set());
   const demoStart = useMemo(() => ({ lat: RIDE.route[0].latitude + 0.012, lng: RIDE.route[0].longitude - 0.018 }), []);
   const demoRoute = useRoute(live ? null : demoStart, live ? null : ll(RIDE.pickup));
   const demoCoords = demoRoute?.coords ?? RIDE.route.map((p) => [p.longitude, p.latitude] as [number, number]);
-  const demoCar = useMemo(() => along(demoCoords, t), [t, demoCoords]);
+  const demoCar = useMemo(() => along(demoCoords, prog), [prog, demoCoords]);
   useEffect(() => {
     if (live || demoPhase !== "enroute") return;
     const iv = setInterval(() => {
-      setT((x) => {
+      setProg((x) => {
         const n = Math.min(1, x + 0.004);
         if (n >= 1) {
           clearInterval(iv);
@@ -136,7 +142,7 @@ export default function Rides() {
   // live road route: driver → pickup while they're coming, pickup → church once you're in the car
   const liveLeg = useRoute(live && phase === "enroute" && carPt ? carPt : live && (phase === "searching" || phase === "arrived") ? ll(ridePickup) : null,
     live && phase === "enroute" ? ll(ridePickup) : live && (phase === "searching" || phase === "arrived") ? { lat: church.coords.latitude, lng: church.coords.longitude } : null);
-  const eta = live ? (phase === "enroute" && liveLeg ? liveLeg.minutes : null) : Math.max(1, Math.ceil((1 - t) * (demoRoute?.minutes ?? 7)));
+  const eta = live ? (phase === "enroute" && liveLeg ? liveLeg.minutes : null) : Math.max(1, Math.ceil((1 - prog) * (demoRoute?.minutes ?? 7)));
   const driver = live ? ride?.driver : { full_name: RIDE.driver.name, phone: RIDE.driver.phone, vehicle: `${RIDE.driver.car} · ${RIDE.driver.plate}` };
 
   // ---------------------------------------------------------------- driver's own position (while sharing) + route to the rider
@@ -146,25 +152,25 @@ export default function Rides() {
 
   // ---------------------------------------------------------------- member actions
   const request = async () => {
-    if (needsAccount("request a ride")) return;
-    if (!live) { setDemoPhase("searching"); setTimeout(() => { setT(0); setDemoPhase("enroute"); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }, 2600); return; }
+    if (needsAccount(t("request a ride"))) return;
+    if (!live) { setDemoPhase("searching"); setTimeout(() => { setProg(0); setDemoPhase("enroute"); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }, 2600); return; }
     setBusy(true);
     try {
       await requestRide({ pickup: /^(Locating|Drag)/.test(pickupLabel) ? "Pinned location" : pickupLabel, lat: pickup.latitude, lng: pickup.longitude, time, seats, notes: note.trim() });
       await my.reload();
-    } catch (e: any) { Alert.alert("Couldn't request", e?.message || "Please try again."); }
+    } catch (e: any) { Alert.alert(t("Couldn't request"), e?.message || t("Please try again.")); }
     finally { setBusy(false); }
   };
-  const cancel = () => Alert.alert("Cancel this ride?", "Your driver will be told.", [
-    { text: "Keep it", style: "cancel" },
-    { text: "Cancel ride", style: "destructive", onPress: async () => {
-      if (!live) { setDemoPhase("request"); setT(0); return; }
-      try { await setRideStatus(ride!.id, "cancelled"); await my.reload(); } catch (e: any) { Alert.alert("Couldn't cancel", e?.message || ""); }
+  const cancel = () => Alert.alert(t("Cancel this ride?"), t("Your driver will be told."), [
+    { text: t("Keep it"), style: "cancel" },
+    { text: t("Cancel ride"), style: "destructive", onPress: async () => {
+      if (!live) { setDemoPhase("request"); setProg(0); return; }
+      try { await setRideStatus(ride!.id, "cancelled"); await my.reload(); } catch (e: any) { Alert.alert(t("Couldn't cancel"), e?.message || ""); }
     } },
   ]);
   const message = async (otherId?: string | null) => {
     if (!live || !otherId) { router.push("/chat/david"); return; }
-    try { const id = await startDirect(otherId); if (id) router.push(`/chat/${id}`); } catch (e: any) { Alert.alert("Couldn't open chat", e?.message || ""); }
+    try { const id = await startDirect(otherId); if (id) router.push(`/chat/${id}`); } catch (e: any) { Alert.alert(t("Couldn't open chat"), e?.message || ""); }
   };
 
   // ---------------------------------------------------------------- driver actions + location sharing
@@ -175,7 +181,7 @@ export default function Rides() {
   const startSharing = async (rideId: string) => {
     stopSharing();
     const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== "granted") { Alert.alert("Location needed", "Allow location so your rider can see you coming."); return; }
+    if (status !== "granted") { Alert.alert(t("Location needed"), t("Allow location so your rider can see you coming.")); return; }
     // Keeps sharing while the app is open. For screen-locked tracking add expo-task-manager background updates (README).
     watchSub.current = await Location.watchPositionAsync({ accuracy: Location.Accuracy.High, distanceInterval: 15, timeInterval: 4000 }, (pos) => {
       setMyPos({ latitude: pos.coords.latitude, longitude: pos.coords.longitude });
@@ -202,13 +208,13 @@ export default function Rides() {
       if (to === "enroute") openNavigation(r.pickup_lat, r.pickup_lng);
       if (to === "completed") confetti.current?.burst(undefined, 420, 90);
       await board.reload();
-    } catch (e: any) { Alert.alert("Ride", e?.message || "Please try again."); board.reload(); }
+    } catch (e: any) { Alert.alert(t("Ride"), e?.message || t("Please try again.")); board.reload(); }
   };
 
   // ---------------------------------------------------------------- the map
   const pickMode = live && mode === 0 && phase === "request";
   const churchPt = { lat: church.coords.latitude, lng: church.coords.longitude };
-  const churchMarker: MapMarker = { id: "church", kind: "church", ...churchPt, label: church.short === "Agape" ? "Agape International" : church.short || "Church" };
+  const churchMarker: MapMarker = { id: "church", kind: "church", ...churchPt, label: church.short === "Agape" ? "Agape International" : church.short || t("Church") };
   let markers: MapMarker[] = [churchMarker];
   let route: { coords: [number, number][]; dashed?: boolean; color?: string } | null = null;
   let fit: { lat: number; lng: number }[] | undefined;
@@ -228,8 +234,8 @@ export default function Rides() {
     }
   } else {
     const rows: { id: string; lat: number; lng: number; name: string; color: string; mine?: boolean }[] = live
-      ? [...board.data.mine.map((r) => ({ id: r.id, lat: r.pickup_lat, lng: r.pickup_lng, name: r.member?.full_name || "Member", color: "#188038", mine: true })),
-         ...board.data.open.map((r) => ({ id: r.id, lat: r.pickup_lat, lng: r.pickup_lng, name: r.member?.full_name || "Member", color: colorFor(r.member_id) }))]
+      ? [...board.data.mine.map((r) => ({ id: r.id, lat: r.pickup_lat, lng: r.pickup_lng, name: r.member?.full_name || t("Member"), color: "#188038", mine: true })),
+         ...board.data.open.map((r) => ({ id: r.id, lat: r.pickup_lat, lng: r.pickup_lng, name: r.member?.full_name || t("Member"), color: colorFor(r.member_id) }))]
       : RIDE.requests.map((r) => ({ id: r.id, lat: r.lat, lng: r.lng, name: r.name, color: r.color, mine: demoAccepted.has(r.id) }));
     rows.forEach((r) => markers.push({ id: `p:${r.id}`, kind: "person", lat: r.lat, lng: r.lng, letter: r.name, color: r.color, label: r.mine ? r.name.split(" ")[0] : undefined }));
     if (myPos) markers.push({ id: "me", kind: "car", lat: myPos.latitude, lng: myPos.longitude });
@@ -258,21 +264,21 @@ export default function Rides() {
       {/* top bar */}
       <View style={{ position: "absolute", top: insets.top + 6, left: 16, right: 16, gap: 10 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-          <IconButton name="chevron-left" onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} bg="#fff" style={shadow(4, 10, 0.18)} />
+          <IconButton name="chevron-left" label={t("Back")} onPress={() => (router.canGoBack() ? router.back() : router.replace("/"))} bg="#fff" style={shadow(4, 10, 0.18)} />
           <View style={[{ flex: 1, height: 44, borderRadius: 22, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", paddingHorizontal: 16, gap: 8 }, shadow(4, 10, 0.18)]}>
             <Icon name="car-side" size={18} color="#188038" />
-            <Body size={15.5} weight="semi" style={{ flex: 1 }} numberOfLines={1}>Ride ministry</Body>
-            {sharingFor ? (<><LiveDot color="#188038" size={6} /><Body size={12} weight="bold" color="#188038">Sharing</Body></>) : null}
+            <Body size={15.5} weight="semi" style={{ flex: 1 }} numberOfLines={1}>{t("Ride ministry")}</Body>
+            {sharingFor ? (<><LiveDot color="#188038" size={6} /><Body size={12} weight="bold" color="#188038">{t("Sharing")}</Body></>) : null}
           </View>
-          {pickMode ? <IconButton name="crosshair" onPress={locate} bg="#fff" color="#1A73E8" style={shadow(4, 10, 0.18)} label="My location" /> : null}
+          {pickMode ? <IconButton name="crosshair" onPress={locate} bg="#fff" color="#1A73E8" style={shadow(4, 10, 0.18)} label={t("My location")} /> : null}
         </View>
         <View style={[{ borderRadius: R.pill, backgroundColor: "#fff" }, shadow(4, 10, 0.15)]}>
-          <Segmented items={["I need a ride", "I'm driving"]} value={mode} onChange={setMode} accent={C.ink} />
+          <Segmented items={[t("I need a ride"), t("I'm driving")]} value={mode} onChange={setMode} accent={C.ink} />
         </View>
         {mode === 0 && phase === "enroute" && eta ? (
           <Animated.View entering={FadeInDown} style={[{ alignSelf: "flex-start", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }, shadow(6, 14, 0.18)]}>
-            <Body size={12} color={C.muted}>{live && ride?.status === "accepted" ? "Driver is" : "Arriving in"}</Body>
-            <Display size={30} color="#188038">{live && ride?.status === "accepted" ? `${eta} min away` : `${eta} min`}</Display>
+            <Body size={12} color={C.muted}>{live && ride?.status === "accepted" ? t("Driver is") : t("Arriving in")}</Body>
+            <Display size={30} color="#188038">{live && ride?.status === "accepted" ? t("{n} min away", { n: eta }) : t("{n} min", { n: eta })}</Display>
           </Animated.View>
         ) : null}
       </View>
@@ -281,44 +287,44 @@ export default function Rides() {
       <View onLayout={(e) => setSheetH(e.nativeEvent.layout.height)} style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10 }}>
         {mode === 0 && phase === "request" ? (
           <Animated.View key="req" entering={FadeInUp.springify().damping(18)} style={sheet}>
-            <Display size={34}>Need a <Serif size={36} color="#0E9F74">ride?</Serif></Display>
-            <Body size={14} color={C.muted} style={{ marginTop: 4 }}>A volunteer from the family will pick you up, for free.</Body>
+            <Display size={28}>{t("Need a ride?")}</Display>
+            <Body size={14} color={C.muted} style={{ marginTop: 4 }}>{t("A volunteer from the family will pick you up, for free.")}</Body>
             <View style={{ marginTop: 14, padding: 14, borderRadius: R.md, backgroundColor: "#F4F1EC", gap: 12 }}>
               <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                 <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 3, borderColor: C.mint }} />
-                <View style={{ flex: 1 }}><Label size={10}>Pickup{live ? " · drag the map to adjust" : ""}</Label><Body weight="semi" numberOfLines={1}>{pickupLabel}</Body></View>
+                <View style={{ flex: 1 }}><Label size={10}>{live ? t("Pickup · drag the map to adjust") : t("Pickup")}</Label><Body weight="semi" numberOfLines={1}>{PICKUP_HINTS.includes(pickupLabel) ? t(pickupLabel) : pickupLabel}</Body></View>
               </View>
               <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                 <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.flame }} />
-                <View style={{ flex: 1 }}><Label size={10}>Destination</Label><Body weight="semi" numberOfLines={1}>{church.address}</Body></View>
+                <View style={{ flex: 1 }}><Label size={10}>{t("Destination")}</Label><Body weight="semi" numberOfLines={1}>{church.address}</Body></View>
               </View>
             </View>
             <View style={{ flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-              {TIMES.map((x) => <Chip key={x} label={x} active={time === x} onPress={() => setTime(x)} />)}
+              {TIMES.map((x) => <Chip key={x} label={slot(x)} active={time === x} onPress={() => setTime(x)} />)}
             </View>
             {live ? (
               <View style={{ marginTop: 10, height: 46, borderRadius: R.pill, backgroundColor: "#F4F1EC", paddingHorizontal: 16, justifyContent: "center" }}>
-                <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder="Note for the driver (building, landmark…)" placeholderTextColor="rgba(15,11,18,0.4)" style={{ fontFamily: F.sans, fontSize: 14.5, color: C.ink }} />
+                <TextInput value={note} onChangeText={setNote} maxLength={200} placeholder={t("Note for the driver (building, landmark…)")} placeholderTextColor="rgba(15,11,18,0.4)" style={{ fontFamily: F.sans, fontSize: 14.5, color: C.ink }} />
               </View>
             ) : null}
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-              <Body weight="semi">Passengers</Body>
+              <Body weight="semi">{t("Passengers")}</Body>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-                <IconButton name="minus" size={38} bg="#F4F1EC" onPress={() => setSeats((s) => Math.max(1, s - 1))} />
+                <IconButton name="minus" label={t("Fewer passengers")} size={38} bg="#F4F1EC" onPress={() => setSeats((s) => Math.max(1, s - 1))} />
                 <Display size={26}>{seats}</Display>
-                <IconButton name="plus" size={38} bg="#F4F1EC" onPress={() => setSeats((s) => Math.min(6, s + 1))} />
+                <IconButton name="plus" label={t("More passengers")} size={38} bg="#F4F1EC" onPress={() => setSeats((s) => Math.min(6, s + 1))} />
               </View>
             </View>
-            <Button label={busy ? "Requesting…" : "Request ride"} icon="car-side" variant="ink" block onPress={request} disabled={busy} style={{ marginTop: 16 }} />
+            <Button label={busy ? t("Requesting…") : t("Request ride")} icon="car-side" variant="ink" block onPress={request} disabled={busy} style={{ marginTop: 16 }} />
           </Animated.View>
         ) : null}
 
         {mode === 0 && phase === "searching" ? (
           <Animated.View key="search" entering={FadeInUp.springify()} style={sheet}>
             <Radar />
-            <Display size={30} center style={{ marginTop: 10 }}>Finding a <Serif size={32} color="#0E9F74">volunteer…</Serif></Display>
-            <Body center color={C.muted} style={{ marginTop: 4 }}>{live ? `${ride?.requested_for} · ${ride?.seats} seat${(ride?.seats ?? 1) > 1 ? "s" : ""}. We'll notify you when a driver accepts.` : `${site.stats.drivers} drivers are serving this Sunday`}</Body>
-            <Press onPress={cancel} style={{ alignSelf: "center", marginTop: 12 }}><Body weight="semi" color={C.rose}>Cancel request</Body></Press>
+            <Display size={28} center style={{ marginTop: 10 }}>{t("Finding a volunteer…")}</Display>
+            <Body center color={C.muted} style={{ marginTop: 4 }}>{live ? `${slot(ride?.requested_for)} · ${seatsLabel(ride?.seats ?? 1)}. ${t("We'll notify you when a driver accepts.")}` : t("{n} drivers are serving this Sunday", { n: site.stats.drivers })}</Body>
+            <Press onPress={cancel} style={{ alignSelf: "center", marginTop: 12 }}><Body weight="semi" color={C.rose}>{t("Cancel request")}</Body></Press>
           </Animated.View>
         ) : null}
 
@@ -326,18 +332,18 @@ export default function Rides() {
           <Animated.View key="enroute" entering={FadeInUp.springify().damping(18)} style={sheet}>
             {phase === "arrived" ? (
               <Animated.View entering={FadeIn}>
-                <Display size={34}>{live ? "Your ride is " : "You've "}<Serif size={36} color={C.flame}>{live ? "here." : "arrived."}</Serif></Display>
-                <Body color={C.muted} style={{ marginTop: 4, marginBottom: 12 }}>{live ? "Your driver is outside. See you at church!" : "Welcome home! Service starts at 10:00 AM."}</Body>
+                <Display size={28}>{live ? t("Your ride is here.") : t("You've arrived.")}</Display>
+                <Body color={C.muted} style={{ marginTop: 4, marginBottom: 12 }}>{live ? t("Your driver is outside. See you at church!") : t("Welcome home! Service starts at 10:00 AM.")}</Body>
               </Animated.View>
             ) : null}
             <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-              <Avatar name={driver?.full_name || "Driver"} color={C.mint} size={52} />
+              <Avatar name={driver?.full_name || t("Driver")} color={C.mint} size={52} />
               <View style={{ flex: 1 }}>
-                <Body weight="bold" size={17}>{driver?.full_name || "Your driver"}</Body>
-                <Body size={13} color={C.muted} numberOfLines={1}>{driver?.vehicle || "Volunteer driver"}</Body>
+                <Body weight="bold" size={17}>{driver?.full_name || t("Your driver")}</Body>
+                <Body size={13} color={C.muted} numberOfLines={1}>{driver?.vehicle || t("Volunteer driver")}</Body>
               </View>
               {live ? (
-                <View style={{ backgroundColor: C.mintSoft, paddingHorizontal: 10, height: 30, borderRadius: R.pill, justifyContent: "center" }}><Body size={12.5} weight="bold">{ride?.status === "accepted" ? "Confirmed" : ride?.status === "enroute" ? "On the way" : "Arrived"}</Body></View>
+                <View style={{ backgroundColor: C.mintSoft, paddingHorizontal: 10, height: 30, borderRadius: R.pill, justifyContent: "center" }}><Body size={12.5} weight="bold">{ride?.status === "accepted" ? t("Confirmed") : ride?.status === "enroute" ? t("On the way") : t("Arrived")}</Body></View>
               ) : (
                 <View style={{ backgroundColor: C.sunSoft, paddingHorizontal: 10, height: 30, borderRadius: R.pill, justifyContent: "center" }}><Body size={13} weight="bold">★ {RIDE.driver.rating}</Body></View>
               )}
@@ -345,30 +351,26 @@ export default function Rides() {
             {phase === "enroute" && !live ? (
               <View style={{ marginTop: 14, flexDirection: "row", alignItems: "center", gap: 10 }}>
                 <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: "#EEE9E2", overflow: "hidden" }}>
-                  <View style={{ width: `${t * 100}%`, height: 8, backgroundColor: C.mint, borderRadius: 4 }} />
+                  <View style={{ width: `${prog * 100}%`, height: 8, backgroundColor: C.mint, borderRadius: 4 }} />
                 </View>
-                <Body size={13} weight="semi">{eta} min</Body>
+                <Body size={13} weight="semi">{t("{n} min", { n: eta ?? "" })}</Body>
               </View>
             ) : null}
-            {live && phase === "enroute" && !driverPos ? <Body size={13} color={C.muted} style={{ marginTop: 10 }}>{ride?.status === "accepted" ? `Pickup ${ride?.requested_for}. You'll see the car here once your driver sets off.` : "Waiting for your driver's location…"}</Body> : null}
+            {live && phase === "enroute" && !driverPos ? <Body size={13} color={C.muted} style={{ marginTop: 10 }}>{ride?.status === "accepted" ? t("Pickup {time}. You'll see the car here once your driver sets off.", { time: slot(ride?.requested_for) }) : t("Waiting for your driver's location…")}</Body> : null}
             <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-              <Press onPress={() => (driver?.phone ? Linking.openURL(`tel:${driver.phone}`) : Alert.alert("No number", "Your driver hasn't added a phone number. Send a message instead."))} style={{ flex: 1, height: 50, borderRadius: R.pill, backgroundColor: "#F4F1EC", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <Icon name="phone" size={17} /><Body weight="semi">Call</Body>
-              </Press>
-              <Press onPress={() => message(ride?.volunteer_id)} style={{ flex: 1, height: 50, borderRadius: R.pill, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-                <Icon name="message-circle" size={17} color="#fff" /><Body weight="semi" color="#fff">Message</Body>
-              </Press>
+              <Button label={t("Call")} icon="phone" variant="tonal" onPress={() => (driver?.phone ? Linking.openURL(`tel:${driver.phone}`) : Alert.alert(t("No number"), t("Your driver hasn't added a phone number. Send a message instead.")))} style={{ flex: 1 }} />
+              <Button label={t("Message")} icon="message-circle" variant="ink" onPress={() => message(ride?.volunteer_id)} style={{ flex: 1 }} />
             </View>
-            {phase === "arrived" && !live ? <Button label="Book my ride home" variant="mint" block small onPress={() => { setDemoPhase("request"); setT(0); }} style={{ marginTop: 10 }} /> : null}
-            {phase === "enroute" ? <Press onPress={cancel} style={{ alignSelf: "center", marginTop: 12 }}><Body weight="semi" color={C.rose}>Cancel ride</Body></Press> : null}
+            {phase === "arrived" && !live ? <Button label={t("Book my ride home")} variant="mint" block small onPress={() => { setDemoPhase("request"); setProg(0); }} style={{ marginTop: 10 }} /> : null}
+            {phase === "enroute" ? <Press onPress={cancel} style={{ alignSelf: "center", marginTop: 12 }}><Body weight="semi" color={C.rose}>{t("Cancel ride")}</Body></Press> : null}
           </Animated.View>
         ) : null}
 
         {mode === 1 && live && !isVolunteer ? (
           <Animated.View key="become" entering={FadeInUp.springify().damping(18)} style={sheet}>
-            <Display size={30}>Drive with <Serif size={32} color="#0E9F74">us?</Serif></Display>
-            <Body color={C.muted} style={{ marginTop: 6 }}>Volunteer drivers bring families to church every week. Apply once, and requests near you appear here.</Body>
-            <Button label="Become a volunteer driver" icon="arrow-right" variant="mint" block onPress={() => (needsAccount("volunteer") ? null : router.push("/volunteer"))} style={{ marginTop: 14 }} />
+            <Display size={28}>{t("Drive with us?")}</Display>
+            <Body color={C.muted} style={{ marginTop: 6 }}>{t("Volunteer drivers bring families to church every week. Apply once, and requests near you appear here.")}</Body>
+            <Button label={t("Become a volunteer driver")} icon="arrow-right" variant="mint" block onPress={() => (needsAccount(t("volunteer")) ? null : router.push("/volunteer"))} style={{ marginTop: 14 }} />
           </Animated.View>
         ) : null}
 
@@ -376,26 +378,26 @@ export default function Rides() {
           <Animated.View key="drive" entering={FadeInUp.springify().damping(18)} style={[sheet, { maxHeight: 460 }]}>
             {board.data.mine.length ? (
               <>
-                <Label>Your rides</Label>
+                <Label>{t("Your rides")}</Label>
                 <View style={{ gap: 8, marginTop: 8, marginBottom: 12 }}>
                   {board.data.mine.map((r) => (
                     <View key={r.id} style={{ padding: 12, borderRadius: R.md, backgroundColor: C.mintSoft }}>
                       <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
-                        <Avatar name={r.member?.full_name || "Member"} color={colorFor(r.member_id)} size={42} />
+                        <Avatar name={r.member?.full_name || t("Member")} color={colorFor(r.member_id)} size={42} />
                         <View style={{ flex: 1 }}>
-                          <Body weight="semi">{r.member?.full_name || "Member"}</Body>
-                          <Body size={12.5} color={C.muted} numberOfLines={1}>{r.pickup_label} · {r.requested_for} · {r.seats} seat{r.seats > 1 ? "s" : ""}</Body>
+                          <Body weight="semi">{r.member?.full_name || t("Member")}</Body>
+                          <Body size={12.5} color={C.muted} numberOfLines={1}>{r.pickup_label} · {slot(r.requested_for)} · {seatsLabel(r.seats)}</Body>
                           {r.notes ? <Body size={12.5} color={C.ink} numberOfLines={2}>“{r.notes}”</Body> : null}
                         </View>
-                        <IconButton name="navigation" size={40} bg={C.ink} color={C.mint} onPress={() => openNavigation(r.pickup_lat, r.pickup_lng)} />
+                        <IconButton name="navigation" label={t("Directions")} size={40} bg={C.ink} color={C.mint} onPress={() => openNavigation(r.pickup_lat, r.pickup_lng)} />
                       </View>
                       <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
-                        {r.status === "accepted" ? <Button label="Start driving" icon="navigation" variant="ink" small onPress={() => drive(r, "enroute")} style={{ flex: 1 }} /> : null}
-                        {r.status === "enroute" ? <Button label="I've arrived" icon="map-pin" variant="ink" small onPress={() => drive(r, "arrived")} style={{ flex: 1 }} /> : null}
-                        {r.status === "arrived" ? <Button label="Ride complete" icon="check" variant="ink" small onPress={() => drive(r, "completed")} style={{ flex: 1 }} /> : null}
-                        <IconButton name="message-circle" size={46} bg="#fff" onPress={() => message(r.member_id)} />
-                        {r.member?.phone ? <IconButton name="phone" size={46} bg="#fff" onPress={() => Linking.openURL(`tel:${r.member!.phone}`)} /> : null}
-                        <IconButton name="x" size={46} bg="#fff" onPress={() => Alert.alert("Hand this ride back?", "It goes back to the other drivers.", [{ text: "Keep it", style: "cancel" }, { text: "Hand back", style: "destructive", onPress: () => drive(r, "cancelled") }])} />
+                        {r.status === "accepted" ? <Button label={t("Start driving")} icon="navigation" variant="ink" small onPress={() => drive(r, "enroute")} style={{ flex: 1 }} /> : null}
+                        {r.status === "enroute" ? <Button label={t("I've arrived")} icon="map-pin" variant="ink" small onPress={() => drive(r, "arrived")} style={{ flex: 1 }} /> : null}
+                        {r.status === "arrived" ? <Button label={t("Ride complete")} icon="check" variant="ink" small onPress={() => drive(r, "completed")} style={{ flex: 1 }} /> : null}
+                        <IconButton name="message-circle" label={t("Message")} size={46} bg="#fff" onPress={() => message(r.member_id)} />
+                        {r.member?.phone ? <IconButton name="phone" label={t("Call")} size={46} bg="#fff" onPress={() => Linking.openURL(`tel:${r.member!.phone}`)} /> : null}
+                        <IconButton name="x" label={t("Hand back")} size={46} bg="#fff" onPress={() => Alert.alert(t("Hand this ride back?"), t("It goes back to the other drivers."), [{ text: t("Keep it"), style: "cancel" }, { text: t("Hand back"), style: "destructive", onPress: () => drive(r, "cancelled") }])} />
                       </View>
                     </View>
                   ))}
@@ -403,21 +405,19 @@ export default function Rides() {
               </>
             ) : null}
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Display size={30}>Ride <Serif size={32} color="#0E9F74">requests</Serif></Display>
-              {profile?.vehicle ? null : <Press onPress={() => router.push("/onboarding?edit=1")}><Body size={12.5} weight="semi" color={C.flame}>Add your car</Body></Press>}
+              <Display size={28}>{t("Ride requests")}</Display>
+              {profile?.vehicle ? null : <Press onPress={() => router.push("/onboarding?edit=1")}><Body size={12.5} weight="semi" color={C.flame}>{t("Add your car")}</Body></Press>}
             </View>
-            {board.data.open.length === 0 ? <Body color={C.muted} style={{ marginTop: 8 }}>{board.loading ? "Loading…" : "No open requests right now. We'll notify you when one comes in."}</Body> : null}
+            {board.data.open.length === 0 ? <Body color={C.muted} style={{ marginTop: 8 }}>{board.loading ? t("Loading…") : t("No open requests right now. We'll notify you when one comes in.")}</Body> : null}
             <View style={{ gap: 8, marginTop: 12 }}>
               {board.data.open.slice(0, 6).map((r, i) => (
                 <Animated.View key={r.id} entering={FadeInDown.delay(i * 70)} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: R.md, backgroundColor: "#F4F1EC" }}>
-                  <Avatar name={r.member?.full_name || "Member"} color={colorFor(r.member_id)} size={42} />
+                  <Avatar name={r.member?.full_name || t("Member")} color={colorFor(r.member_id)} size={42} />
                   <View style={{ flex: 1 }}>
-                    <Body weight="semi">{r.member?.full_name || "Member"}</Body>
-                    <Body size={12.5} color={C.muted} numberOfLines={1}>{r.pickup_label} · {r.requested_for} · {r.seats} seat{r.seats > 1 ? "s" : ""}</Body>
+                    <Body weight="semi">{r.member?.full_name || t("Member")}</Body>
+                    <Body size={12.5} color={C.muted} numberOfLines={1}>{r.pickup_label} · {slot(r.requested_for)} · {seatsLabel(r.seats)}</Body>
                   </View>
-                  <Press onPress={() => drive(r, "accept")} style={{ paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: C.mint, justifyContent: "center" }}>
-                    <Body size={13} weight="bold">Accept</Body>
-                  </Press>
+                  <Button small variant="mint" label={t("Accept")} onPress={() => drive(r, "accept")} />
                 </Animated.View>
               ))}
             </View>
@@ -426,7 +426,7 @@ export default function Rides() {
 
         {mode === 1 && !live ? (
           <Animated.View key="drive-demo" entering={FadeInUp.springify().damping(18)} style={sheet}>
-            <Display size={30}>Ride <Serif size={32} color="#0E9F74">requests</Serif></Display>
+            <Display size={28}>{t("Ride requests")}</Display>
             <View style={{ gap: 8, marginTop: 12 }}>
               {RIDE.requests.map((r, i) => {
                 const on = demoAccepted.has(r.id);
@@ -435,14 +435,12 @@ export default function Rides() {
                     <Avatar name={r.name} color={r.color} size={42} />
                     <View style={{ flex: 1 }}>
                       <Body weight="semi">{r.name}</Body>
-                      <Body size={12.5} color={C.muted}>{r.pickup} · {r.time} · {r.seats} seat{r.seats > 1 ? "s" : ""}</Body>
+                      <Body size={12.5} color={C.muted}>{r.pickup} · {slot(r.time)} · {seatsLabel(r.seats)}</Body>
                     </View>
                     {on ? (
-                      <IconButton name="navigation" size={40} bg={C.ink} color={C.mint} onPress={() => openNavigation(r.lat, r.lng)} />
+                      <IconButton name="navigation" label={t("Directions")} size={40} bg={C.ink} color={C.mint} onPress={() => openNavigation(r.lat, r.lng)} />
                     ) : (
-                      <Press onPress={() => { setDemoAccepted((s) => new Set(s).add(r.id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }} style={{ paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: C.mint, justifyContent: "center" }}>
-                        <Body size={13} weight="bold">Accept</Body>
-                      </Press>
+                      <Button small variant="mint" label={t("Accept")} onPress={() => { setDemoAccepted((s) => new Set(s).add(r.id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }} />
                     )}
                   </Animated.View>
                 );

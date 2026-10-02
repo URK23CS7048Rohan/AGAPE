@@ -13,6 +13,7 @@ import { HeroContent } from "@/lib/content";
 import { nextService } from "@/lib/time";
 import { useStore } from "@/lib/store";
 import { useNotifications } from "@/lib/data";
+import { t } from "@/lib/i18n";
 
 const { width: SW, height: SH } = Dimensions.get("window");
 export const HERO_H = Math.max(620, Math.min(SH * 0.86, 780));
@@ -36,8 +37,8 @@ function CyclingWord({ words }: { words: string[] }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (words.length < 2) return;
-    const t = setInterval(() => setI((x) => (x + 1) % words.length), 2800);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setI((x) => (x + 1) % words.length), 2800);
+    return () => clearInterval(timer);
   }, [words.length]);
   const w = words[i % words.length] || "";
   return (
@@ -52,8 +53,8 @@ function CyclingWord({ words }: { words: string[] }) {
 function NextServiceCard() {
   const [n, setN] = useState(nextService());
   useEffect(() => {
-    const t = setInterval(() => setN(nextService()), 1000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setN(nextService()), 1000);
+    return () => clearInterval(timer);
   }, []);
   const pad = (v: number) => String(v).padStart(2, "0");
   const inner = (
@@ -61,12 +62,12 @@ function NextServiceCard() {
       <View style={{ flex: 1 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
           <LiveDot color={n.live ? "#FF2E4D" : C.sun} size={7} />
-          <Label color="rgba(255,255,255,0.75)" size={10}>{n.live ? "Live now" : "Next service"}</Label>
+          <Label color="rgba(255,255,255,0.75)" size={10}>{n.live ? t("Live now") : t("Next service")}</Label>
         </View>
         <Body size={14.5} weight="semi" color="#fff" style={{ marginTop: 4 }} numberOfLines={1}>{n.live || n.label} · {n.time}</Body>
       </View>
       {n.live ? (
-        <Button label="Watch" small icon="play" onPress={() => router.push("/sermon/power-of-grace")} />
+        <Button label={t("Watch")} small icon="play" onPress={() => router.push("/sermon/power-of-grace")} />
       ) : (
         <View style={{ flexDirection: "row", gap: 10 }}>
           {[["d", n.d], ["h", n.h], ["m", n.m], ["s", n.s]].map(([k, v]) => (
@@ -97,8 +98,8 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
   const slides = hero.slides.length ? hero.slides : [{ image: IMG.homeWorship, caption: "" }];
   useEffect(() => {
     if (slides.length < 2) return;
-    const t = setInterval(() => setIdx((i) => (i + 1) % slides.length), 5000);
-    return () => clearInterval(t);
+    const timer = setInterval(() => setIdx((i) => (i + 1) % slides.length), 5000);
+    return () => clearInterval(timer);
   }, [slides.length]);
 
   const parallax = useAnimatedStyle(() => ({
@@ -123,9 +124,9 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
           <Display size={20} color="#fff">Agape</Display>
           <Label size={8.5} color="rgba(255,255,255,0.7)">International Ministries</Label>
         </View>
-        <IconButton name="creation" bg="rgba(255,255,255,0.16)" color={C.sun} onPress={() => router.push("/assistant")} />
-        <IconButton name="bell" badge={unread > 0} bg="rgba(255,255,255,0.16)" color="#fff" onPress={() => router.push("/notifications")} />
-        <Press onPress={() => router.push("/me")}>
+        <IconButton name="creation" label={t("Ask Agape")} bg="rgba(255,255,255,0.16)" color={C.sun} onPress={() => router.push("/assistant")} />
+        <IconButton name="bell" label={t("Notifications")} badge={unread > 0} bg="rgba(255,255,255,0.16)" color="#fff" onPress={() => router.push("/notifications")} />
+        <Press onPress={() => router.push("/me")} label={t("Me")}>
           <LinearGradient colors={[C.flame, C.rose]} style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.5)" }}>
             <Body weight="bold" color="#fff" size={16}>{(firstName[0] || "A").toUpperCase()}</Body>
           </LinearGradient>
@@ -134,8 +135,8 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
 
       {/* spinning seal → watch */}
       <Animated.View entering={FadeIn.delay(900).duration(700)} style={{ position: "absolute", right: 14, top: insets.top + 74 }}>
-        <Press onPress={() => router.push("/watch")} scaleTo={0.9}>
-          <Seal text="Prayer & Worship · Watch live" size={104} color="#fff">
+        <Press onPress={() => router.push("/watch")} scaleTo={0.9} label={t("Watch live")}>
+          <Seal text={t("Prayer & Worship · Watch live")} size={104} color="#fff">
             <LinearGradient colors={[C.sun, C.flame, C.rose]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ width: 46, height: 46, borderRadius: 23, alignItems: "center", justifyContent: "center" }}>
               <Icon name="play" size={18} color="#fff" />
             </LinearGradient>
@@ -156,8 +157,8 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
           <CyclingWord words={hero.words} />
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(550).duration(800)} style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-          <Button label="Watch live" icon="play" small onPress={() => router.push("/sermon/power-of-grace")} />
-          <Button label="Get a ride" icon="car-side" variant="glass" small onPress={() => router.push("/rides")} />
+          <Button label={t("Watch live")} icon="play" small onPress={() => router.push("/sermon/power-of-grace")} />
+          <Button label={t("Get a ride")} icon="car-side" variant="glass" small onPress={() => router.push("/rides")} />
         </Animated.View>
         <Animated.View entering={FadeInDown.delay(700).duration(800)} style={{ marginTop: 14 }}>
           <NextServiceCard />

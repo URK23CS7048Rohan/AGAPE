@@ -44,11 +44,11 @@ window.AgapeAdminRecords = function (h) {
         g.appendChild(w); return;
       }
       let ctl;
-      if (d.type === "textarea") ctl = `<textarea rows="${d.rows || 3}" placeholder="${esc(d.ph || "")}">${esc(d.fmt ? d.fmt(v) : v ?? "")}</textarea>`;
+      if (d.type === "textarea") ctl = `<textarea rows="${d.rows || 3}" ${d.mono ? 'style="font-family:ui-monospace,Menlo,monospace;font-size:13.5px"' : ""} placeholder="${esc(d.ph || "")}">${esc(d.fmt ? d.fmt(v) : v ?? "")}</textarea>`;
       else if (d.type === "select") ctl = `<select>${d.options.map(([val, lab]) => `<option value="${esc(val)}" ${String(val) === String(v ?? "") ? "selected" : ""}>${esc(lab)}</option>`).join("")}</select>`;
       else if (d.type === "bool") ctl = `<select><option value="true" ${v ? "selected" : ""}>${esc(d.yes || "Yes")}</option><option value="false" ${!v ? "selected" : ""}>${esc(d.no || "No")}</option></select>`;
       else if (d.type === "color") ctl = `<div class="color-in"><input type="color" value="${esc(v || "#FF5A1F")}" /><input type="text" value="${esc(v || "")}" maxlength="9" /><span class="swatches">${PALETTE.map((c) => `<button type="button" style="background:${c}" data-c="${c}"></button>`).join("")}</span></div>`;
-      else ctl = `<input type="${d.type === "number" ? "number" : d.type === "date" ? "date" : "text"}" value="${esc(d.fmt ? d.fmt(v) : v ?? "")}" placeholder="${esc(d.ph || "")}" ${d.type === "number" ? 'step="any"' : ""} />`;
+      else ctl = `<input type="${d.type === "number" ? "number" : d.type === "date" ? "date" : d.type === "datetime" ? "datetime-local" : "text"}" value="${esc(d.fmt ? d.fmt(v) : v ?? "")}" placeholder="${esc(d.ph || "")}" ${d.type === "number" ? 'step="any"' : ""} />`;
       const w = el(`<label class="field ${d.wide ? "span-all" : ""}"><span>${esc(d.label)}</span>${ctl}${d.hint ? `<small>${esc(d.hint)}</small>` : ""}</label>`);
       if (d.type === "color") {
         const [c, t] = $$("input", w);
@@ -161,6 +161,9 @@ window.AgapeAdminRecords = function (h) {
     return out.length ? out : null;
   };
 
+  // shared with records2.js (song book, plans, ministries, testimonies, homes, serve, check-in, push)
+  h._R = { form, records, table, section, el, day };
+
   /* ========================================================== VIEWS */
   return {
     /* ---------------------------------------------------------- SERMONS */
@@ -261,20 +264,23 @@ window.AgapeAdminRecords = function (h) {
     /* ---------------------------------------------------------- GAMES */
     games: { title: "Bible games", crumb: "App content", icon: "gamepad-2", group: "App content", async render(v) {
       const packs = await S.list("question_packs").catch(() => []);
-      v.innerHTML = intro("", "Question packs for <b>Trivia</b> and <b>Verse Match</b> in the app. Scores go to the weekly church leaderboard.");
-      const toText = (p) => (p.questions || []).map((q) => (p.game === "trivia"
-        ? [q.prompt, ...(q.options || []).map((o, i) => (i === Number(q.answer) ? "*" : "") + o)].join(" | ")
+      v.innerHTML = intro("", "Question packs for the app's Bible games: <b>Trivia</b>, <b>Who Said It?</b>, <b>True or False</b>, <b>Emoji Bible</b> and <b>Verse Match</b> (Books in Order, Memory Match and the Daily Challenge are built from these automatically). Mark a pack <b>Kids</b> to use it in Agape Kids. Scores go to the weekly leaderboards.");
+      const GAMES = { trivia: "Trivia", who_said: "Who Said It?", true_false: "True or False", emoji: "Emoji Bible", verse_match: "Verse Match" };
+      const toText = (p) => (p.questions || []).map((q) => (p.game !== "verse_match"
+        ? [q.prompt, ...(q.options || []).map((o, i) => (i === Number(q.answer) ? "*" : "") + o), ...(q.reference ? ["ref: " + q.reference] : [])].join(" | ")
         : [q.prompt, (q.answer || []).join(", "), (q.options || []).join(", "), q.reference || ""].join(" | "))).join("\n");
       v.appendChild(records({
         table: "question_packs", rows: packs, addLabel: "Add a question pack",
-        title: (r) => r.title, sub: (r) => `${r.game === "trivia" ? "Trivia" : "Verse Match"} · ${(r.questions || []).length} questions`,
+        title: (r) => r.title, sub: (r) => `${GAMES[r.game] || r.game}${r.audience === "kids" ? " · Kids" : ""} · ${(r.questions || []).length} questions`,
         badge: (r) => (r.published ? "" : `<span class="badge badge--hidden">Draft</span>`),
-        template: { title: "New pack", game: "trivia", published: true, questions: [] },
-        defs: [{ k: "title", label: "Pack name" }, { k: "game", label: "Game", type: "select", options: [["trivia", "Trivia"], ["verse_match", "Verse Match"]] }, { k: "published", label: "Visibility", type: "bool", yes: "Live in the app", no: "Draft" }],
+        template: { title: "New pack", game: "trivia", audience: "all", published: true, questions: [] },
+        defs: [{ k: "title", label: "Pack name" }, { k: "game", label: "Game", type: "select", options: Object.entries(GAMES) }, { k: "audience", label: "For", type: "select", options: [["all", "Everyone"], ["kids", "Kids"]] }, { k: "published", label: "Visibility", type: "bool", yes: "Live in the app", no: "Draft" }],
         extra: (p, body) => {
           const w = el(`<label class="field" style="margin-top:14px"><span>Questions</span><textarea rows="8">${esc(toText(p))}</textarea><small>${p.game === "verse_match"
             ? "One verse per line: Verse with ___ for each blank | right words, in order | wrong words | Reference.  e.g.  The Lord is my ___ | shepherd | king, rock | Psalm 23:1"
-            : "One per line: Question? | Option | *Right option | Option   (put * before the right answer)"}</small></label>`);
+            : p.game === "true_false" ? "One per line: Statement | *True | False | Reference   (put * before the right answer)"
+            : p.game === "emoji" ? "One per line: 🌊🚶‍♂️🌊 | Jonah | *Moses crossing the Red Sea | Noah | Reference"
+            : "One per line: Question? | Option | *Right option | Option   (optionally end with | ref: John 3:16)"}</small></label>`);
           const btn = el(`<button class="btn btn--ink btn--sm" style="margin-top:10px">Save questions</button>`);
           btn.addEventListener("click", async () => {
             if (!p.id) return toast("Create the pack first", true);
@@ -282,8 +288,10 @@ window.AgapeAdminRecords = function (h) {
             const rows = lines.map((l) => {
               const parts = l.split("|").map((s) => s.trim());
               if (p.game === "verse_match") return { pack_id: p.id, prompt: parts[0], answer: (parts[1] || "").split(",").map((s) => s.trim()).filter(Boolean), options: (parts[2] || "").split(",").map((s) => s.trim()).filter(Boolean), reference: parts[3] || null };
-              const opts = parts.slice(1);
-              return { pack_id: p.id, prompt: parts[0], options: opts.map((o) => o.replace(/^\*/, "")), answer: Math.max(0, opts.findIndex((o) => o.startsWith("*"))) };
+              let opts = parts.slice(1), reference = null;
+              const last = opts[opts.length - 1] || "";
+              if (/^ref:/i.test(last) || (p.game !== "trivia" && opts.length > 2 && /\d+:\d+/.test(last) && !last.startsWith("*"))) { reference = last.replace(/^ref:\s*/i, ""); opts = opts.slice(0, -1); }
+              return { pack_id: p.id, prompt: parts[0], options: opts.map((o) => o.replace(/^\*/, "")), answer: Math.max(0, opts.findIndex((o) => o.startsWith("*"))), reference };
             }).filter((q) => q.prompt && (p.game === "verse_match" ? q.answer.length : q.options.length >= 2));
             try {
               await S.removeWhere("questions", "pack_id", p.id);

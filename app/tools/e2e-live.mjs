@@ -5,7 +5,7 @@
 //
 // env: BASE (app URL), API_URL, ANON_KEY, SERVICE_ROLE_KEY, MAIL_URL, OUT
 import { chromium } from "playwright";
-import { mkdirSync, writeFileSync } from "fs";
+import { mkdirSync, writeFileSync, readFileSync } from "fs";
 import { createClient } from "@supabase/supabase-js";
 
 const BASE = process.env.BASE || "http://localhost:3000";
@@ -127,8 +127,8 @@ await step("watch + sermon notes sync", async () => {
 });
 
 await step("courses: complete a lesson", async () => {
-  await go("/grow");
-  await shot("grow");
+  await go("/learn");
+  await shot("learn");
   const { data: c } = await admin.from("courses").select("id").eq("slug", "foundations").single();
   await go(`/course/${c.id}`);
   await click("Start course");
@@ -138,23 +138,143 @@ await step("courses: complete a lesson", async () => {
   await waitFor(async () => (await admin.from("lesson_progress").select("lesson_id").eq("user_id", me)).data?.length, 10000, "progress saved");
 });
 
-await step("games: score reaches the leaderboard", async () => {
+await step("games: a round of Bible Trivia reaches the leaderboard", async () => {
   await go("/games");
-  await click("Trivia", { exact: true });
-  await page.waitForTimeout(1200);
+  await shot("games-hub");
+  await click("Bible Trivia", { exact: true });
+  await page.waitForTimeout(1500);
   // read the question on screen and tap the right answer (from the database)
   const { data: qs } = await admin.from("questions").select("prompt, options, answer");
-  for (let k = 0; k < 3; k++) {
+  for (let k = 0; k < 16; k++) {
+    if ((await admin.from("game_scores").select("id").eq("user_id", me)).data?.length) break;
     const shown = await page.evaluate(() => document.body.innerText);
     const q = qs.find((x) => Array.isArray(x.options) && typeof x.answer === "number" && shown.includes(x.prompt));
-    if (!q) { await page.waitForTimeout(1500); continue; }
+    if (!q) { await page.waitForTimeout(1200); continue; }
+    if (k === 2) await shot("games-trivia");
     await page.getByText(q.options[q.answer], { exact: true }).first().click();
-    await page.waitForTimeout(1800);
-    if ((await admin.from("game_scores").select("id").eq("user_id", me)).data?.length) break;
+    await page.waitForTimeout(1500);
   }
-  await waitFor(async () => (await admin.from("game_scores").select("id").eq("user_id", me)).data?.length, 12000, "score saved");
+  await waitFor(async () => (await admin.from("game_scores").select("id").eq("user_id", me).eq("game", "trivia")).data?.length, 12000, "score saved");
+  await page.waitForTimeout(1500);
+  await shot("games-result");
+});
+
+await step("bible: read John 3, highlight a verse", async () => {
+  await go("/bible");
+  await shot("bible-tab");
+  await go("/bible/read?b=43&c=3&tr=WEB");
+  await page.getByText(/God so loved the world/).first().waitFor({ timeout: 30000 });
+  await page.getByText(/God so loved the world/).first().click();
+  await page.waitForTimeout(800);
+  await shot("bible-select");
+  await page.locator('[aria-label="Highlight"]').first().click();
+  await waitFor(async () => (await admin.from("bible_marks").select("verse").eq("user_id", me).eq("kind", "highlight")).data?.some((m) => m.verse === 16), 10000, "highlight saved");
+  await page.waitForTimeout(800);
+  await shot("bible-highlight");
+});
+
+await step("reading plan: start, read day 1, journal, mark complete", async () => {
+  await go("/plans/gospel-of-john");
+  await shot("plan");
+  await click("Start this plan");
+  await page.getByPlaceholder("Write a thought or a prayer…").waitFor({ timeout: 20000 });
+  await page.waitForTimeout(3000);
+  await shot("plan-day");
+  await page.getByPlaceholder("Write a thought or a prayer…").fill(`The Word became flesh ${stamp}`);
+  await click("Mark day 1 complete");
+  await waitFor(async () => (await admin.from("plan_progress").select("done").eq("user_id", me)).data?.[0]?.done?.includes(1), 10000, "progress saved");
+  await waitFor(async () => (await admin.from("journal_entries").select("id").eq("user_id", me).like("body", `%${stamp}%`)).data?.length, 10000, "journal saved");
+});
+
+await step("song book: open a hymn and transpose it", async () => {
+  await go("/songs");
+  await shot("songs");
+  await go("/songs/amazing-grace");
+  await page.getByText(/mazing grace/).first().waitFor({ timeout: 15000 });
+  await page.locator('[aria-label="Key +"]').first().click();
+  await page.locator('[aria-label="Key +"]').first().click();
+  await page.getByText("A", { exact: true }).first().waitFor({ timeout: 5000 });
+  await shot("song-transposed");
+});
+
+await step("testimonies: share one, pastor approves, it's on the wall", async () => {
+  await go("/testimonies");
+  await click("Share yours");
+  await page.getByPlaceholder(/Title — e.g./).fill(`God provided a job ${stamp}`);
+  await page.getByPlaceholder("What happened? What did God do?").fill("After eight months of searching, the home group prayed and I got the offer the next week.");
+  await shot("testimony-write");
+  await click("Send", { exact: true });
+  const row = await waitFor(async () => (await admin.from("testimonies").select("id, approved").eq("user_id", me).single()).data, 10000, "testimony saved");
+  if (row.approved) throw new Error("should wait for review");
+  await admin.from("testimonies").update({ approved: true }).eq("id", row.id);
+  await go("/testimonies");
+  await page.getByText(`God provided a job ${stamp}`).first().waitFor({ timeout: 10000 });
+  await shot("testimonies");
+});
+
+await step("home prayer: host a meeting in your home", async () => {
+  await go("/home-prayer/host");
+  await page.getByPlaceholder(/Title — e.g./).fill(`Friday worship ${stamp}`);
+  await page.getByPlaceholder(/Area everyone sees/).fill("Salmiya, Block 12");
+  await page.getByPlaceholder(/Full address/).fill("Street 4, Building 9, Flat 11");
+  await click("Create meeting");
+  await waitFor(async () => (await admin.from("home_meetings").select("id").eq("host_id", me)).data?.length, 10000, "meeting saved");
   await page.waitForTimeout(2500);
-  await shot("games");
+  await shot("home-meeting");
+  await go("/home-prayer");
+  await shot("home-prayer");
+});
+
+await step("serve + check-in: sign up for a shift, check in with the church code", async () => {
+  await go("/serve");
+  await click("Sign up", { exact: true });
+  await waitFor(async () => (await admin.from("serve_signups").select("opportunity_id").eq("user_id", me)).data?.length, 10000, "signed up");
+  await shot("serve");
+  const { data: code } = await admin.from("checkin_codes").insert({ event_key: "sunday-worship", title: "Sunday worship" }).select().single();
+  await go("/checkin");
+  await shot("checkin-card");
+  await click("Scan at church");
+  await page.getByPlaceholder(/Code, e.g./).fill(code.code);
+  await click("Go", { exact: true });
+  await waitFor(async () => (await admin.from("checkins").select("id").eq("user_id", me)).data?.length, 10000, "checked in");
+  await page.waitForTimeout(1000);
+  await shot("checkin-done");
+});
+
+await step("kids mode: a parent PIN keeps the phone in Agape Kids", async () => {
+  await go("/kids");
+  await shot("kids");
+  await click("Turn on Kids mode");
+  await page.locator('input[type="password"]').fill("2468");
+  await click("Turn on", { exact: true });
+  await page.waitForTimeout(1500);
+  await go("/");
+  await page.getByText("Hello, friend!").first().waitFor({ timeout: 10000 });
+  await page.locator('[aria-label="Grown-ups"]').first().click();
+  await page.locator('input[type="password"]').fill("2468");
+  await click("Unlock", { exact: true });
+  await page.waitForTimeout(2500);
+  const { data } = await admin.from("profiles").select("settings").eq("id", me).single();
+  if (data.settings?.kidsMode) throw new Error("still locked");
+});
+
+await step("language: the app switches to Malayalam and back", async () => {
+  const ml = JSON.parse(readFileSync(new URL("../src/i18n/ml.json", import.meta.url)));
+  await go("/me");
+  await click("Language", { exact: true });
+  await click("മലയാളം", { exact: true });
+  await page.waitForTimeout(2500);
+  await go("/");
+  await page.getByText(ml["Bible"], { exact: true }).first().waitFor({ timeout: 10000 });
+  await shot("home-malayalam");
+  await go("/bible");
+  await page.waitForTimeout(3000);
+  await shot("bible-malayalam");
+  const { data } = await admin.from("profiles").select("settings").eq("id", me).single();
+  if (data.settings?.language !== "ml") throw new Error("language not saved to the profile");
+  await admin.from("profiles").update({ settings: { ...data.settings, language: "en", bible: "WEB" } }).eq("id", me);
+  await go("/");
+  await page.waitForTimeout(1500);
 });
 
 await step("rides: request → driver accepts → live location", async () => {

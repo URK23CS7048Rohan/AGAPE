@@ -7,11 +7,13 @@ import { router, useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import * as Haptics from "expo-haptics";
 import { C, R } from "@/theme";
-import { Body, Button, Display, Icon, IconButton, Label, Press, Ring, Serif } from "@/components/ui";
+import { Body, Button, Display, Icon, IconButton, Label, Press, Ring } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { useCourses } from "@/lib/data";
+import { t } from "@/lib/i18n";
 
 const KIND_ICON = { video: "play", pdf: "file-text", quiz: "help-circle" } as const;
+const KIND_LABEL = { video: "Video", pdf: "PDF", quiz: "Quiz" } as const;
 
 export default function CourseScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,8 +42,8 @@ export default function CourseScreen() {
         <View style={{ paddingHorizontal: 20, marginTop: -60 }}>
           <View style={{ flexDirection: "row", alignItems: "flex-end", justifyContent: "space-between" }}>
             <View style={{ flex: 1 }}>
-              <Label>{c.category} · {c.lessons.length} lessons</Label>
-              <Display size={50} style={{ marginTop: 6, lineHeight: 48 }}>{c.title}{"\n"}<Serif size={54} color={c.color}>{c.accent}</Serif></Display>
+              <Label>{c.category} · {t("{n} lessons", { n: c.lessons.length })}</Label>
+              <Display size={34} style={{ marginTop: 6 }}>{`${c.title} ${c.accent || ""}`.trim()}</Display>
             </View>
             <Ring size={86} stroke={8} progress={pct} color={c.color} track="rgba(15,11,18,0.08)">
               <Display size={24}>{Math.round(pct * 100)}%</Display>
@@ -49,7 +51,7 @@ export default function CourseScreen() {
           </View>
           <Body size={15.5} color={C.muted} style={{ marginTop: 14, lineHeight: 23 }}>{c.description}</Body>
 
-          <Label style={{ marginTop: 26, marginBottom: 10 }}>Module 1 · Lessons</Label>
+          <Label style={{ marginTop: 26, marginBottom: 10 }}>{t("Module 1 · Lessons")}</Label>
           <View style={{ gap: 8 }}>
             {c.lessons.map((l, i) => {
               const isDone = doneSet.has(l.id);
@@ -70,9 +72,9 @@ export default function CourseScreen() {
                     </View>
                     <View style={{ flex: 1 }}>
                       <Body weight="semi">{l.title}</Body>
-                      <Body size={12.5} color={C.muted}>{l.kind.toUpperCase()} · {l.minutes} min</Body>
+                      <Body size={12.5} color={C.muted}>{(KIND_LABEL[l.kind] ? t(KIND_LABEL[l.kind]) : l.kind).toUpperCase()} · {t("{n} min", { n: l.minutes })}</Body>
                     </View>
-                    {isNow ? <Body size={12} weight="bold" color={c.color}>START</Body> : null}
+                    {isNow ? <Body size={12} weight="bold" color={c.color}>{t("Start").toUpperCase()}</Body> : null}
                   </Press>
                 </Animated.View>
               );
@@ -80,19 +82,19 @@ export default function CourseScreen() {
           </View>
           {nextIdx === -1 && c.lessons.length ? (
             <Animated.View entering={FadeInDown} style={{ marginTop: 20, padding: 20, borderRadius: R.lg, backgroundColor: C.ink }}>
-              <Display size={30} color={C.cream}>Course <Serif size={32} color={C.sun}>complete!</Serif></Display>
-              <Body color={C.creamMuted} style={{ marginTop: 6 }}>Well done! Show this screen to the Institute team to collect your certificate.</Body>
+              <Display size={28} color={C.cream}>{t("Course complete!")}</Display>
+              <Body color={C.creamMuted} style={{ marginTop: 6 }}>{t("Well done! Show this screen to the Institute team to collect your certificate.")}</Body>
             </Animated.View>
           ) : null}
         </View>
       </Animated.ScrollView>
 
       <View style={{ position: "absolute", top: insets.top + 6, left: 16 }}>
-        <IconButton name="chevron-left" onPress={() => router.back()} bg="rgba(255,255,255,0.92)" />
+        <IconButton name="chevron-left" label={t("Back")} onPress={() => router.back()} bg="rgba(255,255,255,0.92)" />
       </View>
       {nextIdx > -1 ? (
         <View style={{ position: "absolute", left: 16, right: 16, bottom: insets.bottom + 16 }}>
-          <Button label={done === 0 ? "Start course" : `Continue: ${c.lessons[nextIdx].title}`} variant="ink" block onPress={() => open(c.lessons[nextIdx].id)} />
+          <Button label={done === 0 ? t("Start course") : t("Continue: {title}", { title: c.lessons[nextIdx].title })} variant="ink" block onPress={() => open(c.lessons[nextIdx].id)} />
         </View>
       ) : null}
     </View>

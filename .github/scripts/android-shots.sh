@@ -35,15 +35,16 @@ tap "Continue with Apple" 540 1890
 sleep 6; dismiss
 shot 01-home 2
 for i in 1 2 3 4 5 6; do adb shell input swipe 540 1900 540 750 450; shot "01-home-$i" 3; done
-X_Watch=341; X_Grow=539; X_Family=737; X_Me=935
-for t in Watch Grow Family Me; do dismiss; xv="X_$t"; tap "$t" "${!xv}" 2235; shot "tab-$t" 6; adb shell input swipe 540 1900 540 900 450; shot "tab-$t-2" 3; done
-for r in prayer give games events rides assistant; do
+X_Bible=324; X_Watch=540; X_Community=756; X_Me=972
+for t in Bible Watch Community Me; do dismiss; xv="X_$t"; tap "$t" "${!xv}" 2290; shot "tab-$t" 6; adb shell input swipe 540 1900 540 900 450; shot "tab-$t-2" 3; done
+for r in "bible/read?b=43&c=3" plans/gospel-of-john songs/amazing-grace games games/emoji kids ministry/teens testimonies home-prayer serve checkin prayer give events rides; do
   dismiss
-  adb shell am start -W -a android.intent.action.VIEW -d "agape://$r" church.agape.app
+  adb shell am start -W -a android.intent.action.VIEW -d "'agape://$r'" church.agape.app
   sleep 6; dismiss
-  shot "$r" 2
+  n=$(echo "$r" | sed 's/[^a-z0-9]\+/-/g')
+  shot "$n" 4
   adb shell input swipe 540 1900 540 900 450
-  shot "$r-2" 3
+  shot "$n-2" 3
   if [ "$r" = rides ]; then shot rides-3 14; fi
 done
 ls -la android-shots

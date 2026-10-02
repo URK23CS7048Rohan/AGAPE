@@ -104,7 +104,7 @@ const route = (link?: string) => {
   const l = (link || "").toLowerCase();
   if (l.includes("event")) return "/events";
   if (l.includes("give")) return "/give";
-  if (l.includes("app") || l.includes("course")) return "/grow";
+  if (l.includes("app") || l.includes("course")) return "/learn";
   if (l.includes("community") || l.includes("squad")) return "/community";
   if (l.includes("watch") || l.includes("youtube")) return "/watch";
   if (l.includes("ride")) return "/rides";

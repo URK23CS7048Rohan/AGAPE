@@ -3174,6 +3174,33 @@ window.AGAPE_DEFAULT = {
     visitor_cards: [{ id: "vc1", name: "Kevin O.", phone: "+965 5000 0000", needs_ride: true, message: "Bringing kids", status: "new", created_at: "2026-09-28" }],
     care_requests: [{ id: "cr1", member: "Joseph A.", kind: "hospital", details: "My father is in Mubarak hospital, ward 4.", phone: "+965 5000 0001", status: "open", created_at: "2026-09-27" }],
     volunteer_applications: [{ id: "va1", member: "Anita Varghese", teams: ["driving", "welcome"], vehicle: "Kia Carnival · Grey", note: "Free on Sundays", status: "pending", created_at: "2026-09-26" }],
+    songs: [
+      { id: "so1", slug: "amazing-grace", title: "Amazing Grace", author: "John Newton, 1779", original_key: "G", tempo: 76, time_sig: "3/4", tags: ["hymn", "classic"], body: "{Verse 1}\nA[G]mazing grace! How [G7]sweet the [C]sound\nThat [G]saved a wretch like [D]me!", copyright: "Public domain", published: true, position: 1 },
+      { id: "so2", slug: "great-is-thy-faithfulness", title: "Great Is Thy Faithfulness", author: "Thomas O. Chisholm, 1923", original_key: "D", tempo: 76, time_sig: "3/4", tags: ["hymn", "worship"], body: "{Verse 1}\n\"Great is Thy [D]faithfulness,\" [G]O God my [D]Father", copyright: "Public domain", published: true, position: 2 },
+    ],
+    set_lists: [],
+    reading_plans: [
+      { id: "rp1", slug: "gospel-of-john", title: "The Gospel of John", subtitle: "21 days with Jesus", audience: "adults", color: "#FF5A1F", image: "assets/img/bible-coffee.jpg", published: true, position: 1, days: [{ title: "The Word became flesh", refs: ["John 1"], devotion: "John begins before the beginning." }] },
+      { id: "rp2", slug: "heroes-of-the-bible", title: "Heroes of the Bible", subtitle: "10 days for kids", audience: "kids", color: "#FFC23D", image: "assets/img/agape-kids-hearts.jpg", published: true, position: 2, days: [{ title: "Noah trusts God", refs: ["Genesis 6:9-22"] }] },
+    ],
+    ministry_posts: [
+      { id: "mp1", ministry: "kids", kind: "verse", title: "Memory verse", body: "Be kind to one another.", ref: "Ephesians 4:32", pinned: true, published: true, color: "#FFC23D" },
+      { id: "mp2", ministry: "teens", kind: "event", title: "Friday youth night", body: "Games, worship and real talk.", starts_at: new Date(Date.now() + 3 * 864e5).toISOString(), published: true, color: "#4CC3FF" },
+      { id: "mp3", ministry: "squad", kind: "post", title: "Practice: Saturdays 4 PM", body: "Bring water and your lyrics.", pinned: true, published: true, color: "#FF3D7F" },
+    ],
+    testimonies: [
+      { id: "t1", title: "A job after eight months", body: "We prayed as a home group every Thursday. Last week I got the offer.", category: "provision", member: "Joseph A.", approved: false, featured: false, amens: 0, created_at: "2026-09-29" },
+      { id: "t2", title: "My daughter's fever broke", body: "The whole prayer wall prayed. The doctors were amazed.", category: "healing", member: "Anita V.", approved: true, featured: true, amens: 46, created_at: "2026-09-20" },
+    ],
+    home_meetings: [
+      { id: "hm1", title: "Thursday prayer & worship", kind: "prayer", repeats: "weekly", language: "Malayalam / English", starts_at: new Date(Date.now() + 2 * 864e5).toISOString(), area: "Salmiya, Block 10", host: "Thomas K.", home_meeting_places: { address: "Building 14, Street 12, Flat 6" }, home_meeting_rsvps: [{ guests: 1 }, { guests: 0 }], capacity: 16, cancelled: false },
+    ],
+    serve_opportunities: [
+      { id: "so-1", team: "ushering", title: "Sunday ushers", description: "Welcome people at the door.", starts_at: new Date(Date.now() + 3 * 864e5).toISOString(), location: "Agape Church, Salmiya", slots: 6, published: true, serve_signups: [{ profiles: { full_name: "Sarah Mathews" } }] },
+    ],
+    checkin_codes: [],
+    checkins: [{ id: 1, member: "Sarah Mathews", profiles: { full_name: "Sarah Mathews", member_no: "AGP-24-1001" }, event_key: "sunday-worship", title: "Sunday worship", day: "2026-09-27", method: "self" }],
+    push_campaigns: [{ id: "pc1", title: "Prayer & Worship tonight", body: "8 PM in homes across the city. Addresses are in the app.", audience: "everyone", route: "/home-prayer", sent_at: "2026-09-25T15:00:00Z", sent_count: 412 }],
     donations: [
       { id: "g1", donor: "Sarah Mathews", fund: "Tithe", campaign_title: null, amount: 50, currency: "KWD", status: "succeeded", provider: "tap", created_at: "2026-09-28" },
       { id: "g2", donor: "Website visitor", fund: "Building Fund", campaign_title: "Building Fund", amount: 25, currency: "KWD", status: "succeeded", provider: "tap", created_at: "2026-09-27" },
@@ -3311,6 +3338,16 @@ window.AGAPE_DEFAULT = {
         care_requests: "care_requests?select=*,profiles(full_name,email,phone)&order=created_at.desc&limit=500",
         volunteer_applications: "volunteer_applications?select=*,profiles(full_name,email,phone)&order=created_at.desc&limit=500",
         donations: "donations?select=*,profiles(full_name,email)&order=created_at.desc&limit=1000",
+        songs: "songs?select=*&order=position,title",
+        set_lists: "set_lists?select=*&order=service_date.desc.nullslast",
+        reading_plans: "reading_plans?select=*&order=position",
+        ministry_posts: "ministry_posts?select=*&order=pinned.desc,position,created_at.desc&limit=500",
+        testimonies: "testimonies?select=*,profiles!testimonies_user_id_fkey(full_name)&order=created_at.desc&limit=500",
+        home_meetings: "home_meetings?select=*,host:profiles!home_meetings_host_id_fkey(full_name),home_meeting_places(address),home_meeting_rsvps(guests)&order=starts_at.desc&limit=300",
+        serve_opportunities: "serve_opportunities?select=*,serve_signups(user_id,profiles(full_name))&order=starts_at.desc&limit=300",
+        checkin_codes: "checkin_codes?select=*&order=created_at.desc&limit=60",
+        checkins: "checkins?select=*,profiles!checkins_user_id_fkey(full_name,member_no)&order=created_at.desc&limit=1000",
+        push_campaigns: "push_campaigns?select=*&order=created_at.desc&limit=200",
       }[table];
       const rows = await rest(q || `${table}?select=*`);
       return rows.map((r) => ({
@@ -3354,9 +3391,9 @@ window.AGAPE_DEFAULT = {
       await rest(`${table}?id=eq.${id}`, { method: "DELETE" });
     },
     async stats() {
-      if (!LIVE) return { members: 2400, new_members: 18, volunteers: 64, active_learners: 312, total_views: 48210, rides_completed: 1286, rides_open: 2, prayers_pending: 1, visitors_new: 1, care_open: 1, applications_pending: 1, giving_this_month: 18450, demo: true };
-      const r = await rest("staff_stats?select=*");
-      return r[0] || {};
+      if (!LIVE) return { members: 2400, new_members: 18, volunteers: 64, active_learners: 312, total_views: 48210, rides_completed: 1286, rides_open: 2, prayers_pending: 1, visitors_new: 1, care_open: 1, applications_pending: 1, giving_this_month: 18450, testimonies_waiting: 1, checkins_week: 214, readers_week: 96, home_meetings_upcoming: 7, serve_upcoming: 23, demo: true };
+      const [r, m] = await Promise.all([rest("staff_stats?select=*"), rest("staff_stats_more?select=*").catch(() => [{}])]);
+      return { ...(r[0] || {}), ...(m[0] || {}) };
     },
   };
   window.AgapeStore = Store;

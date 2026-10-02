@@ -6,7 +6,8 @@ import { LinearGradient } from "expo-linear-gradient";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG, R, shadow } from "@/theme";
-import { Body, Chip, Display, Icon, Label, LiveBadge, Press, Serif } from "@/components/ui";
+import { Body, Chip, Display, Icon, Label, LiveBadge, Press, Serif, Tile } from "@/components/ui";
+import { t } from "@/lib/i18n";
 import { Series } from "@/data/mock";
 import { useSermons } from "@/lib/data";
 import { useSiteContent } from "@/lib/content";
@@ -41,7 +42,7 @@ function SeriesCard({ s, i, x, firstId }: { s: Series; i: number; x: SharedValue
           <Display size={34} color="#fff" style={{ textTransform: "uppercase", marginTop: 8, lineHeight: 32 }}>
             {s.title}<Serif size={34} color="#fff" style={{ textTransform: "none" }}>{s.accent}</Serif>
           </Display>
-          <Body size={12.5} color="rgba(255,255,255,0.75)" style={{ marginTop: 6 }}>{s.count} messages · {s.speaker}</Body>
+          <Body size={12.5} color="rgba(255,255,255,0.75)" style={{ marginTop: 6 }}>{t("{n} messages", { n: s.count })} · {s.speaker}</Body>
         </View>
       </Animated.View>
     </Press>
@@ -69,10 +70,8 @@ export default function Watch() {
     <View style={{ flex: 1, backgroundColor: C.ink }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 12, paddingBottom: 150 }}>
         <Animated.View entering={FadeInDown.duration(600)} style={{ paddingHorizontal: 20 }}>
-          <Label color={C.creamMuted}>Sermons · Live · Library</Label>
-          <Display size={56} color={C.cream} style={{ marginTop: 8, lineHeight: 54 }}>
-            Watch &{"\n"}<Serif size={62} color={C.sun}>listen.</Serif>
-          </Display>
+          <Label color={C.creamMuted}>{t("Sermons · Live · Worship")}</Label>
+          <Display size={40} color={C.cream} style={{ marginTop: 6 }}>{t("Watch")}</Display>
         </Animated.View>
 
         {/* Live */}
@@ -89,13 +88,19 @@ export default function Watch() {
             </View>
             <View style={{ position: "absolute", left: 18, bottom: 18, right: 90 }}>
               <Display size={36} color="#fff">{live.title} <Serif size={38} color={C.sun}>{live.accent}</Serif></Display>
-              <Body size={13} color="rgba(255,255,255,0.75)">{live.speaker}{live.live ? " · Live & on demand" : ` · ${live.date}`}</Body>
+              <Body size={13} color="rgba(255,255,255,0.75)">{live.speaker}{live.live ? ` · ${t("Live & on demand")}` : ` · ${live.date}`}</Body>
             </View>
             <View style={{ position: "absolute", right: 18, bottom: 18, width: 58, height: 58, borderRadius: 29, backgroundColor: C.flame, alignItems: "center", justifyContent: "center" }}>
               <Icon name="play" size={24} color="#fff" />
             </View>
           </Press>
         </Animated.View> : null}
+
+        {/* Worship tools */}
+        <View style={{ flexDirection: "row", gap: 10, marginHorizontal: 16, marginTop: 14 }}>
+          <Tile dark style={{ flex: 1 }} icon="music-clef-treble" color={C.sun} label={t("Song book")} sub={t("Lyrics & chords")} onPress={() => router.push("/songs" as any)} />
+          <Tile dark style={{ flex: 1 }} icon="headphones" color={C.flame} label={t("Audio Bible")} sub={t("Listen")} onPress={() => router.push("/bible/read?audio=1" as any)} />
+        </View>
 
         {/* YouTube channel */}
         <Animated.View entering={FadeInDown.delay(160).duration(700)}>
@@ -106,7 +111,7 @@ export default function Watch() {
             </View>
             <View style={{ flex: 1, padding: 14 }}>
               <Label color={C.creamMuted} size={10}>Agape International Media</Label>
-              <Display size={22} color={C.cream} style={{ marginTop: 4 }}>Every message, <Serif size={23} color={C.sun}>on YouTube</Serif></Display>
+              <Display size={22} color={C.cream} style={{ marginTop: 4 }}>{t("Every message, on YouTube")}</Display>
             </View>
           </Press>
         </Animated.View>
@@ -114,16 +119,16 @@ export default function Watch() {
         {/* Search */}
         <View style={{ marginHorizontal: 16, marginTop: 22, height: 52, borderRadius: R.pill, backgroundColor: C.ink3, flexDirection: "row", alignItems: "center", paddingHorizontal: 18, gap: 10 }}>
           <Icon name="search" size={18} color={C.creamMuted} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Search sermons, books, speakers" placeholderTextColor="rgba(244,238,228,0.45)" style={{ flex: 1, color: C.cream, fontFamily: F.sans, fontSize: 15 }} />
+          <TextInput value={q} onChangeText={setQ} placeholder={t("Search sermons, books, speakers")} placeholderTextColor="rgba(244,238,228,0.45)" style={{ flex: 1, color: C.cream, fontFamily: F.sans, fontSize: 15 }} />
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingVertical: 16 }}>
-          {books.map((b) => <Chip key={b} label={b} active={book === b} dark onPress={() => setBook(b)} />)}
+          {books.map((b) => <Chip key={b} label={b === "All" ? t("All") : b} active={book === b} dark onPress={() => setBook(b)} />)}
         </ScrollView>
 
         {/* Series */}
         <View style={{ paddingHorizontal: 20, marginTop: 6, marginBottom: 14 }}>
-          <Label color={C.creamMuted}>Series by book</Label>
-          <Display size={30} color={C.cream} style={{ marginTop: 6 }}>Sorted by <Serif size={32} color={C.sun}>the Book</Serif></Display>
+          <Label color={C.creamMuted}>{t("Series by book")}</Label>
+          <Display size={28} color={C.cream} style={{ marginTop: 6 }}>{t("Sorted by the Book")}</Display>
         </View>
         <Animated.ScrollView horizontal onScroll={onScroll} scrollEventThrottle={16} showsHorizontalScrollIndicator={false} snapToInterval={CW + GAP} decelerationRate="fast" contentContainerStyle={{ paddingHorizontal: 16, gap: GAP, paddingBottom: 30 }}>
           {series.map((s, i) => <SeriesCard key={s.id} s={s} i={i} x={x} firstId={SERMONS.find((m) => m.seriesId === s.id)?.id} />)}
@@ -131,7 +136,7 @@ export default function Watch() {
 
         {/* Latest */}
         <View style={{ paddingHorizontal: 20, marginTop: 10, marginBottom: 12 }}>
-          <Display size={30} color={C.cream}>Latest <Serif size={32} color={C.sun}>messages</Serif></Display>
+          <Display size={28} color={C.cream}>{t("Latest messages")}</Display>
         </View>
         <View style={{ paddingHorizontal: 16, gap: 10 }}>
           {list.map((m, i) => (
@@ -149,7 +154,7 @@ export default function Watch() {
               </Press>
             </Animated.View>
           ))}
-          {list.length === 0 && !loading ? <Body color={C.creamMuted} center style={{ marginTop: 20 }}>{SERMONS.length ? "No messages match that search yet." : "Sermons appear here as soon as the team uploads them."}</Body> : null}
+          {list.length === 0 && !loading ? <Body color={C.creamMuted} center style={{ marginTop: 20 }}>{SERMONS.length ? t("No messages match that search yet.") : t("Sermons appear here as soon as the team uploads them.")}</Body> : null}
         </View>
       </ScrollView>
     </View>

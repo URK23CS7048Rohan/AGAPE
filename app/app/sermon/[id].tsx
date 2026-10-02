@@ -8,13 +8,14 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { WebView } from "react-native-webview";
 import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
-import { Avatar, Body, Display, Icon, IconButton, Label, LiveBadge, Press, Segmented, Serif } from "@/components/ui";
+import { Avatar, Body, Button, Display, Icon, IconButton, Label, LiveBadge, Press, Segmented } from "@/components/ui";
 import { useStore } from "@/lib/store";
 import { colorFor, useSermons } from "@/lib/data";
 import { useSiteContent } from "@/lib/content";
 import { countView } from "@/lib/api";
 import { supabase } from "@/lib/supabase";
 import { fmt } from "@/lib/time";
+import { t } from "@/lib/i18n";
 
 const { width: SW } = Dimensions.get("window");
 const HERO = 380;
@@ -35,8 +36,8 @@ function useLiveChat(room: string, name: string, on: boolean) {
     if (!supabase) {
       // demo: a friendly simulated chat
       let k = 0;
-      const t = setInterval(() => { const [n, c, line] = CHAT_LINES[k % CHAT_LINES.length]; setMsgs((cs) => [...cs.slice(-7), { n, c, t: line, k: k++ }]); }, 2200);
-      return () => clearInterval(t);
+      const timer = setInterval(() => { const [n, c, line] = CHAT_LINES[k % CHAT_LINES.length]; setMsgs((cs) => [...cs.slice(-7), { n, c, t: line, k: k++ }]); }, 2200);
+      return () => clearInterval(timer);
     }
     const c = supabase.channel(`live:${room}`, { config: { broadcast: { self: true }, presence: { key: Math.random().toString(36).slice(2) } } });
     c.on("broadcast", { event: "msg" }, ({ payload }: any) => setMsgs((m) => [...m.slice(-40), payload]));
@@ -45,10 +46,10 @@ function useLiveChat(room: string, name: string, on: boolean) {
     ch.current = c;
     return () => { supabase!.removeChannel(c); ch.current = null; };
   }, [room, on]);
-  const send = (t: string) => {
-    const line = { n: name, c: colorFor(name), t: t.slice(0, 280), k: Date.now() + Math.random() };
+  const send = (text: string) => {
+    const line = { n: name, c: colorFor(name), t: text.slice(0, 280), k: Date.now() + Math.random() };
     if (ch.current) ch.current.send({ type: "broadcast", event: "msg", payload: line });
-    else setMsgs((m) => [...m.slice(-7), { ...line, n: "You" }]);
+    else setMsgs((m) => [...m.slice(-7), { ...line, n: t("You") }]);
   };
   return { msgs, watching, send };
 }
@@ -76,7 +77,7 @@ export default function SermonScreen() {
   const topBar = useAnimatedStyle(() => ({ backgroundColor: `rgba(244,238,228,${interpolate(y.value, [HERO - 160, HERO - 80], [0, 0.96], Extrapolation.CLAMP)})` }));
   const titleSt = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [HERO - 120, HERO - 70], [0, 1], Extrapolation.CLAMP) }));
 
-  if (!m) return <View style={{ flex: 1, backgroundColor: C.cream }}><Body center color={C.muted} style={{ marginTop: 120 }}>Loading…</Body></View>;
+  if (!m) return <View style={{ flex: 1, backgroundColor: C.cream }}><Body center color={C.muted} style={{ marginTop: 120 }}>{t("Loading…")}</Body></View>;
   // Specific video → embed it. Otherwise: live stream (if live now) or the channel's latest uploads.
   const uploads = "UU" + CHURCH.youtubeChannelId.slice(2);
   const embed = m.youtubeId
@@ -84,6 +85,9 @@ export default function SermonScreen() {
     : m.live && liveMode
     ? `https://www.youtube.com/embed/live_stream?channel=${CHURCH.youtubeChannelId}&autoplay=1&playsinline=1`
     : `https://www.youtube.com/embed/videoseries?list=${uploads}&autoplay=1&playsinline=1&rel=0`;
+
+  // "{n} views" with the number in bold, keeping one whole phrase for translators
+  const boldCount = (key: string, n: string) => { const [a, b = ""] = t(key).split("{n}"); return <>{a}<Body weight="bold">{n}</Body>{b}</>; };
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.cream }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
@@ -106,9 +110,7 @@ export default function SermonScreen() {
               <Image source={m.image} style={{ flex: 1 }} contentFit="cover" transition={250} />
               <LinearGradient colors={["rgba(0,0,0,0.45)", "transparent", "transparent", C.cream]} locations={[0, 0.3, 0.6, 1]} style={StyleSheet.absoluteFill} />
               {m.live ? <View style={{ position: "absolute", left: 20, bottom: 70 }}><LiveBadge /></View> : null}
-              <Press onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); setPlaying(true); }} style={{ position: "absolute", alignSelf: "center", top: HERO / 2 - 30, width: 76, height: 76, borderRadius: 38, backgroundColor: C.flame, alignItems: "center", justifyContent: "center" }}>
-                <Icon name="play" size={30} color="#fff" />
-              </Press>
+              <IconButton name="play" label={t("Play")} size={76} bg={C.flame} color="#fff" onPress={() => { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium).catch(() => {}); setPlaying(true); }} style={{ position: "absolute", alignSelf: "center", top: HERO / 2 - 30 }} />
             </Animated.View>
           )}
         </View>
@@ -116,45 +118,42 @@ export default function SermonScreen() {
         <View style={{ paddingHorizontal: 20, marginTop: -24 }}>
           <Animated.View entering={FadeInDown.delay(80)}>
             <Label>{series ? `${series.book} · ` : ""}{m.date} · {m.duration}</Label>
-            <Display size={48} style={{ marginTop: 8, lineHeight: 46 }}>{m.title}{"\n"}<Serif size={52} color={C.flame}>{m.accent}</Serif></Display>
+            <Display size={34} style={{ marginTop: 8 }}>{`${m.title} ${m.accent || ""}`.trim()}</Display>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 }}>
               <Avatar name={(m.speaker || "Agape").replace("Ps. ", "")} color={C.ink} size={34} />
               <Body size={14} weight="semi">{m.speaker}</Body>
-              <Body size={13} color={C.muted}>· {fmt(m.views)} views</Body>
+              <Body size={13} color={C.muted}>· {t("{n} views", { n: fmt(m.views) })}</Body>
             </View>
           </Animated.View>
 
           <Animated.View entering={FadeInDown.delay(160)} style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
-            <Press onPress={() => setPlaying(true)} style={{ flex: 1, height: 54, borderRadius: R.pill, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}>
-              <Icon name="play" size={18} color="#fff" />
-              <Body weight="semi" color="#fff">{m.live ? "Watch live" : "Play message"}</Body>
-            </Press>
-            <IconButton name="bookmark" size={54} bg={saved.has(m.id) ? C.flame : "#fff"} color={saved.has(m.id) ? "#fff" : C.ink} onPress={() => toggleSaved(m.id)} />
-            <IconButton name="youtube" size={54} onPress={() => Linking.openURL(m.youtubeId ? `https://www.youtube.com/watch?v=${m.youtubeId}` : CHURCH.youtubeUrl)} />
-            <IconButton name="share-2" size={54} onPress={() => Share.share({ message: `${m.title} ${m.accent} · ${CHURCH.name}\n${m.youtubeId ? `https://youtu.be/${m.youtubeId}` : CHURCH.youtubeUrl}` })} />
+            <Button label={m.live ? t("Watch live") : t("Play message")} icon="play" variant="ink" onPress={() => setPlaying(true)} style={{ flex: 1, height: 54 }} />
+            <IconButton name="bookmark" label={saved.has(m.id) ? t("Saved") : t("Save")} size={54} bg={saved.has(m.id) ? C.flame : "#fff"} color={saved.has(m.id) ? "#fff" : C.ink} onPress={() => toggleSaved(m.id)} />
+            <IconButton name="youtube" label={t("Open in YouTube")} size={54} onPress={() => Linking.openURL(m.youtubeId ? `https://www.youtube.com/watch?v=${m.youtubeId}` : CHURCH.youtubeUrl)} />
+            <IconButton name="share-2" label={t("Share")} size={54} onPress={() => Share.share({ message: `${m.title} ${m.accent} · ${CHURCH.name}\n${m.youtubeId ? `https://youtu.be/${m.youtubeId}` : CHURCH.youtubeUrl}` })} />
           </Animated.View>
           {m.live ? (
             <View style={{ flexDirection: "row", gap: 8, marginTop: 12 }}>
-              <Press onPress={() => { setLiveMode(false); setPlaying(true); }} style={{ paddingHorizontal: 14, height: 36, borderRadius: R.pill, backgroundColor: "#fff", justifyContent: "center" }}><Body size={13} weight="semi">Latest uploads</Body></Press>
-              <Press onPress={() => { setLiveMode(true); setPlaying(true); }} style={{ paddingHorizontal: 14, height: 36, borderRadius: R.pill, backgroundColor: "#FF2E4D", justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">Live stream</Body></Press>
-              <Press onPress={() => Linking.openURL(CHURCH.youtubeUrl)} style={{ paddingHorizontal: 14, height: 36, borderRadius: R.pill, backgroundColor: C.ink, justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">YouTube ↗</Body></Press>
+              <Button small variant="white" label={t("Latest uploads")} onPress={() => { setLiveMode(false); setPlaying(true); }} />
+              <Button small variant="flame" label={t("Live stream")} onPress={() => { setLiveMode(true); setPlaying(true); }} />
+              <Button small variant="ink" label="YouTube ↗" onPress={() => Linking.openURL(CHURCH.youtubeUrl)} />
             </View>
           ) : null}
 
           <View style={{ marginTop: 24 }}>
-            <Segmented items={["About", "Notes", m.live ? "Live chat" : "Related"]} value={tab} onChange={setTab} />
+            <Segmented items={[t("About"), t("Notes"), m.live ? t("Live chat") : t("Related")]} value={tab} onChange={setTab} />
           </View>
 
           {tab === 0 ? (
             <Animated.View entering={FadeIn} style={{ marginTop: 18 }}>
               <Body size={16} style={{ lineHeight: 25 }}>{m.about}</Body>
               <View style={{ flexDirection: "row", gap: 24, marginTop: 18 }}>
-                <Body color={C.muted}><Body weight="bold">{fmt(m.views)}</Body> views</Body>
-                <Body color={C.muted}><Body weight="bold">{fmt(m.likes)}</Body> likes</Body>
+                <Body color={C.muted}>{boldCount("{n} views", fmt(m.views))}</Body>
+                <Body color={C.muted}>{boldCount("{n} likes", fmt(m.likes))}</Body>
               </View>
               <Press onPress={() => router.push("/assistant")} style={{ marginTop: 18, padding: 16, borderRadius: R.lg, backgroundColor: C.lilac, flexDirection: "row", alignItems: "center", gap: 12 }}>
                 <Icon name="creation" size={22} color={C.violet} />
-                <Body weight="semi" style={{ flex: 1 }}>Ask Agape about this sermon</Body>
+                <Body weight="semi" style={{ flex: 1 }}>{t("Ask Agape about this sermon")}</Body>
                 <Icon name="arrow-right" size={18} color={C.violet} />
               </Press>
             </Animated.View>
@@ -163,12 +162,12 @@ export default function SermonScreen() {
           {tab === 1 ? (
             <Animated.View entering={FadeIn} style={{ marginTop: 18 }}>
               <View style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 16, minHeight: 200 }}>
-                <Label style={{ marginBottom: 8 }}>{member ? "My notes · synced to your account" : "My notes · sign in to keep them on every device"}</Label>
+                <Label style={{ marginBottom: 8 }}>{member ? t("My notes · synced to your account") : t("My notes · sign in to keep them on every device")}</Label>
                 <TextInput
                   multiline
                   value={notes[m.id] ?? ""}
-                  onChangeText={(t) => setNote(m.id, t)}
-                  placeholder={"Grace isn't just a gift. It's a way of life.\n\nTap to start writing…"}
+                  onChangeText={(v) => setNote(m.id, v)}
+                  placeholder={`${t("Grace isn't just a gift. It's a way of life.")}\n\n${t("Tap to start writing…")}`}
                   placeholderTextColor="rgba(15,11,18,0.35)"
                   style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 24, color: C.ink, minHeight: 150, textAlignVertical: "top" }}
                 />
@@ -180,9 +179,9 @@ export default function SermonScreen() {
             <View style={{ marginTop: 18, backgroundColor: C.ink, borderRadius: R.lg, padding: 14 }}>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginBottom: 6 }}>
                 <LiveBadge small />
-                <Body size={12.5} color={C.creamMuted}>{live.watching ? `${live.watching} here now` : "Be kind · messages aren't saved"}</Body>
+                <Body size={12.5} color={C.creamMuted}>{live.watching ? t("{n} here now", { n: live.watching }) : t("Be kind · messages aren't saved")}</Body>
               </View>
-              {chat.length === 0 ? <Body size={14} color={C.creamMuted} style={{ paddingVertical: 10 }}>Say hello to everyone watching 👋</Body> : null}
+              {chat.length === 0 ? <Body size={14} color={C.creamMuted} style={{ paddingVertical: 10 }}>{t("Say hello to everyone watching 👋")}</Body> : null}
               {chat.map((c) => (
                 <Animated.View key={c.k} entering={FadeInDown.springify().damping(16)} style={{ flexDirection: "row", gap: 10, paddingVertical: 7 }}>
                   <Avatar name={c.n} color={c.c} size={28} />
@@ -193,8 +192,8 @@ export default function SermonScreen() {
                 </Animated.View>
               ))}
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: R.pill, paddingLeft: 16, paddingRight: 5, height: 48 }}>
-                <TextInput value={draft} onChangeText={setDraft} placeholder="Say something kind…" placeholderTextColor="rgba(244,238,228,0.45)" style={{ flex: 1, color: C.cream, fontFamily: F.sans, fontSize: 15 }} />
-                <IconButton name="send" size={38} bg={C.rose} color="#fff" onPress={() => { if (!draft.trim() || needsAccount("chat during the live stream")) return; live.send(draft.trim()); setDraft(""); }} />
+                <TextInput value={draft} onChangeText={setDraft} placeholder={t("Say something kind…")} placeholderTextColor="rgba(244,238,228,0.45)" style={{ flex: 1, color: C.cream, fontFamily: F.sans, fontSize: 15 }} />
+                <IconButton name="send" label={t("Send")} size={38} bg={C.rose} color="#fff" onPress={() => { if (!draft.trim() || needsAccount(t("chat during the live stream"))) return; live.send(draft.trim()); setDraft(""); }} />
               </View>
             </View>
           ) : null}
@@ -217,11 +216,11 @@ export default function SermonScreen() {
 
       {/* top bar */}
       <Animated.View style={[{ position: "absolute", top: 0, left: 0, right: 0, paddingTop: insets.top + 6, paddingHorizontal: 16, paddingBottom: 10, flexDirection: "row", alignItems: "center", gap: 12 }, topBar]}>
-        <IconButton name="chevron-left" onPress={() => router.back()} bg="rgba(255,255,255,0.9)" />
+        <IconButton name="chevron-left" label={t("Back")} onPress={() => router.back()} bg="rgba(255,255,255,0.9)" />
         <Animated.View style={[{ flex: 1 }, titleSt]}>
           <Body weight="semi" numberOfLines={1}>{m.title} {m.accent}</Body>
         </Animated.View>
-        {playing ? <IconButton name="x" onPress={() => setPlaying(false)} bg="rgba(255,255,255,0.9)" /> : null}
+        {playing ? <IconButton name="x" label={t("Close")} onPress={() => setPlaying(false)} bg="rgba(255,255,255,0.9)" /> : null}
       </Animated.View>
     </KeyboardAvoidingView>
   );

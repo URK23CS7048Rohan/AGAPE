@@ -16,18 +16,20 @@ import * as Linking from "expo-linking";
 import { router } from "expo-router";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isLive } from "./supabase";
+import { t } from "./i18n";
 import { forgetPushToken, registerForPush } from "./push";
 
 WebBrowser.maybeCompleteAuthSession();
 
+export type GameKind = "trivia" | "verse_match" | "who_said" | "true_false" | "emoji" | "books_order" | "memory" | "daily";
 export type Role = "member" | "volunteer" | "staff" | "admin";
-export type Settings = { faceId: boolean; notifications: boolean; largeText: boolean; kidsMode: boolean; language: string };
+export type Settings = { faceId: boolean; notifications: boolean; largeText: boolean; kidsMode: boolean; language: string; kidsPin: string; bible: string; readerSize: number; speechRate: number; dark: boolean };
 export type Profile = {
   id: string; full_name: string | null; email: string | null; phone: string | null; role: Role; member_no: string | null;
   vehicle: string | null; avatar_url: string | null; created_at: string; settings: Partial<Settings>; notifications_seen_at: string;
 };
 
-const DEFAULT_SETTINGS: Settings = { faceId: false, notifications: true, largeText: false, kidsMode: false, language: "English" };
+const DEFAULT_SETTINGS: Settings = { faceId: false, notifications: true, largeText: false, kidsMode: false, language: "en", kidsPin: "", bible: "", readerSize: 19, speechRate: 1, dark: false };
 const LOCAL_KEY = "agape.local.v2";
 const today = () => new Date().toISOString().slice(0, 10);
 
@@ -69,7 +71,7 @@ type State = {
   done: Set<string>;
   completeLesson: (lessonId: string) => void;
   score: number;
-  addScore: (game: "verse_match" | "trivia", n: number) => void;
+  addScore: (game: GameKind, n: number) => void;
   settings: Settings;
   setSetting: <K extends keyof Settings>(k: K, v: Settings[K]) => void;
   activeDays: string[];
@@ -177,9 +179,9 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
 
   const needsAccount = useCallback((what: string) => {
     if (!isLive || session) return false;
-    Alert.alert("Sign in to continue", `Create a free account to ${what}. It takes a few seconds with your e-mail.`, [
-      { text: "Not now", style: "cancel" },
-      { text: "Sign in", onPress: () => router.push("/welcome") },
+    Alert.alert(t("Sign in to continue"), t("Create a free account to {what}. It takes a few seconds with your e-mail.", { what }), [
+      { text: t("Not now"), style: "cancel" },
+      { text: t("Sign in"), onPress: () => router.push("/welcome") },
     ]);
     return true;
   }, [session]);
@@ -306,7 +308,7 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (supabase && uid) supabase.from("lesson_progress").upsert({ lesson_id: lessonId, completed_at: new Date().toISOString() }, { onConflict: "user_id,lesson_id" }).then(({ error }) => warn(error));
   }, [uid, markActive]);
 
-  const addScore = useCallback((game: "verse_match" | "trivia", n: number) => {
+  const addScore = useCallback((game: GameKind, n: number) => {
     setScore((s) => s + n);
     markActive();
     if (supabase && uid) supabase.from("game_scores").insert({ game, points: Math.max(0, Math.min(1000, Math.round(n))) }).then(({ error }) => warn(error));

@@ -8,10 +8,11 @@ import * as WebBrowser from "expo-web-browser";
 import { Image } from "expo-image";
 import { LinearGradient } from "expo-linear-gradient";
 import { C, R } from "@/theme";
-import { BackHeader, Body, Button, Confetti, ConfettiHandle, Display, Icon, Label, Press, Serif } from "@/components/ui";
+import { BackHeader, Body, Button, Confetti, ConfettiHandle, Display, Icon, Label, Press } from "@/components/ui";
 import { YouTube } from "@/components/YouTube";
 import { useCourses } from "@/lib/data";
 import { useStore } from "@/lib/store";
+import { t } from "@/lib/i18n";
 
 const KIND = { video: { icon: "play", label: "Video" }, pdf: { icon: "file-text", label: "Study guide" }, quiz: { icon: "help-circle", label: "Quiz" } } as const;
 
@@ -27,7 +28,7 @@ export default function LessonScreen() {
   const c = courses.find((x) => x.id === course) ?? courses.find((x) => x.lessons.some((l) => l.id === id));
   const idx = c ? c.lessons.findIndex((l) => l.id === id) : -1;
   const l = c && idx > -1 ? c.lessons[idx] : null;
-  if (!c || !l) return <View style={{ flex: 1, backgroundColor: C.lilac }}><BackHeader title="Lesson" /></View>;
+  if (!c || !l) return <View style={{ flex: 1, backgroundColor: C.lilac }}><BackHeader title={t("Lesson")} /></View>;
 
   const isDone = done.has(l.id);
   const quiz = l.quiz || [];
@@ -62,7 +63,7 @@ export default function LessonScreen() {
                   <View style={{ width: 70, height: 70, borderRadius: 35, backgroundColor: l.youtubeId ? C.flame : "rgba(255,255,255,0.2)", alignItems: "center", justifyContent: "center" }}>
                     <Icon name={l.youtubeId ? "play" : "clock"} size={28} color="#fff" />
                   </View>
-                  {!l.youtubeId ? <Body size={13} color="#fff" style={{ marginTop: 10 }}>Video coming soon</Body> : null}
+                  {!l.youtubeId ? <Body size={13} color="#fff" style={{ marginTop: 10 }}>{t("Video coming soon")}</Body> : null}
                 </View>
               </Press>
             )}
@@ -73,20 +74,20 @@ export default function LessonScreen() {
           <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 6, paddingHorizontal: 12, height: 28, borderRadius: R.pill, backgroundColor: c.color }}>
               <Icon name={KIND[l.kind].icon} size={13} color="#fff" />
-              <Body size={12} weight="bold" color="#fff">{KIND[l.kind].label}</Body>
+              <Body size={12} weight="bold" color="#fff">{t(KIND[l.kind].label)}</Body>
             </View>
-            <Label>Lesson {idx + 1} of {c.lessons.length}{l.minutes ? ` · ${l.minutes} min` : ""}</Label>
+            <Label>{t("Lesson {i} of {n}", { i: idx + 1, n: c.lessons.length })}{l.minutes ? ` · ${t("{n} min", { n: l.minutes })}` : ""}</Label>
           </View>
-          <Display size={44} style={{ marginTop: 12, lineHeight: 44 }}>{l.title}</Display>
-          {isDone ? <Animated.View entering={ZoomIn} style={{ alignSelf: "flex-start", marginTop: 10, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.mint, paddingHorizontal: 12, height: 30, borderRadius: R.pill }}><Icon name="check" size={14} color={C.ink} /><Body size={12.5} weight="bold">Completed</Body></Animated.View> : null}
+          <Display size={34} style={{ marginTop: 12 }}>{l.title}</Display>
+          {isDone ? <Animated.View entering={ZoomIn} style={{ alignSelf: "flex-start", marginTop: 10, flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.mint, paddingHorizontal: 12, height: 30, borderRadius: R.pill }}><Icon name="check" size={14} color={C.ink} /><Body size={12.5} weight="bold">{t("Completed")}</Body></Animated.View> : null}
           {l.body ? <Body size={16} style={{ marginTop: 16, lineHeight: 25 }}>{l.body}</Body> : null}
 
           {l.kind === "pdf" ? (
             <Press onPress={() => (l.pdfUrl ? WebBrowser.openBrowserAsync(l.pdfUrl) : null)} style={{ marginTop: 18, padding: 18, borderRadius: R.lg, backgroundColor: "#fff", flexDirection: "row", alignItems: "center", gap: 14 }}>
               <View style={{ width: 50, height: 50, borderRadius: 25, backgroundColor: c.color, alignItems: "center", justifyContent: "center" }}><Icon name="file-text" size={22} color="#fff" /></View>
               <View style={{ flex: 1 }}>
-                <Body weight="semi">{l.pdfUrl ? "Open the study guide" : "Study guide coming soon"}</Body>
-                <Body size={13} color={C.muted}>{l.pdfUrl ? "PDF · opens in your browser" : "The Institute team is uploading it"}</Body>
+                <Body weight="semi">{l.pdfUrl ? t("Open the study guide") : t("Study guide coming soon")}</Body>
+                <Body size={13} color={C.muted}>{l.pdfUrl ? t("PDF · opens in your browser") : t("The Institute team is uploading it")}</Body>
               </View>
               {l.pdfUrl ? <Icon name="arrow-up-right" size={18} color={C.ink} /> : null}
             </Press>
@@ -98,14 +99,14 @@ export default function LessonScreen() {
                 const picked = answers[qi];
                 return (
                   <Animated.View key={qi} entering={FadeInDown.delay(qi * 80)} style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 16 }}>
-                    <Label>Question {qi + 1}</Label>
+                    <Label>{t("Question {n}", { n: qi + 1 })}</Label>
                     <Body size={17} weight="semi" style={{ marginTop: 6 }}>{q.prompt}</Body>
                     <View style={{ gap: 8, marginTop: 12 }}>
                       {q.options.map((o, oi) => {
                         const state = picked === undefined ? "idle" : oi === q.answer ? "right" : oi === picked ? "wrong" : "dim";
                         return (
                           <Press key={oi} onPress={() => { if (picked !== undefined) return; setAnswers((a) => ({ ...a, [qi]: oi })); Haptics.notificationAsync(oi === q.answer ? Haptics.NotificationFeedbackType.Success : Haptics.NotificationFeedbackType.Error).catch(() => {}); }}
-                            style={{ minHeight: 48, borderRadius: R.pill, paddingHorizontal: 18, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: state === "right" ? C.mint : state === "wrong" ? C.rose : "#F4F1EC", opacity: state === "dim" ? 0.5 : 1 }}>
+                            style={{ minHeight: 48, borderRadius: 14, paddingHorizontal: 18, paddingVertical: 10, flexDirection: "row", alignItems: "center", justifyContent: "space-between", backgroundColor: state === "right" ? C.mint : state === "wrong" ? C.rose : "#F4F1EC", opacity: state === "dim" ? 0.5 : 1 }}>
                             <Body weight="semi" color={state === "wrong" ? "#fff" : C.ink} style={{ flex: 1 }}>{o}</Body>
                             {state === "right" ? <Icon name="check" size={16} /> : state === "wrong" ? <Icon name="x" size={16} color="#fff" /> : null}
                           </Press>
@@ -117,8 +118,8 @@ export default function LessonScreen() {
               })}
               {quizFinished ? (
                 <Animated.View entering={FadeIn} style={{ padding: 18, borderRadius: R.lg, backgroundColor: C.ink }}>
-                  <Display size={30} color={C.cream}>{correct} of {quiz.length} <Serif size={32} color={C.sun}>{correct === quiz.length ? "perfect!" : "right"}</Serif></Display>
-                  <Body color={C.creamMuted} style={{ marginTop: 4 }}>{correct === quiz.length ? "Beautifully done." : "Good effort. Review the lesson any time."}</Body>
+                  <Display size={28} color={C.cream}>{correct === quiz.length ? t("{c} of {n}, perfect!", { c: correct, n: quiz.length }) : t("{c} of {n} right", { c: correct, n: quiz.length })}</Display>
+                  <Body color={C.creamMuted} style={{ marginTop: 4 }}>{correct === quiz.length ? t("Beautifully done.") : t("Good effort. Review the lesson any time.")}</Body>
                 </Animated.View>
               ) : null}
             </View>
@@ -127,7 +128,7 @@ export default function LessonScreen() {
       </ScrollView>
       <View style={{ position: "absolute", left: 16, right: 16, bottom: insets.bottom + 16 }}>
         <Button
-          label={isDone ? (next ? `Next: ${next.title}` : "Back to the course") : canComplete ? "Mark as complete" : `Answer all ${quiz.length} questions`}
+          label={isDone ? (next ? t("Next: {title}", { title: next.title }) : t("Back to the course")) : canComplete ? t("Mark as complete") : t("Answer all {n} questions", { n: quiz.length })}
           icon={isDone ? "arrow-right" : "check"} variant="ink" block disabled={!canComplete}
           onPress={() => (isDone ? (next ? router.replace(`/lesson/${next.id}?course=${c.id}`) : router.back()) : finish())}
         />

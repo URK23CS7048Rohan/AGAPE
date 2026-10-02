@@ -4,8 +4,9 @@ import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withRep
 import { LinearGradient } from "expo-linear-gradient";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R } from "@/theme";
-import { BackHeader, Body, Display, IconButton, Press, Serif, TypingDots } from "@/components/ui";
+import { BackHeader, Body, Button, Display, IconButton, TypingDots } from "@/components/ui";
 import { askAgape, ChatMsg } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 const SUGGEST = ["What does Romans 8:28 mean?", "Give me a devotional on anxiety", "Where's the verse about “be still”?", "Summarize Sunday's sermon"];
 
@@ -34,10 +35,10 @@ export default function Assistant() {
 
   const stream = (id: string, full: string) => {
     let i = 0;
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       i = Math.min(full.length, i + 3 + Math.floor(Math.random() * 4));
       setMsgs((m) => m.map((x) => (x.id === id ? { ...x, shown: full.slice(0, i), streaming: i < full.length } : x)));
-      if (i >= full.length) { clearInterval(t); setBusy(false); }
+      if (i >= full.length) { clearInterval(timer); setBusy(false); }
     }, 22);
   };
 
@@ -57,7 +58,7 @@ export default function Assistant() {
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
       <LinearGradient colors={[C.skySoft, C.lilac, C.roseSoft]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
-        <BackHeader title="Ask Agape" right={<Orb size={40} />} />
+        <BackHeader title={t("Ask Agape")} right={<Orb size={40} />} />
         <FlatList
           ref={list}
           data={msgs}
@@ -67,8 +68,8 @@ export default function Assistant() {
           ListEmptyComponent={
             <Animated.View entering={FadeInDown.duration(700)} style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 40 }}>
               <Orb size={96} />
-              <Display size={46} center style={{ marginTop: 22, lineHeight: 44 }}>Ask anything.{"\n"}<Serif size={48} color={C.violet}>At 2 AM too.</Serif></Display>
-              <Body center color={C.muted} style={{ marginTop: 10, maxWidth: 300 }}>Bible questions, verse lookups, devotionals, and anything from this week's sermon.</Body>
+              <Display size={34} center style={{ marginTop: 22 }}>{t("Ask anything. At 2 AM too.")}</Display>
+              <Body center color={C.muted} style={{ marginTop: 10, maxWidth: 300 }}>{t("Bible questions, verse lookups, devotionals, and anything from this week's sermon.")}</Body>
             </Animated.View>
           }
           renderItem={({ item: m }) => (
@@ -81,16 +82,14 @@ export default function Assistant() {
         />
         <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 12, gap: 8, paddingBottom: 10 }} style={{ flexGrow: 0 }}>
           {SUGGEST.map((s) => (
-            <Press key={s} disabled={busy} onPress={() => ask(s)} style={{ paddingHorizontal: 15, height: 40, borderRadius: R.pill, backgroundColor: "rgba(255,255,255,0.8)", justifyContent: "center", opacity: busy ? 0.5 : 1 }}>
-              <Body size={13.5} weight="medium">{s}</Body>
-            </Press>
+            <Button key={s} small variant="white" label={t(s)} disabled={busy} onPress={() => ask(t(s))} />
           ))}
         </ScrollView>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingBottom: insets.bottom + 10 }}>
           <View style={{ flex: 1, minHeight: 54, borderRadius: R.pill, backgroundColor: "#fff", paddingHorizontal: 20, justifyContent: "center" }}>
-            <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => ask(draft)} returnKeyType="send" placeholder="Type your question…" placeholderTextColor="rgba(15,11,18,0.4)" style={{ fontFamily: F.sans, fontSize: 16, color: C.ink }} />
+            <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => ask(draft)} returnKeyType="send" placeholder={t("Type your question…")} placeholderTextColor="rgba(15,11,18,0.4)" style={{ fontFamily: F.sans, fontSize: 16, color: C.ink }} />
           </View>
-          <IconButton name="send" size={54} bg={C.violet} color="#fff" onPress={() => ask(draft)} />
+          <IconButton name="send" label={t("Send")} size={54} bg={C.violet} color="#fff" onPress={() => ask(draft)} />
         </View>
       </LinearGradient>
     </KeyboardAvoidingView>

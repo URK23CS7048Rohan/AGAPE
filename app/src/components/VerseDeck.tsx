@@ -7,6 +7,7 @@ import { BlurView } from "expo-blur";
 import { C, R, shadow } from "@/theme";
 import { Verse } from "@/data/mock";
 import { Body, Icon, Label, Press, Serif } from "./ui";
+import { t } from "@/lib/i18n";
 
 const { width: SW } = Dimensions.get("window");
 const CARD_W = SW - 56;
@@ -15,10 +16,10 @@ const SNAP = CARD_W + GAP;
 const CARD_H = 460;
 
 const dayOfYear = () => { const n = new Date(); return Math.floor((n.getTime() - new Date(n.getFullYear(), 0, 0).getTime()) / 864e5); };
-const textSize = (t: string) => (t.length > 115 ? 27 : t.length > 70 ? 32 : 40);
+const textSize = (s: string) => (s.length > 115 ? 27 : s.length > 70 ? 32 : 40);
 
 function share(v: Verse) {
-  Share.share({ message: `“${v.text}”\n— ${v.ref}${v.translation ? ` (${v.translation})` : ""}\n\nShared from the Agape app` }).catch(() => {});
+  Share.share({ message: `“${v.text}”\n— ${v.ref}${v.translation ? ` (${v.translation})` : ""}\n\n${t("Shared from the Agape app")}` }).catch(() => {});
 }
 
 function VerseCard({ v, i, x, today }: { v: Verse; i: number; x: SharedValue<number>; today: boolean }) {
@@ -49,7 +50,7 @@ function VerseCard({ v, i, x, today }: { v: Verse; i: number; x: SharedValue<num
           <View style={{ borderRadius: R.pill, overflow: "hidden" }}>
             <BlurView intensity={30} tint="dark" style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, height: 30 }}>
               <View style={{ width: 7, height: 7, borderRadius: 4, backgroundColor: today ? C.sun : "rgba(255,255,255,0.6)" }} />
-              <Label size={10} color="#fff">{today ? "Verse of the day" : v.theme || "Scripture"}</Label>
+              <Label size={10} color="#fff">{today ? t("Verse of the day") : v.theme || t("Scripture")}</Label>
             </BlurView>
           </View>
           {v.translation ? (
@@ -64,8 +65,8 @@ function VerseCard({ v, i, x, today }: { v: Verse; i: number; x: SharedValue<num
           <Serif size={size} color="#fff" style={{ lineHeight: Math.round(size * 1.08) }}>“{v.text}”</Serif>
           <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 18 }}>
             <Body size={16} weight="bold" color="#fff">{v.ref}</Body>
-            <Press onPress={() => share(v)} hitSlop={6} style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: R.pill, paddingLeft: 14, paddingRight: 6, height: 40 }}>
-              <Body size={13} weight="semi">Share</Body>
+            <Press onPress={() => share(v)} hitSlop={6} label={t("Share")} style={{ flexDirection: "row", alignItems: "center", gap: 8, backgroundColor: "#fff", borderRadius: R.pill, paddingLeft: 14, paddingRight: 6, height: 40 }}>
+              <Body size={13} weight="semi">{t("Share")}</Body>
               <View style={{ width: 28, height: 28, borderRadius: 14, backgroundColor: C.flame, alignItems: "center", justifyContent: "center" }}>
                 <Icon name="share-2" size={14} color="#fff" />
               </View>

@@ -249,7 +249,14 @@
           <div class="stat"><small>Rides completed</small><b>${fmt(st.rides_completed)}</b><i>${fmt(st.rides_open)} waiting now</i></div>
           <div class="stat"><small>Giving this month</small><b>${esc(C.church.currency)} ${fmt(st.giving_this_month)}</b><i>confirmed gifts</i></div>
         </div>
-        ${(st.prayers_pending || st.visitors_new || st.care_open || st.applications_pending) ? `<div class="quick" style="margin-bottom:16px">
+        <div class="stats">
+          <div class="stat"><small>Checked in</small><b>${fmt(st.checkins_week)}</b><i>last 7 days</i></div>
+          <div class="stat"><small>Reading plans</small><b>${fmt(st.readers_week)}</b><i>readers this week</i></div>
+          <div class="stat"><small>Home meetings</small><b>${fmt(st.home_meetings_upcoming)}</b><i>coming up</i></div>
+          <div class="stat"><small>Serving</small><b>${fmt(st.serve_upcoming)}</b><i>shift sign-ups</i></div>
+        </div>
+        ${(st.prayers_pending || st.visitors_new || st.care_open || st.applications_pending || st.testimonies_waiting) ? `<div class="quick" style="margin-bottom:16px">
+          ${st.testimonies_waiting ? `<a href="#stories"><span class="qi" style="background:var(--sun)">${ic("sun")}</span><b>${fmt(st.testimonies_waiting)} testimon${st.testimonies_waiting > 1 ? "ies" : "y"} to read</b><small>From the app</small></a>` : ""}
           ${st.prayers_pending ? `<a href="#prayer"><span class="qi" style="background:var(--rose)">${ic("hand-heart")}</span><b>${fmt(st.prayers_pending)} prayer${st.prayers_pending > 1 ? "s" : ""} to review</b><small>From the website</small></a>` : ""}
           ${st.visitors_new ? `<a href="#visitors"><span class="qi" style="background:var(--brand)">${ic("hand-helping")}</span><b>${fmt(st.visitors_new)} new visitor${st.visitors_new > 1 ? "s" : ""}</b><small>Welcome cards to follow up</small></a>` : ""}
           ${st.care_open ? `<a href="#care"><span class="qi" style="background:var(--violet)">${ic("shield-check")}</span><b>${fmt(st.care_open)} care request${st.care_open > 1 ? "s" : ""}</b><small>Confidential</small></a>` : ""}
@@ -404,7 +411,7 @@
     } },
 
     /* ---------------------------------------------------------- TESTIMONIES */
-    testimonies: { title: "Testimonies", crumb: "Website", icon: "quote", group: "Website", render(v) {
+    testimonies: { title: "Website quotes", crumb: "Website", icon: "quote", group: "Website", render(v) {
       v.innerHTML = intro("", "Stories of answered prayer, shown in two moving rows. Always get permission before publishing someone's story.");
       v.appendChild(listEditor({
         items: C.testimonies, addLabel: "Add a testimony",
@@ -563,7 +570,10 @@
   };
 
   // database-backed views (sermons, courses, games, visitors, care, volunteers, giving)
-  if (window.AgapeAdminRecords) Object.assign(VIEWS, window.AgapeAdminRecords({ S, $, $$, esc, ic, fmt, toast, intro, imgPicker, src, PALETTE, currency: () => (C && C.church.currency) || "KWD" }));
+  const H = { S, $, $$, esc, ic, fmt, toast, intro, imgPicker, src, PALETTE, currency: () => (C && C.church.currency) || "KWD", content: () => C, go: (k) => go(k) };
+  if (window.AgapeAdminRecords) Object.assign(VIEWS, window.AgapeAdminRecords(H));
+  // app v2: song book, plans, Kids/Teens/Squad, testimonies, home meetings, serve, check-in, push
+  if (window.AgapeAdminMore && H._R) Object.assign(VIEWS, window.AgapeAdminMore(H, H._R));
 
   /* ================= navigation ================= */
   function buildNav() {

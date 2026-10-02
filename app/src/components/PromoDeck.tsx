@@ -8,6 +8,7 @@ import { C, F, R, shadow } from "@/theme";
 import { Promo } from "@/data/mock";
 import { Body, Display, Icon, Label, Press, Serif } from "./ui";
 import { Seal, SwipeDeck } from "./Motion";
+import { t } from "@/lib/i18n";
 
 const { width: SW } = Dimensions.get("window");
 const W = SW - 36;
@@ -71,7 +72,7 @@ export function PromoDeck({ promos }: { promos: Promo[] }) {
       />
       <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8, marginTop: 16 }}>
         <Icon name="chevrons-left" size={14} color={C.muted} />
-        <Label size={10}>Swipe the stack</Label>
+        <Label size={10}>{t("Swipe the stack")}</Label>
         <Icon name="chevrons-right" size={14} color={C.muted} />
       </View>
     </View>

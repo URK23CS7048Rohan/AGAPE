@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { C, F, R } from "@/theme";
 import { PROMOS, Promo } from "@/data/mock";
 import { Bar, Body, Button, Display, Label, Press, Serif, Sticker } from "./ui";
+import { t } from "@/lib/i18n";
 
 const { width: SW } = Dimensions.get("window");
 const isLight = (hex: string) => { const h = (hex || "#000").replace("#", ""); const v = parseInt(h.length === 3 ? h.split("").map((c) => c + c).join("") : h, 16); return 0.299 * ((v >> 16) & 255) + 0.587 * ((v >> 8) & 255) + 0.114 * (v & 255) > 150; };
@@ -45,7 +46,7 @@ function PromoCard({ p, i, x }: { p: Promo; i: number; x: SharedValue<number> })
           {p.progress ? (
             <View style={{ marginBottom: 16 }}>
               <Bar progress={p.progress} color={C.sun} track="rgba(255,255,255,0.2)" />
-              <Label color="rgba(255,255,255,0.8)" style={{ marginTop: 8 }}>{Math.round(p.progress * 100)}% of goal raised</Label>
+              <Label color="rgba(255,255,255,0.8)" style={{ marginTop: 8 }}>{t("{n}% of goal raised", { n: Math.round(p.progress * 100) })}</Label>
             </View>
           ) : null}
           <Button label={p.cta} variant="light" small onPress={() => router.push(p.route as any)} />
@@ -70,12 +71,12 @@ export function PromoCarousel({ promos = PROMOS }: { promos?: Promo[] }) {
   const touching = useRef(false);
   const onScroll = useAnimatedScrollHandler((e) => { x.value = e.contentOffset.x; });
   useEffect(() => {
-    const t = setInterval(() => {
+    const timer = setInterval(() => {
       if (touching.current) return;
       idx.current = (idx.current + 1) % promos.length;
       ref.current?.scrollTo({ x: idx.current * SNAP, animated: true });
     }, 5200);
-    return () => clearInterval(t);
+    return () => clearInterval(timer);
   }, [promos.length]);
   return (
     <View>

@@ -355,6 +355,112 @@ test("functions: Ask Agape requires an account", { skip: !FUNCTIONS }, async () 
   assert.equal(r.status, 401);
 });
 
+test("v2 content: song book, reading plans, Kids/Teens/Squad posts are public; only staff edit", async () => {
+  const songs = ok(await anon.from("songs").select("slug, original_key, body").eq("published", true));
+  assert.ok(songs.length >= 20, "hymns seeded");
+  assert.ok(songs.every((s) => /\{[^}]+\}/.test(s.body) && /\[[A-G]/.test(s.body)), "chord charts with sections");
+  const plans = ok(await anon.from("reading_plans").select("slug, audience, days"));
+  assert.ok(plans.some((p) => p.audience === "kids") && plans.some((p) => p.audience === "teens"), "plans for kids and teens");
+  assert.ok(plans.every((p) => p.days.length && p.days.every((d) => d.refs.length)), "every day has readings");
+  const posts = ok(await anon.from("ministry_posts").select("ministry"));
+  assert.deepEqual([...new Set(posts.map((p) => p.ministry))].sort(), ["kids", "squad", "teens"]);
+  const bad = await ann.c.from("songs").insert({ slug: `x-${stamp}`, title: "X", body: "{V}\n[G]x" });
+  assert.ok(bad.error, "members can't add songs");
+  ok(await sam.c.from("songs").insert({ slug: `staff-song-${stamp}`, title: "Staff song", body: "{Verse}\n[G]Hello" }), "staff add songs");
+  const packs = ok(await anon.from("question_packs").select("game, audience").eq("published", true));
+  for (const g of ["who_said", "true_false", "emoji"]) assert.ok(packs.some((p) => p.game === g), `pack for ${g}`);
+  assert.ok(packs.some((p) => p.audience === "kids"), "kids packs");
+});
+
+test("v2 Bible: highlights, reading-plan progress and the journal are private", async () => {
+  ok(await ann.c.from("bible_marks").insert([{ kind: "highlight", book: 43, chapter: 3, verse: 16, color: "#FFE07A", translation: "WEB" }, { kind: "bookmark", book: 19, chapter: 23, verse: 1 }]));
+  const plan = ok(await ann.c.from("reading_plans").select("id, slug").eq("slug", "gospel-of-john").single());
+  ok(await ann.c.from("plan_progress").upsert({ plan_id: plan.id, done: [1, 2], reminder: "07:30" }, { onConflict: "user_id,plan_id" }));
+  ok(await ann.c.from("journal_entries").insert({ plan_id: plan.id, day: 1, body: `In the beginning was the Word ${stamp}` }));
+  assert.equal(ok(await eve.c.from("bible_marks").select("id").eq("user_id", ann.id)).length, 0, "marks are private");
+  assert.equal(ok(await eve.c.from("journal_entries").select("id").like("body", `%${stamp}%`)).length, 0, "journal is private");
+  assert.equal(ok(await ann.c.from("journal_entries").select("id").like("body", `%${stamp}%`)).length, 1);
+  const counts = ok(await anon.rpc("plan_counts"));
+  assert.ok(counts.some((c) => c.plan_id === plan.id && c.readers >= 1), "reader counts");
+});
+
+test("v2 testimonies: shared → reviewed → live, Amen once, author told", async () => {
+  const t = ok(await ann.c.from("testimonies").insert({ user_id: ann.id, title: `Healed ${stamp}`, body: "God healed my back after the church prayed for me.", category: "healing", approved: true, featured: true }).select().single());
+  assert.equal(t.approved, false, "members can't self-approve");
+  assert.equal(t.featured, false);
+  assert.equal(ok(await eve.c.from("testimony_wall").select("id").eq("id", t.id)).length, 0, "hidden until approved");
+  ok(await sam.c.from("testimonies").update({ approved: true }).eq("id", t.id));
+  await waitFor(async () => ok(await ann.c.from("notifications").select("id").eq("kind", "testimony").eq("body", `Healed ${stamp}`)).length, 8000, "approval notice");
+  const wall = ok(await anon.from("testimony_wall").select("author_name").eq("id", t.id).single());
+  assert.equal(wall.author_name, "Ann M.");
+  assert.equal(ok(await eve.c.rpc("amen", { t: t.id })), 1);
+  assert.equal(ok(await eve.c.rpc("amen", { t: t.id })), 1, "one Amen per person");
+  await waitFor(async () => ok(await ann.c.from("notifications").select("id").eq("kind", "testimony").like("title", "1 person%")).length, 8000, "amen notice");
+});
+
+test("v2 home prayer meetings: address only after RSVP, capacity, host told, cancel notifies", async () => {
+  const when = new Date(Date.now() + 2 * 864e5).toISOString();
+  const id = ok(await ann.c.rpc("host_home_meeting", { p_title: `Thursday prayer ${stamp}`, p_kind: "prayer", p_starts_at: when, p_area: "Salmiya, Block 10", p_address: "Building 14, Flat 6", p_lat: 29.33, p_lng: 48.07, p_capacity: 2 }));
+  const listed = ok(await eve.c.from("home_meeting_list").select("area, host_name, going, joined").eq("id", id).single());
+  assert.equal(listed.area, "Salmiya, Block 10");
+  assert.equal(listed.host_name, "Ann M.");
+  assert.equal(ok(await eve.c.from("home_meeting_places").select("address").eq("meeting_id", id)).length, 0, "address hidden before RSVP");
+  assert.equal((await anon.from("home_meeting_list").select("id").eq("id", id)).data?.length || 0, 0, "visitors don't see home meetings");
+  const place = ok(await eve.c.rpc("join_home_meeting", { m: id, p_guests: 0 }));
+  assert.equal(place.address, "Building 14, Flat 6");
+  assert.equal(ok(await eve.c.from("home_meeting_places").select("address").eq("meeting_id", id)).length, 1, "address after RSVP");
+  await waitFor(async () => ok(await ann.c.from("notifications").select("id").eq("kind", "meeting").like("title", "Eve T.%")).length, 8000, "host notified");
+  const full = await bob.c.rpc("join_home_meeting", { m: id, p_guests: 2 });
+  assert.match(full.error?.message || "", /full/);
+  ok(await ann.c.from("home_meetings").update({ cancelled: true }).eq("id", id));
+  await waitFor(async () => ok(await eve.c.from("notifications").select("id").eq("kind", "meeting").eq("title", "Meeting cancelled")).length, 8000, "guests told");
+});
+
+test("v2 serve board, QR check-in and the new-member checklist", async () => {
+  const op = ok(await sam.c.from("serve_opportunities").insert({ team: "ushering", title: `Ushers ${stamp}`, starts_at: new Date(Date.now() + 864e5).toISOString(), slots: 1 }).select().single());
+  assert.equal(ok(await ann.c.rpc("serve_sign_up", { o: op.id })), 1);
+  const taken = await eve.c.rpc("serve_sign_up", { o: op.id });
+  assert.match(taken.error?.message || "", /taken/);
+  const board = ok(await ann.c.from("serve_board").select("taken, mine").eq("id", op.id).single());
+  assert.deepEqual(board, { taken: 1, mine: true });
+
+  const code = ok(await sam.c.from("checkin_codes").insert({ event_key: "sunday-worship", title: "Sunday worship" }).select().single());
+  const first = ok(await ann.c.rpc("check_in_self", { p_code: `AGAPE:CHECKIN:${code.code}` }));
+  assert.equal(first.already, false);
+  assert.equal(ok(await ann.c.rpc("check_in_self", { p_code: code.code })).already, true);
+  assert.ok((await ann.c.rpc("check_in_self", { p_code: "NOPE1234" })).error, "bad code rejected");
+  assert.ok((await ann.c.from("checkin_codes").insert({ event_key: "x", title: "x" })).error, "members can't make codes");
+  const annNo = ok(await ann.c.from("profiles").select("member_no").eq("id", ann.id).single()).member_no;
+  const scanned = ok(await bob.c.rpc("check_in_member", { p_member: `AGAPE:MEMBER:${annNo}`, p_event_key: "youth-night" }));
+  assert.equal(scanned.name, "Ann M. Mathews");
+  assert.ok((await eve.c.rpc("check_in_member", { p_member: annNo, p_event_key: "x" })).error, "members can't check others in");
+
+  const w = ok(await ann.c.rpc("welcome_progress"));
+  assert.equal(w.visit, true); assert.equal(w.plan, true); assert.equal(w.serve, true);
+  assert.equal(ok(await eve.c.rpc("welcome_progress")).plan, false);
+});
+
+test("v2 push campaigns reach the right audience; daily challenge once a day; per-game boards", async () => {
+  ok(await eve.c.from("profiles").update({ settings: { language: "ml" } }).eq("id", eve.id));
+  assert.ok((await ann.c.from("push_campaigns").insert({ title: "x", body: "x" })).error, "members can't send campaigns");
+  const c = ok(await sam.c.from("push_campaigns").insert({ title: `Malayalam service ${stamp}`, body: "7 PM tonight", audience: "language:ml", route: "/events" }).select("id").single());
+  await waitFor(async () => ok(await eve.c.from("notifications").select("id").eq("title", `Malayalam service ${stamp}`)).length, 8000, "eve notified");
+  assert.equal(ok(await ann.c.from("notifications").select("id").eq("title", `Malayalam service ${stamp}`)).length, 0, "others not");
+  const sent = ok(await sam.c.from("push_campaigns").select("sent_count, sent_at").eq("id", c.id).single());
+  assert.ok(sent.sent_at && sent.sent_count >= 1);
+  const later = ok(await sam.c.from("push_campaigns").insert({ title: "Later", body: "x", send_at: new Date(Date.now() + 3600e3).toISOString() }).select("sent_at").single());
+  assert.equal(later.sent_at, null, "scheduled ones wait");
+
+  ok(await eve.c.from("game_scores").insert({ game: "daily", points: 420 }));
+  assert.ok((await eve.c.from("game_scores").insert({ game: "daily", points: 500 })).error, "one daily challenge a day");
+  ok(await eve.c.from("game_scores").insert({ game: "books_order", points: 610 }));
+  const board = ok(await anon.rpc("leaderboard", { p_game: "books_order", p_days: 7 }));
+  assert.ok(board.some((r) => r.name === "Eve T." && r.points >= 610));
+
+  const teens = ok(await eve.c.rpc("join_group", { group_key: "teens", group_name: "Agape Teens" }));
+  assert.ok(teens, "teens chat can always be joined");
+});
+
 test("accounts: members can delete their account (App Store rule)", async () => {
   const tmp = await member("del", "Delete Me");
   ok(await tmp.c.from("prayer_requests").insert({ body: "temp" }));
