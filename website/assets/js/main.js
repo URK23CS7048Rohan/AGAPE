@@ -1218,160 +1218,66 @@ void main(){
   })();
 
   /* =======================================================
-     VERSES — auto-playing scripture carousel + share card
+     VERSE OF THE DAY — scripture posters in a 3D coverflow
      ======================================================= */
   (() => {
-    const sec = $("#verse");
+    const sec = $("#verse"), stage = $(".js-vposters");
     const V = ((SITE && SITE.verses) || []).filter((v) => v && v.text);
-    if (!sec || !V.length) return;
-    const q = $(".js-verse-q"), bgs = $$(".js-vbg img"), chips = $$(".vchip"), rail = $(".verse__rail");
-    const refEl = $(".js-vref"), trEl = $(".js-vtr"), themeEl = $(".js-vtheme"), numEl = $(".js-vnum"), labelEl = $(".js-vlabel");
-    const playBtn = $(".js-vplay");
-    const DUR = 9;
-    const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    if (!sec || !stage || !V.length || !window.AgapePosters) return;
     const now = new Date();
-    const doy = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5);
-    const today = doy % V.length;
-    let cur = -1, timer = null, inView = false, userPaused = false, hover = false, token = 0;
-
-    // a page of the open Bible turns with every new verse
-    const leaf = $(".vbook__leaf");
-    const turnPage = (dir) => {
-      if (!leaf) return;
-      gsap.killTweensOf(leaf);
-      gsap.fromTo(leaf, { rotateY: dir > 0 ? 0 : -180, opacity: 1 }, { rotateY: dir > 0 ? -180 : 0, duration: 1.1, ease: "power2.inOut", onComplete: () => gsap.set(leaf, { opacity: 0 }) });
+    const today = Math.floor((now - new Date(now.getFullYear(), 0, 0)) / 864e5) % V.length;
+    stage.innerHTML = V.map((v, i) => `<div class="vp__card" data-i="${i}" role="group" aria-label="${(v.ref || "").replace(/"/g, "")}">${AgapePosters.render(v, i)}</div>`).join("");
+    const cards = $$(".vp__card", stage), refEl = $(".js-vref"), label = $(".js-vlabel");
+    const mobile = () => innerWidth < 760;
+    let cur = today, inView = false, timer = null;
+    const layout = () => {
+      const n = cards.length, m = mobile();
+      cards.forEach((c, i) => {
+        let d = i - cur; if (d > n / 2) d -= n; if (d < -n / 2) d += n;
+        const a = Math.abs(d);
+        c.style.transform = `translateX(${d * (m ? 72 : 58)}%) translateZ(${-a * (m ? 220 : 180)}px) rotateY(${-Math.sign(d) * Math.min(a, 2) * 24}deg)`;
+        c.style.opacity = a > (m ? 1 : 3) ? 0 : 1 - a * 0.12;
+        c.style.zIndex = 50 - a;
+        c.style.filter = a ? `brightness(${1 - a * 0.14})` : "none";
+        c.style.pointerEvents = a > (m ? 1 : 3) ? "none" : "auto";
+        c.classList.toggle("is-on", !a);
+      });
+      const v = V[cur];
+      refEl.innerHTML = `<b>${String(cur + 1).padStart(2, "0")}</b> / ${String(V.length).padStart(2, "0")} · ${v.ref}`;
+      label.textContent = cur === today ? "Verse of the day" : "Scripture for you";
     };
-    const sizeClass = (t) => (t.length > 115 ? "is-long" : t.length > 70 ? "is-mid" : "is-short");
-    const words = (t) => `“${t}”`.split(/\s+/).map((w) => `<span class="vw"><span>${w.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</span></span>`).join(" ");
-    const pad = (n) => String(n + 1).padStart(2, "0");
+    const go = (i) => { cur = (i + V.length) % V.length; layout(); restart(); };
+    const restart = () => { clearTimeout(timer); if (inView && !reduce) timer = setTimeout(() => go(cur + 1), 6500); };
+    cards.forEach((c, i) => c.addEventListener("click", () => i !== cur && go(i)));
+    $(".js-vnext").addEventListener("click", () => go(cur + 1));
+    $(".js-vprev").addEventListener("click", () => go(cur - 1));
+    addEventListener("keydown", (e) => { if (!inView || /input|textarea|select/i.test(document.activeElement.tagName)) return; if (e.key === "ArrowRight") go(cur + 1); else if (e.key === "ArrowLeft") go(cur - 1); });
+    let sx = 0, sy = 0, down = false;
+    stage.addEventListener("pointerdown", (e) => { sx = e.clientX; sy = e.clientY; down = true; });
+    stage.addEventListener("pointerup", (e) => { if (!down) return; down = false; const dx = e.clientX - sx, dy = e.clientY - sy; if (Math.abs(dx) > 40 && Math.abs(dx) > Math.abs(dy)) go(cur + (dx < 0 ? 1 : -1)); });
+    stage.addEventListener("pointerenter", (e) => e.pointerType === "mouse" && clearTimeout(timer));
+    stage.addEventListener("pointerleave", restart);
+    ScrollTrigger.create({ trigger: sec, start: "top 70%", end: "bottom 30%", onToggle: (s) => { inView = s.isActive; inView ? restart() : clearTimeout(timer); } });
+    addEventListener("resize", layout);
+    layout();
+    if (!reduce) gsap.from($$(".pz", stage), { y: 80, opacity: 0, duration: 1.2, stagger: 0.05, ease: "expo.out", scrollTrigger: { trigger: sec, start: "top 65%", once: true }, clearProps: "transform,opacity" });
 
-    const tick = () => {
-      if (timer) timer.kill();
-      const fill = chips[cur] && $(".vchip__fill", chips[cur]);
-      if (!fill) return;
-      timer = gsap.fromTo(fill, { scaleX: 0 }, { scaleX: 1, duration: DUR, ease: "none", paused: true, onComplete: () => go(cur + 1, 1) });
-      sync();
-    };
-    const sync = () => {
-      const run = inView && !userPaused && !hover && !document.hidden;
-      if (timer) run ? timer.play() : timer.pause();
-      sec.classList.toggle("is-paused", userPaused);
-      playBtn.setAttribute("aria-label", userPaused ? "Play" : "Pause");
-    };
-
-    function go(i, dir = 1, instant = false) {
-      i = (i + V.length) % V.length;
-      if (i === cur) return;
-      const v = V[i], my = ++token;
-      const prev = cur; cur = i;
-      if (prev > -1 && !instant && !reduce) turnPage(dir);
-      // preload next background
-      [i, (i + 1) % V.length].forEach((k) => bgs[k] && bgs[k].setAttribute("loading", "eager"));
-      bgs.forEach((im, k) => im.classList.toggle("is-on", k === i));
-      if (prev > -1 && bgs[prev]) bgs[prev].classList.add("was-on"), setTimeout(() => bgs[prev] && bgs[prev].classList.remove("was-on"), 1600);
-      chips.forEach((c, k) => { c.classList.toggle("is-on", k === i); c.setAttribute("aria-selected", k === i); if (k !== i) gsap.set($(".vchip__fill", c), { scaleX: k < i ? 1 : 0 }); });
-      if (chips[i] && rail) {
-        const c = chips[i];
-        rail.scrollTo({ left: c.offsetLeft - rail.clientWidth / 2 + c.offsetWidth / 2, behavior: instant ? "auto" : "smooth" });
-      }
-      numEl.textContent = pad(i);
-      labelEl.textContent = i === today ? "Verse of the day" : "Scripture for you";
-      const swapMeta = () => { refEl.textContent = v.ref; trEl.textContent = v.translation || ""; themeEl.textContent = v.theme || ""; };
-      const enter = () => {
-        if (my !== token) return;
-        q.className = `verse__q js-verse-q ${sizeClass(v.text)}`;
-        q.innerHTML = words(v.text);
-        swapMeta();
-        if (reduce || instant) { gsap.set(q.querySelectorAll(".vw > span"), { clearProps: "all" }); return; }
-        gsap.fromTo(q.querySelectorAll(".vw > span"), { yPercent: 35 * dir, opacity: 0, filter: "blur(12px)" },
-          { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 1.1, stagger: 0.045, ease: "expo.out" });
-        gsap.fromTo([".verse__ref", ".verse__theme"], { opacity: 0, y: 10 }, { opacity: 1, y: 0, duration: 0.7, stagger: 0.08, delay: 0.25, ease: "power3.out" });
-      };
-      const old = q.querySelectorAll(".vw > span");
-      if (instant || reduce || !old.length) enter();
-      else gsap.to(old, { yPercent: -30 * dir, opacity: 0, filter: "blur(10px)", duration: 0.42, stagger: 0.012, ease: "power2.in", onComplete: enter });
-      tick();
-    }
-
-    // controls
-    $(".js-vnext").addEventListener("click", () => go(cur + 1, 1));
-    $(".js-vprev").addEventListener("click", () => go(cur - 1, -1));
-    playBtn.addEventListener("click", () => { userPaused = !userPaused; sync(); });
-    chips.forEach((c, k) => c.addEventListener("click", () => go(k, k >= cur ? 1 : -1)));
-    const inner = $(".verse__inner");
-    inner.addEventListener("pointerenter", (e) => { if (e.pointerType === "mouse") { hover = true; sync(); } });
-    inner.addEventListener("pointerleave", () => { hover = false; sync(); });
-    addEventListener("keydown", (e) => {
-      if (!inView || /input|textarea|select/i.test(document.activeElement.tagName)) return;
-      if (e.key === "ArrowRight") go(cur + 1, 1);
-      else if (e.key === "ArrowLeft") go(cur - 1, -1);
-    });
-    // swipe (not on the chip rail — it scrolls sideways)
-    let sx = 0, sy = 0, st = 0;
-    sec.addEventListener("pointerdown", (e) => { if (e.target.closest(".verse__rail, button, a")) { st = 0; return; } sx = e.clientX; sy = e.clientY; st = 1; });
-    sec.addEventListener("pointerup", (e) => {
-      if (!st) return; st = 0;
-      const dx = e.clientX - sx, dy = e.clientY - sy;
-      if (Math.abs(dx) > 50 && Math.abs(dx) > Math.abs(dy) * 1.3) go(cur + (dx < 0 ? 1 : -1), dx < 0 ? 1 : -1);
-    });
-    document.addEventListener("visibilitychange", sync);
-    ScrollTrigger.create({ trigger: sec, start: "top 70%", end: "bottom 30%", onToggle: (self) => { inView = self.isActive; sync(); } });
-
-    gsap.fromTo(".verse__bg", { yPercent: -6 }, { yPercent: 6, ease: "none", scrollTrigger: { trigger: ".verse", start: "top bottom", end: "bottom top", scrub: true } });
-    go(today, 1, true);
-    // first reveal when scrolled into view
-    if (!reduce) {
-      gsap.set(q.querySelectorAll(".vw > span"), { yPercent: 35, opacity: 0, filter: "blur(12px)" });
-      ScrollTrigger.create({ trigger: sec, start: "top 60%", once: true, onEnter: () => {
-        gsap.to(q.querySelectorAll(".vw > span"), { yPercent: 0, opacity: 1, filter: "blur(0px)", duration: 1.2, stagger: 0.05, ease: "expo.out" });
-      } });
-    }
-
-    /* share card — always the verse currently on screen */
-    const modal = $(".share-modal"), cv = $(".share-canvas"), ctx = cv.getContext("2d");
-    const draw = () => {
-      const v = V[cur], bg = bgs[cur];
-      const W = 1080, H = 1350;
-      ctx.fillStyle = "#0F0B12"; ctx.fillRect(0, 0, W, H);
+    // share or download the poster on top as a PNG
+    const fileName = () => `agape-${V[cur].ref.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`;
+    const toBlob = () => window.htmlToImage.toBlob($(".pz", cards[cur]), { pixelRatio: Math.max(2, 1080 / cards[cur].offsetWidth), cacheBust: false });
+    const busy = (b, on) => { b.disabled = on; };
+    const download = (blob) => { const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = fileName(); a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 4000); };
+    $(".js-vdl").addEventListener("click", async (e) => { const b = e.currentTarget; busy(b, true); try { download(await toBlob()); } catch (err) { console.warn(err); } busy(b, false); });
+    $(".js-vshare").addEventListener("click", async (e) => {
+      const b = e.currentTarget; busy(b, true);
       try {
-        const ir = bg.naturalWidth / bg.naturalHeight, cr = W / H;
-        let sw = bg.naturalWidth, sh = bg.naturalHeight, sx = 0, sy = 0;
-        if (ir > cr) { sw = sh * cr; sx = (bg.naturalWidth - sw) / 2; } else { sh = sw / cr; sy = (bg.naturalHeight - sh) / 2; }
-        ctx.drawImage(bg, sx, sy, sw, sh, 0, 0, W, H);
-      } catch (e) {}
-      const g = ctx.createLinearGradient(0, 0, 0, H);
-      g.addColorStop(0, "rgba(15,11,18,.4)"); g.addColorStop(1, "rgba(15,11,18,.92)");
-      ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
-      ctx.fillStyle = "#FFC23D"; ctx.font = "500 30px 'Geist Mono', monospace";
-      ctx.fillText((cur === today ? "VERSE OF THE DAY" : (v.theme || "SCRIPTURE")).toUpperCase(), 90, 150);
-      const size = v.text.length > 115 ? 72 : v.text.length > 70 ? 84 : 100, lh = size * 1.08;
-      ctx.fillStyle = "#fff"; ctx.font = `italic ${size}px 'Instrument Serif', serif`;
-      let line = "";
-      const lines = [];
-      `“${v.text}”`.split(" ").forEach((w) => { const t = line ? line + " " + w : w; if (ctx.measureText(t).width > 900) { lines.push(line); line = w; } else line = t; });
-      lines.push(line);
-      let y = H / 2 - (lines.length * lh) / 2 + 40;
-      lines.forEach((l) => { ctx.fillText(l, 90, y); y += lh; });
-      ctx.font = "500 34px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(255,255,255,.85)";
-      ctx.fillText(`${v.ref.toUpperCase()}${v.translation ? "  ·  " + v.translation.toUpperCase() : ""}`, 90, y + 40);
-      const logo = $(".footer .logo__img");
-      try { if (logo && logo.naturalWidth) { const lh2 = 84, lw = (logo.naturalWidth / logo.naturalHeight) * lh2; ctx.drawImage(logo, 90, H - 168, lw, lh2); } } catch (e) {}
-      ctx.fillStyle = "#fff"; ctx.font = "800 40px Bricolage, sans-serif"; ctx.fillText("Agape", 178, H - 124);
-      ctx.font = "500 18px 'Geist Mono', monospace"; ctx.fillStyle = "rgba(255,255,255,.6)"; ctx.fillText("INTERNATIONAL MINISTRIES", 180, H - 94);
-    };
-    let wasPaused = false;
-    $(".js-share").addEventListener("click", () => {
-      wasPaused = userPaused; userPaused = true; sync();
-      const bg = bgs[cur];
-      const open = () => { draw(); modal.classList.add("is-open"); smoother && smoother.paused(true); };
-      bg && !bg.complete ? (bg.addEventListener("load", open, { once: true }), bg.addEventListener("error", open, { once: true })) : open();
-    });
-    const close = () => { modal.classList.remove("is-open"); smoother && smoother.paused(false); userPaused = wasPaused; sync(); };
-    $(".js-close").addEventListener("click", close);
-    modal.addEventListener("click", (e) => e.target === modal && close());
-    $(".js-dl").addEventListener("click", () => {
-      try { const a = document.createElement("a"); a.download = `agape-${V[cur].ref.toLowerCase().replace(/[^a-z0-9]+/g, "-")}.png`; a.href = cv.toDataURL("image/png"); a.click(); }
-      catch (e) { alert("Open the site from a web server to download the card."); }
+        const blob = await toBlob(), file = new File([blob], fileName(), { type: "image/png" }), v = V[cur];
+        const text = `“${v.text}” ${v.ref}`;
+        if (navigator.canShare && navigator.canShare({ files: [file] })) await navigator.share({ files: [file], text });
+        else if (navigator.share) { await navigator.share({ text, url: location.href }); }
+        else download(blob);
+      } catch (err) { if (err && err.name !== "AbortError") console.warn(err); }
+      busy(b, false);
     });
   })();
 

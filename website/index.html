@@ -17,7 +17,7 @@
 <link rel="stylesheet" href="assets/css/arcade.css" />
 <link rel="stylesheet" href="assets/css/story.css" />
 <link rel="stylesheet" href="assets/css/sacred.css" />
-<link rel="stylesheet" href="assets/css/book.css" />
+<link rel="stylesheet" href="assets/css/posters.css" />
 </head>
 <body class="is-loading" data-page="site">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
@@ -785,38 +785,21 @@
 </section>
 
 <!-- ============ VERSE ============ -->
-<section class="verse verse--book" id="verse" aria-roledescription="carousel" aria-label="Bible verses" data-page-bg="#0b1530">
-      <div class="verse__bg js-vbg"></div>
-      <div class="vbook__sky" aria-hidden="true"></div>
-      <div class="container verse__inner">
-        <div class="verse__top">
-          <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--gold"></span><span class="js-vlabel">Verse of the day</span></span>
-          <span class="verse__count"><b class="js-vnum">01</b><i></i><span class="js-vtotal">12</span></span>
+<section class="verse verse--posters" id="verse" aria-roledescription="carousel" aria-label="Scripture posters" data-page-bg="#0b1530">
+      <div class="container vp__head">
+        <div>
+          <span class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span><span class="js-vlabel">Verse of the day</span></span>
+          <h2>Scripture, <em>made to share.</em></h2>
         </div>
-        <div class="vbook">
-          <div class="vbook__glow" aria-hidden="true"></div>
-          <div class="vbook__book">
-            <div class="vbook__page vbook__page--l">
-              <span class="vbook__orn" aria-hidden="true">✠</span>
-              <span class="verse__theme js-vtheme">Rest</span>
-              <span class="verse__ref"><b class="js-vref">Matthew 11:28</b><small class="js-vtr">WEB</small></span>
-              <span class="vbook__folio" aria-hidden="true">The Holy Bible</span>
-            </div>
-            <div class="vbook__page vbook__page--r">
-              <blockquote class="verse__q js-verse-q" aria-live="polite">“Come to me, all you who labor and are heavily burdened, and I will give you rest.”</blockquote>
-            </div>
-            <div class="vbook__leaf" aria-hidden="true"></div>
-          </div>
-        </div>
-        <div class="verse__foot">
-          <div class="verse__ctrl">
-            <button class="verse__nav js-vprev" aria-label="Previous verse"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
-            <button class="verse__nav verse__play js-vplay" aria-label="Pause"><svg class="ic ic-pause"><use href="#i-pause"/></svg><svg class="ic ic-play"><use href="#i-play"/></svg></button>
-            <button class="verse__nav js-vnext" aria-label="Next verse"><svg class="ic"><use href="#i-arrow-right"/></svg></button>
-          </div>
-          <button class="btn btn--glass js-share" data-magnetic><span>Share as a card</span><i><svg class="ic"><use href="#i-share-2"/></svg></i></button>
-        </div>
-        <div class="verse__rail"><div class="verse__chips js-vchips" role="tablist"></div></div>
+        <p>A new poster every day. Swipe through them, then send one to someone who needs it today.</p>
+      </div>
+      <div class="vp__stage js-vposters"></div>
+      <div class="container vp__foot">
+        <button class="vp__btn js-vprev" aria-label="Previous verse"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
+        <span class="vp__ref js-vref" aria-live="polite"></span>
+        <button class="vp__btn js-vnext" aria-label="Next verse"><svg class="ic"><use href="#i-arrow-right"/></svg></button>
+        <button class="vp__act js-vshare"><span>Share</span><i><svg class="ic"><use href="#i-share-2"/></svg></i></button>
+        <button class="vp__act vp__act--ghost js-vdl"><span>Download</span><i><svg class="ic"><use href="#i-arrow-down"/></svg></i></button>
       </div>
     </section>
 
@@ -966,6 +949,8 @@
 
 <script src="assets/js/vendor/three.min.js"></script>
 <script src="assets/js/story3d.js"></script>
+<script src="assets/js/vendor/html-to-image.min.js"></script>
+<script src="assets/js/posters.js"></script>
 <script src="assets/js/main.js"></script>
 <script src="assets/js/v3.js"></script>
 <script src="assets/js/v4.js"></script>

@@ -344,7 +344,7 @@
     { group: "Life at Agape gallery", items: C.gallery.map((g, i) => ({ label: g.caption || `Photo ${i + 1}`, get: () => g.image, set: (v) => (g.image = v) })) },
     { group: "Events", items: C.events.map((e) => ({ label: e.title, get: () => e.image, set: (v) => (e.image = v) })) },
     { group: "Ministries", items: C.ministries.map((m) => ({ label: m.name, get: () => m.image, set: (v) => (m.image = v) })) },
-    { group: "Bible verse backgrounds", items: (C.verses || []).map((x) => ({ label: x.ref, get: () => x.image, set: (v) => (x.image = v) })) },
+    { group: "Bible verse posters (optional, 4:5)", items: (C.verses || []).map((x) => ({ label: x.ref, get: () => x.image, set: (v) => (x.image = v) })) },
     { group: "Giving campaigns", items: C.campaigns.map((c) => ({ label: `${c.title} ${c.accent}`, get: () => c.image, set: (v) => (c.image = v) })) },
   ];
 
@@ -526,7 +526,7 @@
     /* ---------------------------------------------------------- BIBLE VERSES */
     verses: { title: "Bible verses", crumb: "Website", icon: "book-open", group: "Website", render(v) {
       if (!Array.isArray(C.verses)) C.verses = [];
-      v.innerHTML = intro("", "The Scripture carousel on the website and the verse deck in the app. One verse is picked as “Verse of the day” each day, and visitors can tap through the rest. Use a public-domain translation (KJV, WEB) or one you have permission to quote.");
+      v.innerHTML = intro("", "The Scripture carousel on the website and the verse deck in the app. One verse is picked as “Verse of the day” each day, and visitors can tap through the rest. Use a public-domain translation (KJV, WEB) or one you have permission to quote. Each verse is shown as a designed poster; upload your own poster image (4:5, e.g. 1080×1350 from Canva) to use it instead.");
       v.appendChild(listEditor({
         items: C.verses, image: "image", imageShape: "imgpick--wide", addLabel: "Add a verse",
         title: (x) => `${x.ref || "New verse"}${x.translation ? " · " + x.translation : ""}`, sub: (x) => x.text,
