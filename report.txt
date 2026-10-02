@@ -1,0 +1,96 @@
+✔  sign up with an e-mailed code
+✔  me: real member card
+✔  prayer wall: post a request
+✔  community: join a group and chat
+✔  events: RSVP and ticket
+✔  watch + sermon notes sync
+✔  courses: complete a lesson
+✔  games: a round of Bible Trivia reaches the leaderboard
+✔  bible: read John 3, highlight a verse
+✔  reading plan: start, read day 1, journal, mark complete
+✔  song book: open a hymn and transpose it
+✔  testimonies: share one, pastor approves, it's on the wall
+✔  home prayer: host a meeting in your home
+✔  serve + check-in: sign up for a shift, check in with the church code
+✔  kids mode: a parent PIN keeps the phone in Agape Kids
+✔  language: the app switches to Malayalam and back
+✔  rides: request → driver accepts → live location
+✔  notifications list the ride updates
+✔  give: checkout creates a donation, webhook confirms it
+✔  driver view: volunteer sees requests
+✔  no JavaScript errors
+
+---- log
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+   member AGP-26-1001
+✔ sign up with an e-mailed code
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ me: real member card
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+[console.warning] [Reanimated] Property [transform] may be overwritten by a layout animation. Please wrap your component with an animated view and apply the layout animation on the wrapper.
+✔ prayer wall: post a request
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ community: join a group and chat
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ events: RSVP and ticket
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ watch + sermon notes sync
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ courses: complete a lesson
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ games: a round of Bible Trivia reaches the leaderboard
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ bible: read John 3, highlight a verse
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ reading plan: start, read day 1, journal, mark complete
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ song book: open a hymn and transpose it
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ testimonies: share one, pastor approves, it's on the wall
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ home prayer: host a meeting in your home
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ serve + check-in: sign up for a shift, check in with the church code
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ kids mode: a parent PIN keeps the phone in Agape Kids
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ language: the app switches to Malayalam and back
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [.WebGL-0x3c2401d31a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[console.warning] [.WebGL-0x3c2401d31a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[console.warning] [.WebGL-0x3c2401d31a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels
+[console.warning] [.WebGL-0x3c2401d31a00]GL Driver Message (OpenGL, Performance, GL_CLOSE_PATH_NV, High): GPU stall due to ReadPixels (this message will no longer repeat)
+[console.warning] Expected value to be of type number, but found null instead.
+[console.warning] Expected value to be of type number, but found null instead.
+[console.warning] Expected value to be of type number, but found null instead.
+[console.warning] Map cannot fit within canvas with the given bounds, padding, and/or offset.
+✔ rides: request → driver accepts → live location
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ notifications list the ride updates
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+[console.warning] [expo-notifications] Listening to push token changes is not yet fully supported on web. Adding a listener will have no effect.
+✔ give: checkout creates a donation, webhook confirms it
+✔ driver view: volunteer sees requests
+✔ no JavaScript errors

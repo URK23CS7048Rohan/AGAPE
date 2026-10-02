@@ -1,0 +1,30 @@
+✔  website loads in live mode
+✔  rides section shows a real street map
+✔  download section: Android APK + iPhone install
+✔  visitor posts a prayer request (held for review)
+✔  visitor fills in the welcome card
+✔  visitor gives online (checkout → confirmed)
+✔  staff signs in to the admin
+✔  admin approves the prayer → it's on the public wall
+✔  admin adds a sermon with a YouTube link
+✔  admin sees visitor cards and gifts
+✔  admin: app song book, plans, check-in code and a push notification
+✔  admin publishes a website edit
+✔  public wall shows the approved prayer
+✔  no JavaScript errors
+
+---- log
+✔ website loads in live mode
+✔ rides section shows a real street map
+✔ download section: Android APK + iPhone install
+✔ visitor posts a prayer request (held for review)
+✔ visitor fills in the welcome card
+✔ visitor gives online (checkout → confirmed)
+✔ staff signs in to the admin
+✔ admin approves the prayer → it's on the public wall
+✔ admin adds a sermon with a YouTube link
+✔ admin sees visitor cards and gifts
+✔ admin: app song book, plans, check-in code and a push notification
+✔ admin publishes a website edit
+✔ public wall shows the approved prayer
+✔ no JavaScript errors

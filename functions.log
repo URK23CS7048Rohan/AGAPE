@@ -1,0 +1,36 @@
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+WARN: config section [inbucket] is deprecated. Please use [local_smtp] instead.
+Setting up Edge Functions runtime...
+2026-10-02T08:07:26.924406515Z Serving functions on http://127.0.0.1:54321/functions/v1/<function-name>
+2026-10-02T08:07:26.924474047Z  - http://127.0.0.1:54321/functions/v1/ask-agape
+2026-10-02T08:07:26.924477191Z  - http://127.0.0.1:54321/functions/v1/create-checkout
+2026-10-02T08:07:26.924479445Z  - http://127.0.0.1:54321/functions/v1/payment-webhook
+2026-10-02T08:07:26.924481568Z  - http://127.0.0.1:54321/functions/v1/push
+2026-10-02T08:07:26.924483761Z Using supabase-edge-runtime-1.77.1 (compatible with Deno v2.1.4)
+2026-10-02T08:07:28.484089610Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:10:48.880378024Z wall clock duration warning: isolate: f0f16c1c-1bc3-4619-9a5e-44e30ac2e127
+2026-10-02T08:10:48.885653796Z early termination has been triggered: isolate: f0f16c1c-1bc3-4619-9a5e-44e30ac2e127
+2026-10-02T08:11:03.147021158Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:11:03.148630503Z serving the request with supabase/functions/push
+2026-10-02T08:11:58.979644350Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:11:58.980158753Z serving the request with supabase/functions/push
+2026-10-02T08:12:00.587645557Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:12:00.588087103Z serving the request with supabase/functions/push
+2026-10-02T08:12:01.463379118Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:12:01.463747003Z serving the request with supabase/functions/push
+2026-10-02T08:12:10.183573233Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:12:10.183914013Z serving the request with supabase/functions/push
+2026-10-02T08:12:20.197989630Z serving the request with supabase/functions/create-checkout
+2026-10-02T08:12:20.592099430Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:12:20.684461442Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:12:20.684877475Z serving the request with supabase/functions/push
+2026-10-02T08:12:55.267454432Z serving the request with supabase/functions/create-checkout
+2026-10-02T08:12:55.552901172Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:12:55.673850922Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:12:56.211422841Z serving the request with supabase/functions/payment-webhook
+2026-10-02T08:13:28.836150909Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:13:28.837050763Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:13:28.837268262Z Legacy token type detected, attempting HS256 verification.
+2026-10-02T08:13:28.838545730Z serving the request with supabase/functions/push
+2026-10-02T08:13:28.838827685Z serving the request with supabase/functions/push
+2026-10-02T08:13:28.839418016Z serving the request with supabase/functions/push
