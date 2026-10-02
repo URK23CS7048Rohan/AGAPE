@@ -7,6 +7,7 @@ import { BackHeader, Body, Button, Display, Icon, IconButton, Label, Press } fro
 import { useAuth, useNeedsAccount } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { mySteps, requestStep, StepKind } from "@/lib/life";
+import { t } from "@/lib/i18n";
 
 const STEPS: { kind: StepKind; title: string; body: string; icon: string; color: string }[] = [
   { kind: "salvation", title: "I've decided to follow Jesus", body: "Tell us, and someone will help you take your first steps with God.", icon: "heart", color: C.rose },
@@ -27,17 +28,17 @@ export default function NextSteps() {
   const [details, setDetails] = useState("");
   const send = async () => {
     if (!open) return;
-    try { await requestStep({ kind: open.kind, name: profile?.full_name || undefined, phone: phone.trim() || undefined, details: details.trim() || undefined }); setOpen(null); setDetails(""); mine.reload(); Alert.alert("Thank you", "Someone from the church will be in touch soon."); }
-    catch (e: any) { Alert.alert("Couldn't send", e.message); }
+    try { await requestStep({ kind: open.kind, name: profile?.full_name || undefined, phone: phone.trim() || undefined, details: details.trim() || undefined }); setOpen(null); setDetails(""); mine.reload(); Alert.alert(t("Thank you"), t("Someone from the church will be in touch soon.")); }
+    catch (e: any) { Alert.alert(t("Couldn't send"), e.message); }
   };
   const status = (k: StepKind) => mine.data?.find((s) => s.kind === k);
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title="Next steps" />
+      <BackHeader title={t("Next steps")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 10 }}>
         <View style={{ backgroundColor: C.ink, borderRadius: R.xl, padding: 20 }}>
-          <Display size={28} color="#fff">Take your next step</Display>
-          <Body color="rgba(255,255,255,0.8)" style={{ marginTop: 4 }}>Wherever you are with God, we'd love to walk with you.</Body>
+          <Display size={28} color="#fff">{t("Take your next step")}</Display>
+          <Body color="rgba(255,255,255,0.8)" style={{ marginTop: 4 }}>{t("Wherever you are with God, we'd love to walk with you.")}</Body>
         </View>
         {STEPS.map((s, i) => {
           const st = status(s.kind);
@@ -46,8 +47,8 @@ export default function NextSteps() {
               <Press onPress={() => (needs("take a next step") ? null : setOpen(s))} scaleTo={0.98} style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: "#fff", borderRadius: R.lg, padding: 14, borderWidth: 1.5, borderColor: C.line }}>
                 <View style={{ width: 48, height: 48, borderRadius: 16, backgroundColor: s.color, alignItems: "center", justifyContent: "center" }}><Icon name={s.icon} size={20} /></View>
                 <View style={{ flex: 1 }}>
-                  <Body weight="bold">{s.title}</Body>
-                  <Label numberOfLines={2}>{st ? (st.status === "new" ? "Request sent · we'll be in touch" : st.status === "contacted" ? "Someone has been in touch" : "Done · praise God!") : s.body}</Label>
+                  <Body weight="bold">{t(s.title)}</Body>
+                  <Label numberOfLines={2}>{st ? (st.status === "new" ? t("Request sent · we'll be in touch") : st.status === "contacted" ? t("Someone has been in touch") : t("Done · praise God!")) : t(s.body)}</Label>
                 </View>
                 {st ? <Icon name="check-circle" size={20} color={C.mint} /> : <Icon name="chevron-right" size={18} color={C.muted} />}
               </Press>
@@ -58,11 +59,11 @@ export default function NextSteps() {
       <Modal visible={!!open} transparent animationType="fade" onRequestClose={() => setOpen(null)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: 20 }}>
           <View style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 18, gap: 10 }}>
-            <View style={{ flexDirection: "row", alignItems: "center" }}><Body weight="bold" size={18} style={{ flex: 1 }}>{open?.title}</Body><IconButton name="x" size={38} border={C.line} onPress={() => setOpen(null)} /></View>
-            <Body color={C.muted}>{open?.body}</Body>
-            <TextInput value={phone} onChangeText={setPhone} placeholder="Phone or WhatsApp (optional)" placeholderTextColor={C.muted} keyboardType="phone-pad" style={inp} />
-            <TextInput value={details} onChangeText={setDetails} placeholder="Anything we should know? (optional)" placeholderTextColor={C.muted} multiline style={[inp, { height: 100, paddingTop: 12, textAlignVertical: "top" }]} />
-            <Button label="Send" variant="ink" trail="send" block onPress={send} />
+            <View style={{ flexDirection: "row", alignItems: "center" }}><Body weight="bold" size={18} style={{ flex: 1 }}>{open ? t(open.title) : ""}</Body><IconButton name="x" size={38} border={C.line} onPress={() => setOpen(null)} /></View>
+            <Body color={C.muted}>{open ? t(open.body) : ""}</Body>
+            <TextInput value={phone} onChangeText={setPhone} placeholder={t("Phone or WhatsApp (optional)")} placeholderTextColor={C.muted} keyboardType="phone-pad" style={inp} />
+            <TextInput value={details} onChangeText={setDetails} placeholder={t("Anything we should know? (optional)")} placeholderTextColor={C.muted} multiline style={[inp, { height: 100, paddingTop: 12, textAlignVertical: "top" }]} />
+            <Button label={t("Send")} variant="ink" trail="send" block onPress={send} />
           </View>
         </View>
       </Modal>

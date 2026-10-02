@@ -8,6 +8,7 @@ import { Body, Button, Dashes, DigitTiles, Display, Icon, Label, LiveDot, Sticke
 import { HeroContent } from "@/lib/content";
 import { nextService } from "@/lib/time";
 import { useSiteContent } from "@/lib/content";
+import { t as tr } from "@/lib/i18n";
 
 function Slide({ source, active }: { source: any; active: boolean }) {
   const o = useSharedValue(active ? 1 : 0);
@@ -77,12 +78,12 @@ export function HeroStage({ hero }: { hero: HeroContent; y?: any }) {
         </View>
 
         <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-          <Button label="Watch" icon="play" trail={null} small onPress={() => router.push("/watch")} style={{ flex: 1 }} />
-          <Button label="Get a ride" icon="car-side" trail={null} variant="light" small onPress={() => router.push("/rides")} style={{ flex: 1 }} />
+          <Button label={tr("Watch")} icon="play" trail={null} small onPress={() => router.push("/watch")} style={{ flex: 1 }} />
+          <Button label={tr("Get a ride")} icon="car-side" trail={null} variant="light" small onPress={() => router.push("/rides")} style={{ flex: 1 }} />
         </View>
       </View>
       <View pointerEvents="none" style={{ position: "absolute", right: -6, top: -14 }}>
-        <Sticker top="Join us" bottom="this week" bg={C.sun} size={92} rotate={12} />
+        <Sticker top={tr("Join us")} bottom={tr("this week")} bg={C.sun} size={92} rotate={12} />
       </View>
     </Animated.View>
   );
@@ -105,14 +106,14 @@ export function NextService() {
         <View style={{ padding: 18 }}>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
             <LiveDot color={n.live ? "#fff" : C.sun} size={7} />
-            <Label color="rgba(255,255,255,0.85)">{n.live ? "Live now" : "Next service"}</Label>
+            <Label color="rgba(255,255,255,0.85)">{n.live ? tr("Live now") : tr("Next service")}</Label>
           </View>
           <Body size={18} weight="semi" color="#fff" style={{ marginTop: 4, marginRight: 50 }} numberOfLines={1}>{n.live || n.label} · {n.time}</Body>
           <Dashes color="rgba(255,255,255,0.4)" style={{ marginVertical: 14 }} />
           {n.live ? (
-            <Button label="Join the stream" icon="play" variant="light" block onPress={() => router.push("/watch")} />
+            <Button label={tr("Join the stream")} icon="play" variant="light" block onPress={() => router.push("/watch")} />
           ) : (
-            <DigitTiles groups={[["Days", n.d], ["Hours", n.h], ["Minutes", n.m], ["Seconds", n.s]]} />
+            <DigitTiles groups={[[tr("Days"), n.d], [tr("Hours"), n.h], [tr("Minutes"), n.m], [tr("Seconds"), n.s]]} />
           )}
         </View>
       </Ticket>

@@ -6,6 +6,7 @@ import { C, R } from "@/theme";
 import { BackHeader, Body, Empty, Icon, Label, Press, Segmented } from "@/components/ui";
 import { book } from "@/lib/bible";
 import { MarkKind, useMarks } from "@/lib/scripture";
+import { t as tr } from "@/lib/i18n";
 
 const KINDS: MarkKind[] = ["highlight", "bookmark", "note"];
 
@@ -15,13 +16,13 @@ export default function Marks() {
   const list = marks.all().filter((m) => m.kind === KINDS[t]);
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title="My highlights" />
+      <BackHeader title={tr("My highlights")} />
       <View style={{ marginHorizontal: 16, marginTop: 6 }}>
-        <Segmented items={["Highlights", "Saved", "Notes"]} value={t} onChange={setT} />
+        <Segmented items={[tr("Highlights"), tr("Saved"), tr("Notes")]} value={t} onChange={setT} />
       </View>
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 10 }}>
         {!list.length ? (
-          <Empty icon="bookmark" title={["No highlights yet", "Nothing saved yet", "No notes yet"][t]} body="In the Bible, tap a verse to highlight it, save it or write a note." action="Open the Bible" onAction={() => router.push("/bible/read")} />
+          <Empty icon="bookmark" title={["No highlights yet", "Nothing saved yet", "No notes yet"][t]} body={tr("In the Bible, tap a verse to highlight it, save it or write a note.")} action={tr("Open the Bible")} onAction={() => router.push("/bible/read")} />
         ) : list.map((m, i) => (
           <Animated.View key={`${m.kind}${m.book}.${m.chapter}.${m.verse}`} entering={FadeInDown.delay(Math.min(i, 8) * 40)}>
             <Press onPress={() => router.push({ pathname: "/bible/read", params: { b: String(m.book), c: String(m.chapter), v: String(m.verse) } })} scaleTo={0.98}
@@ -29,7 +30,7 @@ export default function Marks() {
               <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                 <Body weight="bold" style={{ flex: 1 }}>{book(m.book).name} {m.chapter}:{m.verse}</Body>
                 {m.translation ? <Label size={11}>{m.translation}</Label> : null}
-                <Press hitSlop={8} onPress={() => Alert.alert("Remove?", "", [{ text: "Cancel", style: "cancel" }, { text: "Remove", style: "destructive", onPress: () => marks.remove(m.kind, m.book, m.chapter, m.verse) }])}>
+                <Press hitSlop={8} onPress={() => Alert.alert(tr("Remove?"), "", [{ text: tr("Cancel"), style: "cancel" }, { text: tr("Remove"), style: "destructive", onPress: () => marks.remove(m.kind, m.book, m.chapter, m.verse) }])}>
                   <Icon name="trash-2" size={16} color={C.muted} />
                 </Press>
               </View>

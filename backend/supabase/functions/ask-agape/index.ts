@@ -32,7 +32,7 @@ Deno.serve(async (req) => {
     const { count } = await supabase.from("ai_usage").select("id", { count: "exact", head: true }).eq("user_id", user.id).gte("created_at", since);
     if ((count ?? 0) >= limit) return Response.json({ reply: "You've reached today's question limit. It resets in 24 hours. 🙏" }, { headers: cors });
 
-    const { messages } = await req.json();
+    const { messages, language } = await req.json();
     const history = (Array.isArray(messages) ? messages : []).slice(-12).map((m: any) => ({
       role: m.role === "assistant" ? "assistant" : "user",
       content: String(m.content ?? "").slice(0, 4000),
@@ -42,10 +42,14 @@ Deno.serve(async (req) => {
     const { data: sermons } = await supabase.from("videos").select("title, speaker, description").order("published_at", { ascending: false }).limit(6);
     const context = sermons?.length ? `\n\nRecent sermons at Agape:\n${sermons.map((s) => `- "${s.title}" (${s.speaker}): ${s.description ?? ""}`).join("\n")}` : "";
 
+    // reply in the language the member chose in the app (English, Hindi, Malayalam, Tamil or Arabic)
+    const langs: Record<string, string> = { hi: "Hindi", ml: "Malayalam", ta: "Tamil", ar: "Arabic" };
+    const say = langs[String(language)] ? `\n\nAnswer in ${langs[String(language)]}, using that language's familiar Bible wording.` : "";
+
     const r = await fetch("https://api.anthropic.com/v1/messages", {
       method: "POST",
       headers: { "x-api-key": Deno.env.get("ANTHROPIC_API_KEY")!, "anthropic-version": "2023-06-01", "content-type": "application/json" },
-      body: JSON.stringify({ model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5-5", max_tokens: 700, system: SYSTEM + context, messages: history }),
+      body: JSON.stringify({ model: Deno.env.get("ANTHROPIC_MODEL") ?? "claude-sonnet-5-5", max_tokens: 700, system: SYSTEM + context + say, messages: history }),
     });
     const json = await r.json();
     if (!r.ok) throw new Error(json?.error?.message ?? "AI request failed");

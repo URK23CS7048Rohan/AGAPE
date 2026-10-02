@@ -1,5 +1,6 @@
 import React, { forwardRef, useEffect, useImperativeHandle, useMemo, useState } from "react";
 import { Dimensions, Pressable, StyleSheet, Text, TextStyle, View, ViewStyle, StyleProp, LayoutChangeEvent } from "react-native";
+import { t as tr } from "@/lib/i18n";
 import Animated, {
   Easing,
   useAnimatedProps,
@@ -158,7 +159,7 @@ export function LiveBadge({ small }: { small?: boolean }) {
   return (
     <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.red, paddingHorizontal: small ? 9 : 12, height: small ? 24 : 30, borderRadius: 10, alignSelf: "flex-start" }}>
       <LiveDot color="#fff" size={small ? 6 : 7} />
-      <Text style={{ fontFamily: F.sansBold, fontSize: small ? 10.5 : 12, letterSpacing: 0.8, color: "#fff" }}>LIVE</Text>
+      <Text style={{ fontFamily: F.sansBold, fontSize: small ? 10.5 : 12, letterSpacing: 0.8, color: "#fff" }}>{tr("LIVE")}</Text>
     </View>
   );
 }
@@ -465,7 +466,7 @@ export function Empty({ icon = "inbox", title, body, action, onAction, color = C
   );
 }
 export function ErrorBox({ error, onRetry }: { error?: Error | null; onRetry?: () => void }) {
-  return <Empty icon="wifi-off" color={C.rose} title="Couldn't load this" body={error?.message || "Check your connection and try again."} action={onRetry ? "Try again" : undefined} onAction={onRetry} />;
+  return <Empty icon="wifi-off" color={C.rose} title={tr("Couldn't load this")} body={error?.message || tr("Check your connection and try again.")} action={onRetry ? tr("Try again") : undefined} onAction={onRetry} />;
 }
 /** Renders loading / error / empty / content for a useQuery result. */
 export function Async<T>({ q, empty, children, label }: { q: { data?: T; loading: boolean; error?: Error; reload: () => void }; empty?: (d: T) => React.ReactNode | null; children: (d: T) => React.ReactNode; label?: string }) {

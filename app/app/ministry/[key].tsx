@@ -7,8 +7,9 @@ import { C, R, onColor } from "@/theme";
 import { Async, BackHeader, Body, Button, Display, Empty, Icon, Label, Press, Starburst } from "@/components/ui";
 import { imageSource } from "@/lib/content";
 import { useQuery } from "@/lib/query";
-import { listPosts, MinistryKey } from "@/lib/life";
+import { listPosts, MinistryKey, when } from "@/lib/life";
 import { say, hush } from "@/lib/audio";
+import { t } from "@/lib/i18n";
 
 const META: Record<MinistryKey, { title: string; sub: string; color: string; icon: string }> = {
   kids: { title: "Kids", sub: "Bible stories, memory verses and things to make and do", color: C.sun, icon: "star" },
@@ -33,7 +34,7 @@ export default function Ministry() {
           <Display size={34} color={onColor(meta.color)}>{meta.title}</Display>
           <Body size={14} color={onColor(meta.color)} style={{ marginTop: 4, maxWidth: "70%" }}>{meta.sub}</Body>
         </View>
-        <Async q={q} empty={(d) => (d.length ? null : <Empty icon="star" title="Nothing here yet" body="The team will post stories, verses and news here." />)}>
+        <Async q={q} empty={(d) => (d.length ? null : <Empty icon="star" title={t("Nothing here yet")} body={t("The team will post stories, verses and news here.")} />)}>
           {(list) => list.map((p, i) => {
             const isOpen = open === p.id || p.kind === "verse";
             const tint = p.color || [C.sunSoft, C.mintSoft, C.lilac, C.roseSoft, C.skySoft][i % 5];
@@ -46,17 +47,17 @@ export default function Ministry() {
                       <View style={{ backgroundColor: p.kind === "verse" ? C.sun : tint, borderRadius: 8, paddingHorizontal: 8, paddingVertical: 3 }}><Label size={11} color={C.ink}>{KIND_LABEL[p.kind] || p.kind}</Label></View>
                       {p.pinned ? <Icon name="bookmark" size={13} color={p.kind === "verse" ? C.sun : C.flame} /> : null}
                       <View style={{ flex: 1 }} />
-                      {p.starts_at ? <Label>{new Date(p.starts_at).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })}</Label> : null}
+                      {p.starts_at ? <Label>{when(p.starts_at)}</Label> : null}
                     </View>
                     <Body weight="bold" size={18} color={p.kind === "verse" ? "#fff" : C.ink} style={{ marginTop: 8 }}>{p.title}</Body>
                     {p.body ? <Body color={p.kind === "verse" ? "rgba(255,255,255,0.9)" : C.ink} style={{ marginTop: 6, lineHeight: 22 }} numberOfLines={isOpen ? undefined : 3}>{p.body}</Body> : null}
                     {p.ref ? <Label color={p.kind === "verse" ? C.sun : C.flame} style={{ marginTop: 8 }}>{p.ref}</Label> : null}
                     {isOpen ? (
                       <View style={{ flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-                        {p.body && (p.kind === "story" || p.kind === "verse") ? <Button small variant={p.kind === "verse" ? "sun" : "white"} icon={reading === p.id ? "square" : "volume-2"} trail={null} label={reading === p.id ? "Stop" : "Read it to me"} onPress={() => { if (reading === p.id) { hush(); setReading(null); } else { setReading(p.id); say(`${p.title}. ${p.body}`, "en-US", 0.95, () => setReading(null)); } }} /> : null}
-                        {p.youtube_id ? <Button small variant="ink" icon="play" trail={null} label="Watch" onPress={() => Linking.openURL(`https://youtu.be/${p.youtube_id}`)} /> : null}
-                        {p.link ? <Button small variant="white" label="Open" onPress={() => (p.link!.startsWith("/") ? router.push(p.link as any) : Linking.openURL(p.link!))} /> : null}
-                        <Button small variant="white" icon="share-2" trail={null} label="Share" onPress={() => Share.share({ message: `${p.title}\n\n${p.body || ""}${p.ref ? `\n${p.ref}` : ""}` })} />
+                        {p.body && (p.kind === "story" || p.kind === "verse") ? <Button small variant={p.kind === "verse" ? "sun" : "white"} icon={reading === p.id ? "square" : "volume-2"} trail={null} label={reading === p.id ? t("Stop") : t("Read it to me")} onPress={() => { if (reading === p.id) { hush(); setReading(null); } else { setReading(p.id); say(`${p.title}. ${p.body}`, "en-US", 0.95, () => setReading(null)); } }} /> : null}
+                        {p.youtube_id ? <Button small variant="ink" icon="play" trail={null} label={t("Watch")} onPress={() => Linking.openURL(`https://youtu.be/${p.youtube_id}`)} /> : null}
+                        {p.link ? <Button small variant="white" label={t("Open")} onPress={() => (p.link!.startsWith("/") ? router.push(p.link as any) : Linking.openURL(p.link!))} /> : null}
+                        <Button small variant="white" icon="share-2" trail={null} label={t("Share")} onPress={() => Share.share({ message: `${p.title}\n\n${p.body || ""}${p.ref ? `\n${p.ref}` : ""}` })} />
                       </View>
                     ) : null}
                   </View>

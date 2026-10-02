@@ -2,6 +2,7 @@
  * Every read and write the app makes. Table and function names match
  * backend/supabase/migrations. Row-level security decides what each member may see or change.
  */
+import { lang } from "./i18n";
 import { supabase } from "./supabase";
 import { invalidate } from "./query";
 
@@ -16,7 +17,7 @@ export type ChatMsg = { role: "user" | "assistant"; content: string };
 
 /** Ask the AI assistant via the `ask-agape` Edge Function (the API key stays on the server). */
 export async function askAgape(history: ChatMsg[]): Promise<string> {
-  const { data, error } = await supabase.functions.invoke("ask-agape", { body: { messages: history } });
+  const { data, error } = await supabase.functions.invoke("ask-agape", { body: { messages: history, language: lang() } });
   if (error) {
     const body = await (error as any).context?.json?.().catch(() => null);
     throw new Error(body?.error || "Ask Agape isn't available right now. Please try again in a moment.");

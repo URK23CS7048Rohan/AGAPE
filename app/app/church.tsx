@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { router } from "expo-router";
 import { C, R } from "@/theme";
 import { BackHeader, Body, Icon, Label, Press } from "@/components/ui";
+import { t as tr } from "@/lib/i18n";
 
 type Tile = { icon: string; title: string; sub: string; route: string; color: string };
 const GROUPS: { title: string; items: Tile[] }[] = [
@@ -42,16 +43,16 @@ const GROUPS: { title: string; items: Tile[] }[] = [
 export default function Church() {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title="Church life" />
+      <BackHeader title={tr("Church life")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
         {GROUPS.map((g, gi) => (
           <Animated.View key={g.title} entering={FadeInDown.delay(gi * 60)} style={{ marginBottom: 18 }}>
-            <Label style={{ marginBottom: 10, marginLeft: 4 }}>{g.title}</Label>
+            <Label style={{ marginBottom: 10, marginLeft: 4 }}>{tr(g.title)}</Label>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
               {g.items.map((t) => (
                 <Press key={t.title} onPress={() => router.push(t.route as any)} scaleTo={0.96} style={{ width: "48.4%", backgroundColor: "#fff", borderRadius: R.lg, padding: 14, gap: 10, borderWidth: 1.5, borderColor: C.line }}>
                   <View style={{ width: 42, height: 42, borderRadius: 14, backgroundColor: t.color, alignItems: "center", justifyContent: "center" }}><Icon name={t.icon} size={19} color={t.color === C.ink ? "#fff" : C.ink} /></View>
-                  <View><Body weight="bold" size={15}>{t.title}</Body><Label size={12} numberOfLines={1}>{t.sub}</Label></View>
+                  <View><Body weight="bold" size={15}>{tr(t.title)}</Body><Label size={12} numberOfLines={1}>{tr(t.sub)}</Label></View>
                 </Press>
               ))}
             </View>

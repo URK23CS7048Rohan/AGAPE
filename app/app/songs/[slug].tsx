@@ -7,6 +7,7 @@ import { Body, Icon, IconButton, Label, Loading, Press } from "@/components/ui";
 import { useQuery } from "@/lib/query";
 import { getSong } from "@/lib/scripture";
 import { capoShapeKey, interval, keyPlus, lyricsOnly, parseSong, transposeChord } from "@/lib/chords";
+import { t } from "@/lib/i18n";
 
 export default function SongView() {
   const p = useLocalSearchParams<{ slug: string; key?: string }>();
@@ -49,12 +50,12 @@ export default function SongView() {
       </View>
 
       <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ flexGrow: 0, flexShrink: 0, height: 72, borderBottomWidth: 1, borderColor: C.line }} contentContainerStyle={{ gap: 8, paddingHorizontal: 12, alignItems: "center" }}>
-        <Stepper label="Key" value={key} onMinus={() => setKey(keyPlus(key, -1))} onPlus={() => setKey(keyPlus(key, 1))} />
-        <Stepper label="Capo" value={capo ? String(capo) : "Off"} onMinus={() => setCapo(Math.max(0, capo - 1))} onPlus={() => setCapo(Math.min(9, capo + 1))} />
-        <Toggle label="Chords" on={chords} onPress={() => setChords(!chords)} />
-        <Stepper label="Text" value={String(size)} onMinus={() => setSize(Math.max(13, size - 1))} onPlus={() => setSize(Math.min(28, size + 1))} />
-        <Toggle label={scrolling ? "Scrolling" : "Auto-scroll"} on={scrolling} onPress={() => setScrolling(!scrolling)} icon={scrolling ? "pause" : "play"} />
-        {scrolling ? <Stepper label="Speed" value={String(speed)} onMinus={() => setSpeed(Math.max(1, speed - 1))} onPlus={() => setSpeed(Math.min(8, speed + 1))} /> : null}
+        <Stepper label={t("Key")} value={key} onMinus={() => setKey(keyPlus(key, -1))} onPlus={() => setKey(keyPlus(key, 1))} />
+        <Stepper label={t("Capo")} value={capo ? String(capo) : "Off"} onMinus={() => setCapo(Math.max(0, capo - 1))} onPlus={() => setCapo(Math.min(9, capo + 1))} />
+        <Toggle label={t("Chords")} on={chords} onPress={() => setChords(!chords)} />
+        <Stepper label={t("Text")} value={String(size)} onMinus={() => setSize(Math.max(13, size - 1))} onPlus={() => setSize(Math.min(28, size + 1))} />
+        <Toggle label={scrolling ? t("Scrolling") : t("Auto-scroll")} on={scrolling} onPress={() => setScrolling(!scrolling)} icon={scrolling ? "pause" : "play"} />
+        {scrolling ? <Stepper label={t("Speed")} value={String(speed)} onMinus={() => setSpeed(Math.max(1, speed - 1))} onPlus={() => setSpeed(Math.min(8, speed + 1))} /> : null}
       </ScrollView>
 
       <ScrollView ref={scroll} onScroll={(e) => (y.current = e.nativeEvent.contentOffset.y)} scrollEventThrottle={32} contentContainerStyle={{ padding: 20, paddingBottom: insets.bottom + 120 }}>

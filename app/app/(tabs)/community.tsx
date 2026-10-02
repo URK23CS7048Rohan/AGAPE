@@ -11,6 +11,7 @@ import { useAuth, useNeedsAccount } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { joinGroup, listAnnouncements, listGroups, myChats } from "@/lib/api";
 import { ago, fmt } from "@/lib/time";
+import { t } from "@/lib/i18n";
 
 const GROUP_COLORS = [C.rose, C.mint, C.flame, C.sun, C.violet, C.sky];
 const TABS = ["chats", "groups", "news"];
@@ -32,7 +33,7 @@ export default function Community() {
     if (needs("join groups")) return;
     setBusy(id);
     try { await joinGroup(id, join); await groups.reload(); }
-    catch (e: any) { Alert.alert("Couldn't update", e.message); }
+    catch (e: any) { Alert.alert(t("Couldn't update"), e.message); }
     finally { setBusy(null); }
   };
 
@@ -44,7 +45,7 @@ export default function Community() {
         refreshControl={<RefreshControl refreshing={false} onRefresh={() => { chats.reload(); groups.reload(); news.reload(); }} />}
       >
         <Animated.View entering={FadeInDown.duration(500)}>
-          <ScreenTitle title="Family" sub="Your groups, chats and church news" right={<IconButton name="edit-3" bg={C.ink} color="#fff" onPress={() => (needs("message people") ? null : router.push("/chat/new"))} />} />
+          <ScreenTitle title={t("Family")} sub={t("Your groups, chats and church news")} right={<IconButton name="edit-3" bg={C.ink} color="#fff" onPress={() => (needs("message people") ? null : router.push("/chat/new"))} />} />
         </Animated.View>
 
         {/* Prayer wall entry */}
@@ -53,9 +54,9 @@ export default function Community() {
             <Ticket color={C.rose} at={0.5}>
               <View style={{ flexDirection: "row", alignItems: "center", padding: 18, gap: 14 }}>
                 <View style={{ flex: 1 }}>
-                  <Label color={C.ink}>Prayer wall{stats.prayers ? ` · ${fmt(stats.prayers)} prayers` : ""}</Label>
-                  <Display size={26} style={{ marginTop: 4 }}>Share a request</Display>
-                  <Body size={13.5} style={{ marginTop: 4 }}>Pray for others, and let the family pray for you.</Body>
+                  <Label color={C.ink}>{t("Prayer wall")}{stats.prayers ? ` · ${fmt(stats.prayers)} prayers` : ""}</Label>
+                  <Display size={26} style={{ marginTop: 4 }}>{t("Share a request")}</Display>
+                  <Body size={13.5} style={{ marginTop: 4 }}>{t("Pray for others, and let the family pray for you.")}</Body>
                 </View>
                 <Starburst size={70} color={C.ink} rotate={-8}><Icon name="hands-pray" size={28} color={C.rose} /></Starburst>
               </View>
@@ -64,15 +65,15 @@ export default function Community() {
         </Animated.View>
 
         <View style={{ marginHorizontal: 16, marginTop: 18 }}>
-          <Segmented items={["Chats", "Groups", "News"]} value={tab} onChange={setTab} />
+          <Segmented items={[t("Chats"), t("Groups"), t("News")]} value={tab} onChange={setTab} />
         </View>
 
         {tab === 0 ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14 }}>
             {!signedIn ? (
-              <Empty icon="message-circle" title="Chat with the family" body="Sign in to message members and talk with your groups." action="Sign in" onAction={() => router.push("/auth")} />
+              <Empty icon="message-circle" title={t("Chat with the family")} body={t("Sign in to message members and talk with your groups.")} action={t("Sign in")} onAction={() => router.push("/auth")} />
             ) : (
-              <Async q={chats} empty={(d) => (d.length ? null : <Empty icon="message-circle" title="No chats yet" body="Join a group to get its chat, or tap ✎ to message someone." action="Browse groups" onAction={() => setTab(1)} />)}>
+              <Async q={chats} empty={(d) => (d.length ? null : <Empty icon="message-circle" title={t("No chats yet")} body={t("Join a group to get its chat, or tap ✎ to message someone.")} action={t("Browse groups")} onAction={() => setTab(1)} />)}>
                 {(list) => (
                   <View style={{ backgroundColor: "#fff", borderRadius: R.lg, paddingVertical: 4, borderWidth: 1.5, borderColor: C.line }}>
                     {list.map((c, i) => (
@@ -85,7 +86,7 @@ export default function Community() {
                           </View>
                           <View style={{ flex: 1 }}>
                             <Body weight="semi" size={16} numberOfLines={1}>{c.name}</Body>
-                            <Label numberOfLines={1} size={13.5}>{c.last_body ? `${c.kind === "direct" ? "" : `${c.last_sender?.split(" ")[0]}: `}${c.last_body}` : c.kind === "group" ? `${c.members} member${c.members === 1 ? "" : "s"} · say hello!` : "No messages yet"}</Label>
+                            <Label numberOfLines={1} size={13.5}>{c.last_body ? `${c.kind === "direct" ? "" : `${c.last_sender?.split(" ")[0]}: `}${c.last_body}` : c.kind === "group" ? `${c.members} member${c.members === 1 ? "" : "s"} · say hello!` : t("No messages yet")}</Label>
                           </View>
                           <View style={{ alignItems: "flex-end", gap: 6 }}>
                             <Label size={12}>{ago(c.last_at)}</Label>
@@ -103,7 +104,7 @@ export default function Community() {
 
         {tab === 1 ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, gap: 12 }}>
-            <Async q={groups} empty={(d) => (d.length ? null : <Empty icon="users" title="No groups yet" body="Groups and ministries will appear here once the team adds them." />)}>
+            <Async q={groups} empty={(d) => (d.length ? null : <Empty icon="users" title={t("No groups yet")} body={t("Groups and ministries will appear here once the team adds them.")} />)}>
               {(list) => list.map((g, i) => {
                 const color = g.color || GROUP_COLORS[i % GROUP_COLORS.length];
                 const fg = onColor(color);
@@ -117,12 +118,12 @@ export default function Community() {
                         <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
                           <Press onPress={() => toggleJoin(g.id, !g.joined)} disabled={busy === g.id} style={{ paddingHorizontal: 14, height: 34, borderRadius: 11, backgroundColor: g.joined ? "#fff" : C.ink, justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 6, opacity: busy === g.id ? 0.6 : 1 }}>
                             <Icon name={g.joined ? "check" : "plus"} size={14} color={g.joined ? C.ink : "#fff"} />
-                            <Body size={13} weight="bold" color={g.joined ? C.ink : "#fff"}>{g.joined ? "Joined" : "Join"}</Body>
+                            <Body size={13} weight="bold" color={g.joined ? C.ink : "#fff"}>{g.joined ? t("Joined") : t("Join")}</Body>
                           </Press>
                           {g.joined ? (
                             <Press onPress={() => setTab(0)} style={{ paddingHorizontal: 12, height: 34, borderRadius: 11, backgroundColor: "rgba(255,255,255,0.6)", justifyContent: "center", flexDirection: "row", alignItems: "center", gap: 6 }}>
                               <Icon name="message-circle" size={14} />
-                              <Body size={13} weight="bold">Chat</Body>
+                              <Body size={13} weight="bold">{t("Chat")}</Body>
                             </Press>
                           ) : null}
                         </View>
@@ -137,12 +138,12 @@ export default function Community() {
 
         {tab === 2 ? (
           <Animated.View entering={FadeIn} style={{ marginHorizontal: 16, marginTop: 14, gap: 12 }}>
-            <Async q={news} empty={(d) => (d.length ? null : <Empty icon="bell" title="No news yet" body="Church announcements will show up here." />)}>
+            <Async q={news} empty={(d) => (d.length ? null : <Empty icon="bell" title={t("No news yet")} body={t("Church announcements will show up here.")} />)}>
               {(list) => list.map((a, i) => (
                 <Animated.View key={a.id} entering={FadeInDown.delay(i * 60)} style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 16, borderWidth: 1.5, borderColor: C.line }}>
                   <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                     <View style={{ backgroundColor: GROUP_COLORS[i % GROUP_COLORS.length], borderRadius: 8, paddingHorizontal: 9, height: 24, justifyContent: "center" }}>
-                      <Body size={11.5} weight="bold" color={onColor(GROUP_COLORS[i % GROUP_COLORS.length])}>Announcement</Body>
+                      <Body size={11.5} weight="bold" color={onColor(GROUP_COLORS[i % GROUP_COLORS.length])}>{t("Announcement")}</Body>
                     </View>
                     <Label size={12}>{ago(a.created_at)}</Label>
                   </View>

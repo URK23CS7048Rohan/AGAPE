@@ -1,4 +1,5 @@
 import type { Service } from "./content";
+import { dateLabel, t } from "./i18n";
 
 /** Next service from the times set in /admin, computed in the church's local time zone. */
 export function nextService(services: Service[], tzOffsetHours: number, now = Date.now()) {
@@ -31,13 +32,12 @@ export const fmt = (n: number) => Math.round(n || 0).toLocaleString("en-US");
 /** "5m", "3h", "Yesterday", "12 Sep" */
 export function ago(iso?: string | null) {
   if (!iso) return "";
-  const t = new Date(iso).getTime();
-  const s = (Date.now() - t) / 1000;
-  if (s < 60) return "now";
+  const s = (Date.now() - new Date(iso).getTime()) / 1000;
+  if (s < 60) return t("now");
   if (s < 3600) return `${Math.floor(s / 60)}m`;
   if (s < 86400) return `${Math.floor(s / 3600)}h`;
-  if (s < 172800) return "Yesterday";
-  return new Date(t).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+  if (s < 172800) return t("Yesterday");
+  return dateLabel(new Date(iso), { day: "numeric", month: "short" });
 }
 
 export const clock = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });

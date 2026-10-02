@@ -10,6 +10,7 @@ import { useAuth } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { imageSource } from "@/lib/content";
 import { completedLessons, Course, learningDays, listCourses, listGuides } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 const DAY_NAMES = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const COLORS = [C.violet, C.mint, C.flame, C.sun, C.rose, C.sky];
@@ -19,7 +20,7 @@ function week() {
   const now = new Date();
   return Array.from({ length: 6 }, (_, k) => {
     const d = new Date(now.getFullYear(), now.getMonth(), now.getDate() - (5 - k));
-    return { top: DAY_NAMES[d.getDay()], bottom: String(d.getDate()), iso: d.toLocaleDateString("en-CA"), today: k === 5 };
+    return { top: t(DAY_NAMES[d.getDay()]), bottom: String(d.getDate()), iso: d.toLocaleDateString("en-CA"), today: k === 5 };
   });
 }
 
@@ -54,7 +55,7 @@ export default function Grow() {
         refreshControl={<RefreshControl refreshing={false} onRefresh={() => { courses.reload(); done.reload(); days.reload(); guides.reload(); }} />}
       >
         <Animated.View entering={FadeInDown.duration(500)}>
-          <ScreenTitle title="Go deeper" sub="Courses and study guides from the Agape Institute" />
+          <ScreenTitle title={t("Go deeper")} sub={t("Courses and study guides from the Agape Institute")} />
         </Animated.View>
 
         {/* This week */}
@@ -65,14 +66,14 @@ export default function Grow() {
                 <Icon name="fire" size={34} color={C.ink} />
               </Starburst>
             </View>
-            <Display size={30} style={{ maxWidth: "70%" }}>{signedIn ? (streak ? `${streak}-day streak` : "Start a streak") : "Learn every day"}</Display>
-            <Body size={13.5} style={{ marginTop: 2, maxWidth: "70%" }}>{signedIn ? "Finish a lesson each day to keep it going." : "Sign in to track your progress and earn certificates."}</Body>
+            <Display size={30} style={{ maxWidth: "70%" }}>{signedIn ? (streak ? `${streak}-day streak` : t("Start a streak")) : t("Learn every day")}</Display>
+            <Body size={13.5} style={{ marginTop: 2, maxWidth: "70%" }}>{signedIn ? t("Finish a lesson each day to keep it going.") : t("Sign in to track your progress and earn certificates.")}</Body>
             <Press
               onPress={() => (!signedIn ? router.push("/auth") : featured ? router.push(`/course/${featured.id}`) : null)}
               style={{ marginTop: 16, flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: C.ink, borderRadius: 16, paddingLeft: 16, paddingRight: 6, height: 52 }}
             >
               <Icon name={signedIn ? "book-open" : "log-in"} size={17} color="#fff" />
-              <Body color="#fff" weight="semi" style={{ flex: 1 }} numberOfLines={1}>{!signedIn ? "Sign in to start" : featured ? `Continue: ${featured.title}` : "Courses coming soon"}</Body>
+              <Body color="#fff" weight="semi" style={{ flex: 1 }} numberOfLines={1}>{!signedIn ? t("Sign in to start") : featured ? `Continue: ${featured.title}` : t("Courses coming soon")}</Body>
               <View style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: C.sun, alignItems: "center", justifyContent: "center" }}><Icon name="arrow-right" size={18} /></View>
             </Press>
           </View>
@@ -86,7 +87,7 @@ export default function Grow() {
         {/* Featured */}
         {featured ? (
           <Animated.View entering={FadeInDown.delay(160)} style={{ marginTop: 28 }}>
-            <SectionTitle title="Your plan" action="Open" onAction={() => router.push(`/course/${featured.id}`)} />
+            <SectionTitle title={t("Your plan")} action={t("Open")} onAction={() => router.push(`/course/${featured.id}`)} />
             <View style={{ flexDirection: "row", gap: 10, marginHorizontal: 16 }}>
               <Press onPress={() => router.push(`/course/${featured.id}`)} scaleTo={0.98} style={{ flex: 1.15, backgroundColor: C.orange, borderRadius: R.lg, padding: 14, minHeight: 230, justifyContent: "space-between" }}>
                 <View>
@@ -102,12 +103,12 @@ export default function Grow() {
               </Press>
               <View style={{ flex: 1, gap: 10 }}>
                 <View style={{ flex: 1, backgroundColor: C.sky, borderRadius: R.lg, padding: 14, justifyContent: "space-between" }}>
-                  <Label color={C.ink}>Lessons done</Label>
+                  <Label color={C.ink}>{t("Lessons done")}</Label>
                   <Display size={34}>{fDone}/{featured.lessons.length}</Display>
                 </View>
                 <Press onPress={() => (guides.data?.[0]?.url ? Linking.openURL(guides.data[0].url!) : router.push(`/course/${featured.id}`))} style={{ height: 70, backgroundColor: C.rose, borderRadius: R.lg, paddingHorizontal: 14, flexDirection: "row", alignItems: "center", gap: 10 }}>
                   <Icon name="file-text" size={20} />
-                  <Body size={13.5} weight="semi" style={{ flex: 1 }} numberOfLines={2}>{guides.data?.[0]?.title || "Study guide"}</Body>
+                  <Body size={13.5} weight="semi" style={{ flex: 1 }} numberOfLines={2}>{guides.data?.[0]?.title || t("Study guide")}</Body>
                 </Press>
               </View>
             </View>
@@ -116,14 +117,14 @@ export default function Grow() {
 
         {/* All courses */}
         <View style={{ marginTop: 30 }}>
-          <SectionTitle title="All courses" />
+          <SectionTitle title={t("All courses")} />
           {cats.length > 2 ? (
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 8, paddingBottom: 14 }}>
               {cats.map((c) => <Chip key={c} label={c} active={cat === c} onPress={() => setCat(c)} />)}
             </ScrollView>
           ) : null}
           <View style={{ paddingHorizontal: 16, gap: 12 }}>
-            <Async q={courses} label="Loading courses…" empty={(d) => (d.length ? null : <Empty icon="book-open" title="No courses yet" body="The Agape Institute's courses will appear here." />)}>
+            <Async q={courses} label={t("Loading courses…")} empty={(d) => (d.length ? null : <Empty icon="book-open" title={t("No courses yet")} body={t("The Agape Institute's courses will appear here.")} />)}>
               {() => shown.map((c, i) => {
                 const d = doneIn(c);
                 const color = colorOf(c, i);
@@ -137,7 +138,7 @@ export default function Grow() {
                         <View style={{ flex: 1 }}>
                           <Label>{[c.category, `${c.lessons.length} lesson${c.lessons.length === 1 ? "" : "s"}`].filter(Boolean).join(" · ")}</Label>
                           <Body size={16} weight="semi" numberOfLines={2} style={{ marginTop: 2 }}>{c.title}</Body>
-                          <Label style={{ marginTop: 2 }}>{!signedIn ? "Sign in to track progress" : d === 0 ? "Not started" : d >= c.lessons.length ? "Completed 🎉" : `${d} of ${c.lessons.length} done`}</Label>
+                          <Label style={{ marginTop: 2 }}>{!signedIn ? t("Sign in to track progress") : d === 0 ? t("Not started") : d >= c.lessons.length ? t("Completed 🎉") : `${d} of ${c.lessons.length} done`}</Label>
                         </View>
                         <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: color, alignItems: "center", justifyContent: "center" }}>
                           <Icon name={c.lessons.length && d >= c.lessons.length ? "check" : "play"} size={16} color={onColor(color)} />
@@ -155,7 +156,7 @@ export default function Grow() {
         {/* Study guides */}
         {guides.data?.length ? (
           <View style={{ marginTop: 30 }}>
-            <SectionTitle title="Study guides" sub="Open and read page by page" />
+            <SectionTitle title={t("Study guides")} sub={t("Open and read page by page")} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}>
               {guides.data.map((p, i) => {
                 const color = p.color || COLORS[i % COLORS.length];
@@ -168,7 +169,7 @@ export default function Grow() {
                       </View>
                       <View>
                         <Display size={19} color={fg} numberOfLines={3}>{p.title}</Display>
-                        <Label color={fg} style={{ marginTop: 4, opacity: 0.85 }}>{p.pages ? `${p.pages} pages · ` : ""}PDF</Label>
+                        <Label color={fg} style={{ marginTop: 4, opacity: 0.85 }}>{p.pages ? `${p.pages} pages · ` : ""}{t("PDF")}</Label>
                       </View>
                     </Press>
                   </Animated.View>

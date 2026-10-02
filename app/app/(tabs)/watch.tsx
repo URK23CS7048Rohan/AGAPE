@@ -10,11 +10,13 @@ import { imageSource, useSiteContent } from "@/lib/content";
 import { useQuery } from "@/lib/query";
 import { listSeries, listVideos, Series, Video, videoThumb } from "@/lib/api";
 import { duration } from "@/lib/time";
+import { t } from "@/lib/i18n";
+import { dateLabel } from "@/lib/i18n";
 
 const CW = 200;
 const GAP = 12;
 const SERIES_COLORS = [C.flame, C.violet, C.mint, C.sun, C.rose, C.sky];
-const date = (iso: string | null) => (iso ? new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : "");
+const date = (iso: string | null) => (iso ? dateLabel(new Date(iso), { day: "numeric", month: "short", year: "numeric" }) : "");
 
 function SeriesCard({ s, i, active, onPress }: { s: Series; i: number; active: boolean; onPress: () => void }) {
   const tint = s.color || SERIES_COLORS[i % SERIES_COLORS.length];
@@ -85,7 +87,7 @@ export default function Watch() {
         refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => { series.reload(); videos.reload(); }} />}
       >
         <Animated.View entering={FadeInDown.duration(500)}>
-          <ScreenTitle title="Watch & listen" sub="Sermons, live services and the full library" />
+          <ScreenTitle title={t("Watch & listen")} sub={t("Sermons, live services and the full library")} />
         </Animated.View>
 
         {/* Live now, or the channel's live stream */}
@@ -98,8 +100,8 @@ export default function Watch() {
               </View>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 12, padding: 10, paddingTop: 16 }}>
                 <View style={{ flex: 1 }}>
-                  <Display size={22} color="#fff" numberOfLines={1}>{live ? live.title : "Live services"}</Display>
-                  <Label color="rgba(255,255,255,0.65)" numberOfLines={1}>{live ? live.speaker || church.name : "Watch the stream when we're live, or the latest uploads"}</Label>
+                  <Display size={22} color="#fff" numberOfLines={1}>{live ? live.title : t("Live services")}</Display>
+                  <Label color="rgba(255,255,255,0.65)" numberOfLines={1}>{live ? live.speaker || church.name : t("Watch the stream when we're live, or the latest uploads")}</Label>
                 </View>
                 <View style={{ width: 50, height: 50, borderRadius: 16, backgroundColor: C.flame, alignItems: "center", justifyContent: "center" }}>
                   <Icon name="play" size={22} color="#fff" />
@@ -118,7 +120,7 @@ export default function Watch() {
             <View style={{ width: 56, height: 56, borderRadius: 14, backgroundColor: "#FF0033", alignItems: "center", justifyContent: "center" }}><Icon name="youtube" size={28} color="#fff" /></View>
             <View style={{ flex: 1 }}>
               <Label>{church.name}</Label>
-              <Body size={16} weight="semi">Every message on YouTube</Body>
+              <Body size={16} weight="semi">{t("Every message on YouTube")}</Body>
             </View>
             <Icon name="arrow-up-right" size={20} />
           </Press>
@@ -127,7 +129,7 @@ export default function Watch() {
         {/* Search */}
         <View style={{ marginHorizontal: 16, marginTop: 22, height: 52, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.line, flexDirection: "row", alignItems: "center", paddingHorizontal: 16, gap: 10 }}>
           <Icon name="search" size={18} color={C.muted} />
-          <TextInput value={q} onChangeText={setQ} placeholder="Search sermons, books, speakers" placeholderTextColor="rgba(20,20,20,0.4)" style={{ flex: 1, color: C.ink, fontFamily: F.sans, fontSize: 15 }} />
+          <TextInput value={q} onChangeText={setQ} placeholder={t("Search sermons, books, speakers")} placeholderTextColor="rgba(20,20,20,0.4)" style={{ flex: 1, color: C.ink, fontFamily: F.sans, fontSize: 15 }} />
           {q ? <Press onPress={() => setQ("")}><Icon name="x" size={18} color={C.muted} /></Press> : null}
         </View>
         {books.length > 1 ? (
@@ -139,7 +141,7 @@ export default function Watch() {
         {/* Series */}
         {shownSeries.length ? (
           <View style={{ marginTop: 8 }}>
-            <SectionTitle title="Series" sub={seriesId ? "Showing one series below. Tap it again to show all." : "Tap a series to see its messages"} />
+            <SectionTitle title={t("Series")} sub={seriesId ? t("Showing one series below. Tap it again to show all.") : t("Tap a series to see its messages")} />
             <ScrollView horizontal showsHorizontalScrollIndicator={false} snapToInterval={CW + GAP} decelerationRate="fast" contentContainerStyle={{ paddingHorizontal: 16, gap: GAP }}>
               {shownSeries.map((s, i) => <SeriesCard key={s.id} s={s} i={i} active={seriesId === s.id} onPress={() => setSeriesId((x) => (x === s.id ? null : s.id))} />)}
             </ScrollView>
@@ -148,12 +150,12 @@ export default function Watch() {
 
         {/* Messages */}
         <View style={{ marginTop: 28 }}>
-          <SectionTitle title={seriesId ? (series.data ?? []).find((s) => s.id === seriesId)?.title || "Messages" : "Latest messages"} />
+          <SectionTitle title={seriesId ? (series.data ?? []).find((s) => s.id === seriesId)?.title || t("Messages") : t("Latest messages")} />
           <View style={{ paddingHorizontal: 16, gap: 10 }}>
             <Async
               q={videos}
-              label="Loading sermons…"
-              empty={(d) => (d.length === 0 ? <Empty icon="video" title="No sermons yet" body="New messages appear here as soon as the team adds them." /> : list.length === 0 ? <Empty icon="search" title="Nothing matches" body="Try a different word or clear the filters." /> : null)}
+              label={t("Loading sermons…")}
+              empty={(d) => (d.length === 0 ? <Empty icon="video" title={t("No sermons yet")} body={t("New messages appear here as soon as the team adds them.")} /> : list.length === 0 ? <Empty icon="search" title={t("Nothing matches")} body={t("Try a different word or clear the filters.")} /> : null)}
             >
               {() => list.map((m, i) => <Row key={m.id} m={m} i={i} />)}
             </Async>

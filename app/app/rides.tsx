@@ -13,6 +13,7 @@ import { useAuth } from "@/lib/auth";
 import { useSiteContent } from "@/lib/content";
 import { DARK_MAP_STYLE } from "@/lib/mapStyle";
 import { acceptRide, lastRideLocation, myActiveRide, myDrives, openRides, pushRideLocation, requestRide, Ride, ridePhone, setRideStatus, startDirect, subscribeRideLocation, subscribeRides } from "@/lib/api";
+import { t as tr } from "@/lib/i18n";
 
 type Pt = { latitude: number; longitude: number };
 
@@ -46,12 +47,12 @@ function openNavigation(lat: number, lng: number) {
 async function call(rideId: string) {
   const phone = await ridePhone(rideId).catch(() => null);
   if (phone) Linking.openURL(`tel:${phone.replace(/[^+\d]/g, "")}`);
-  else Alert.alert("No phone number", "They haven't added a phone number. Send a message instead.");
+  else Alert.alert(tr("No phone number"), tr("They haven't added a phone number. Send a message instead."));
 }
 async function message(otherId: string | null) {
   if (!otherId) return;
   try { const conv = await startDirect(otherId); router.push(`/chat/${conv}`); }
-  catch (e: any) { Alert.alert("Couldn't open chat", e.message); }
+  catch (e: any) { Alert.alert(tr("Couldn't open chat"), e.message); }
 }
 
 /* ------------------------------------------------------------------ rider */
@@ -71,58 +72,58 @@ function RiderSheet({ ride, here, reload, onArrive }: { ride: Ride | null | unde
 
   if (!ride) {
     const request = async () => {
-      if (!here) return Alert.alert("Location needed", "Allow location access so your driver knows where to pick you up.");
+      if (!here) return Alert.alert(tr("Location needed"), tr("Allow location access so your driver knows where to pick you up."));
       setBusy(true);
       try { await requestRide({ pickup: pickup.trim() || here.label, lat: here.latitude, lng: here.longitude, time, seats, notes }); reload(); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }
-      catch (e: any) { Alert.alert("Couldn't request a ride", e.message); }
+      catch (e: any) { Alert.alert(tr("Couldn't request a ride"), e.message); }
       finally { setBusy(false); }
     };
     return (
       <Animated.View key="req" entering={FadeInUp.springify().damping(18)} style={sheet}>
-        <Display size={28}>Need a ride?</Display>
-        <Body size={14} color={C.muted} style={{ marginTop: 4 }}>A volunteer from the church family will pick you up, for free.</Body>
+        <Display size={28}>{tr("Need a ride?")}</Display>
+        <Body size={14} color={C.muted} style={{ marginTop: 4 }}>{tr("A volunteer from the church family will pick you up, for free.")}</Body>
         <View style={{ marginTop: 14, padding: 12, borderRadius: R.md, backgroundColor: C.bg, gap: 10 }}>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
             <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 3, borderColor: C.mint }} />
             <View style={{ flex: 1 }}>
-              <Label size={11}>Pickup</Label>
-              <TextInput value={pickup} onChangeText={setPickup} placeholder={here ? "Add a landmark or building" : "Finding your location…"} placeholderTextColor="rgba(20,20,20,0.4)" style={{ fontFamily: F.sansSemi, fontSize: 15, color: C.ink, paddingVertical: 2 }} />
+              <Label size={11}>{tr("Pickup")}</Label>
+              <TextInput value={pickup} onChangeText={setPickup} placeholder={here ? tr("Add a landmark or building") : tr("Finding your location…")} placeholderTextColor="rgba(20,20,20,0.4)" style={{ fontFamily: F.sansSemi, fontSize: 15, color: C.ink, paddingVertical: 2 }} />
             </View>
           </View>
           <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
             <View style={{ width: 12, height: 12, borderRadius: 6, backgroundColor: C.flame }} />
-            <View style={{ flex: 1 }}><Label size={11}>Destination</Label><Body weight="semi" numberOfLines={1}>{church.address || church.name}</Body></View>
+            <View style={{ flex: 1 }}><Label size={11}>{tr("Destination")}</Label><Body weight="semi" numberOfLines={1}>{church.address || church.name}</Body></View>
           </View>
         </View>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, marginTop: 12 }}>
           {times.map((x) => <Chip key={x} label={x} active={time === x} onPress={() => setTime(x)} />)}
         </ScrollView>
         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
-          <Body weight="semi">Passengers</Body>
+          <Body weight="semi">{tr("Passengers")}</Body>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
             <IconButton name="minus" size={38} bg={C.bg} onPress={() => setSeats((s) => Math.max(1, s - 1))} />
             <Display size={24}>{seats}</Display>
             <IconButton name="plus" size={38} bg={C.bg} onPress={() => setSeats((s) => Math.min(8, s + 1))} />
           </View>
         </View>
-        <TextInput value={notes} onChangeText={setNotes} maxLength={200} placeholder="Note for the driver (optional)" placeholderTextColor="rgba(20,20,20,0.4)" style={{ marginTop: 10, height: 44, borderRadius: 12, backgroundColor: C.bg, paddingHorizontal: 12, fontFamily: F.sans, fontSize: 14, color: C.ink }} />
-        <Button label={busy ? "Requesting…" : "Request ride"} icon="car-side" variant="ink" block onPress={request} disabled={busy || !here} style={{ marginTop: 12 }} />
+        <TextInput value={notes} onChangeText={setNotes} maxLength={200} placeholder={tr("Note for the driver (optional)")} placeholderTextColor="rgba(20,20,20,0.4)" style={{ marginTop: 10, height: 44, borderRadius: 12, backgroundColor: C.bg, paddingHorizontal: 12, fontFamily: F.sans, fontSize: 14, color: C.ink }} />
+        <Button label={busy ? tr("Requesting…") : tr("Request ride")} icon="car-side" variant="ink" block onPress={request} disabled={busy || !here} style={{ marginTop: 12 }} />
       </Animated.View>
     );
   }
 
-  const cancel = () => Alert.alert("Cancel this ride?", undefined, [
-    { text: "Keep it", style: "cancel" },
-    { text: "Cancel ride", style: "destructive", onPress: () => setRideStatus(ride.id, "cancelled").then(reload).catch((e) => Alert.alert("Couldn't cancel", e.message)) },
+  const cancel = () => Alert.alert(tr("Cancel this ride?"), undefined, [
+    { text: tr("Keep it"), style: "cancel" },
+    { text: tr("Cancel ride"), style: "destructive", onPress: () => setRideStatus(ride.id, "cancelled").then(reload).catch((e) => Alert.alert(tr("Couldn't cancel"), e.message)) },
   ]);
 
   if (ride.status === "requested") {
     return (
       <Animated.View key="search" entering={FadeInUp.springify()} style={sheet}>
         <Radar />
-        <Display size={24} center style={{ marginTop: 10 }}>Finding a volunteer…</Display>
-        <Body center color={C.muted} style={{ marginTop: 4 }}>{ride.requested_for} · {ride.seats} seat{ride.seats > 1 ? "s" : ""} · we'll notify you here as soon as a driver accepts.</Body>
-        <Button label="Cancel request" icon="x" trail={null} variant="ghost" block small onPress={cancel} style={{ marginTop: 14 }} />
+        <Display size={24} center style={{ marginTop: 10 }}>{tr("Finding a volunteer…")}</Display>
+        <Body center color={C.muted} style={{ marginTop: 4 }}>{ride.requested_for} · {ride.seats > 1 ? tr("{n} seats", { n: ride.seats }) : tr("1 seat")} {tr("· we'll notify you here as soon as a driver accepts.")}</Body>
+        <Button label={tr("Cancel request")} icon="x" trail={null} variant="ghost" block small onPress={cancel} style={{ marginTop: 14 }} />
       </Animated.View>
     );
   }
@@ -135,19 +136,19 @@ function RiderSheet({ ride, here, reload, onArrive }: { ride: Ride | null | unde
       <View style={{ flexDirection: "row", alignItems: "center", gap: 12, marginTop: 12 }}>
         <Avatar name={v?.full_name || "Driver"} color={C.mint} size={52} />
         <View style={{ flex: 1 }}>
-          <Body weight="bold" size={17}>{v?.full_name || "Volunteer driver"}</Body>
+          <Body weight="bold" size={17}>{v?.full_name || tr("Volunteer driver")}</Body>
           {v?.car ? <Body size={13} color={C.muted}>{v.car}</Body> : null}
         </View>
       </View>
       <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
         <Press onPress={() => call(ride.id)} style={{ flex: 1, height: 50, borderRadius: 14, backgroundColor: C.bg, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <Icon name="phone" size={17} /><Body weight="semi">Call</Body>
+          <Icon name="phone" size={17} /><Body weight="semi">{tr("Call")}</Body>
         </Press>
         <Press onPress={() => message(ride.volunteer_id)} style={{ flex: 1, height: 50, borderRadius: 14, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
-          <Icon name="message-circle" size={17} color="#fff" /><Body weight="semi" color="#fff">Message</Body>
+          <Icon name="message-circle" size={17} color="#fff" /><Body weight="semi" color="#fff">{tr("Message")}</Body>
         </Press>
       </View>
-      {ride.status !== "arrived" ? <Button label="Cancel ride" icon="x" trail={null} variant="ghost" block small onPress={cancel} style={{ marginTop: 10 }} /> : null}
+      {ride.status !== "arrived" ? <Button label={tr("Cancel ride")} icon="x" trail={null} variant="ghost" block small onPress={cancel} style={{ marginTop: 10 }} /> : null}
     </Animated.View>
   );
 }
@@ -159,7 +160,7 @@ function DriverSheet({ open, mine, reload, sharingFor, setSharingFor }: { open?:
   if (!isVolunteer) {
     return (
       <View style={sheet}>
-        <Empty icon="car-side" color={C.mint} title="Drive for the ride ministry" body="Volunteer drivers are approved by the church team. Ask a staff member to add you as a volunteer, then this screen shows ride requests." />
+        <Empty icon="car-side" color={C.mint} title={tr("Drive for the ride ministry")} body={tr("Volunteer drivers are approved by the church team. Ask a staff member to add you as a volunteer, then this screen shows ride requests.")} />
       </View>
     );
   }
@@ -167,45 +168,45 @@ function DriverSheet({ open, mine, reload, sharingFor, setSharingFor }: { open?:
   const act = async (id: string, f: () => Promise<any>) => {
     setBusy(id);
     try { await f(); reload(); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }
-    catch (e: any) { Alert.alert("Couldn't update the ride", e.message); }
+    catch (e: any) { Alert.alert(tr("Couldn't update the ride"), e.message); }
     finally { setBusy(null); }
   };
   return (
     <Animated.View key="drive" entering={FadeInUp.springify().damping(18)} style={[sheet, { maxHeight: 460 }]}>
       <ScrollView showsVerticalScrollIndicator={false}>
-        {mine.length ? <Display size={22}>My rides</Display> : null}
+        {mine.length ? <Display size={22}>{tr("My rides")}</Display> : null}
         {mine.map((r) => (
           <View key={r.id} style={{ marginTop: 10, padding: 12, borderRadius: R.md, backgroundColor: C.mintSoft, gap: 10 }}>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10 }}>
               <Avatar name={r.member?.full_name || "?"} color={C.violet} size={42} />
               <View style={{ flex: 1 }}>
-                <Body weight="semi">{r.member?.full_name || "Member"}</Body>
-                <Label numberOfLines={2}>{r.pickup_label} · {r.requested_for} · {r.seats} seat{r.seats > 1 ? "s" : ""}{r.notes ? ` · “${r.notes}”` : ""}</Label>
+                <Body weight="semi">{r.member?.full_name || tr("Member")}</Body>
+                <Label numberOfLines={2}>{r.pickup_label} · {r.requested_for} · {r.seats > 1 ? tr("{n} seats", { n: r.seats }) : tr("1 seat")}{r.notes ? ` · “${r.notes}”` : ""}</Label>
               </View>
               <IconButton name="navigation" size={40} bg={C.ink} color={C.sun} onPress={() => openNavigation(r.pickup_lat, r.pickup_lng)} />
             </View>
             <View style={{ flexDirection: "row", gap: 8, flexWrap: "wrap" }}>
-              {r.status === "accepted" ? <Chip label="Start driving" icon="play" color={C.ink} active onPress={() => act(r.id, async () => { await setRideStatus(r.id, "enroute"); setSharingFor(r.id); })} /> : null}
-              {r.status === "enroute" ? <Chip label="I've arrived" icon="map-pin" color={C.ink} active onPress={() => act(r.id, () => setRideStatus(r.id, "arrived"))} /> : null}
-              {r.status === "arrived" ? <Chip label="Ride complete" icon="check" color={C.mint} active onPress={() => act(r.id, async () => { await setRideStatus(r.id, "completed"); setSharingFor(null); })} /> : null}
-              <Chip label="Call" icon="phone" onPress={() => call(r.id)} />
-              <Chip label="Message" icon="message-circle" onPress={() => message(r.member_id)} />
-              {r.status === "accepted" ? <Chip label="Hand back" icon="corner-up-left" onPress={() => act(r.id, () => setRideStatus(r.id, "requested"))} /> : null}
+              {r.status === "accepted" ? <Chip label={tr("Start driving")} icon="play" color={C.ink} active onPress={() => act(r.id, async () => { await setRideStatus(r.id, "enroute"); setSharingFor(r.id); })} /> : null}
+              {r.status === "enroute" ? <Chip label={tr("I've arrived")} icon="map-pin" color={C.ink} active onPress={() => act(r.id, () => setRideStatus(r.id, "arrived"))} /> : null}
+              {r.status === "arrived" ? <Chip label={tr("Ride complete")} icon="check" color={C.mint} active onPress={() => act(r.id, async () => { await setRideStatus(r.id, "completed"); setSharingFor(null); })} /> : null}
+              <Chip label={tr("Call")} icon="phone" onPress={() => call(r.id)} />
+              <Chip label={tr("Message")} icon="message-circle" onPress={() => message(r.member_id)} />
+              {r.status === "accepted" ? <Chip label={tr("Hand back")} icon="corner-up-left" onPress={() => act(r.id, () => setRideStatus(r.id, "requested"))} /> : null}
             </View>
-            {sharingFor === r.id ? <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><LiveDot color={C.mint} size={6} /><Label>Sharing your live location with {r.member?.full_name?.split(" ")[0] || "the rider"}</Label></View> : null}
+            {sharingFor === r.id ? <View style={{ flexDirection: "row", alignItems: "center", gap: 6 }}><LiveDot color={C.mint} size={6} /><Label>{tr("Sharing your live location with")} {r.member?.full_name?.split(" ")[0] || tr("the rider")}</Label></View> : null}
           </View>
         ))}
-        <Display size={22} style={{ marginTop: mine.length ? 18 : 0 }}>Ride requests</Display>
-        {open.length === 0 ? <Label style={{ marginTop: 6 }}>No one is waiting for a ride right now. 🙌</Label> : null}
+        <Display size={22} style={{ marginTop: mine.length ? 18 : 0 }}>{tr("Ride requests")}</Display>
+        {open.length === 0 ? <Label style={{ marginTop: 6 }}>{tr("No one is waiting for a ride right now. 🙌")}</Label> : null}
         {open.map((r, i) => (
           <Animated.View key={r.id} entering={FadeInDown.delay(i * 60)} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: R.md, backgroundColor: C.bg, marginTop: 8 }}>
             <Avatar name={r.member?.full_name || "?"} color={C.rose} size={42} />
             <View style={{ flex: 1 }}>
-              <Body weight="semi">{r.member?.full_name || "Member"}</Body>
-              <Label numberOfLines={2}>{r.pickup_label} · {r.requested_for} · {r.seats} seat{r.seats > 1 ? "s" : ""}</Label>
+              <Body weight="semi">{r.member?.full_name || tr("Member")}</Body>
+              <Label numberOfLines={2}>{r.pickup_label} · {r.requested_for} · {r.seats > 1 ? tr("{n} seats", { n: r.seats }) : tr("1 seat")}</Label>
             </View>
             <Press onPress={() => act(r.id, () => acceptRide(r.id))} disabled={busy === r.id} style={{ paddingHorizontal: 14, height: 38, borderRadius: 12, backgroundColor: C.mint, justifyContent: "center", opacity: busy === r.id ? 0.6 : 1 }}>
-              <Body size={13} weight="bold" color="#fff">Accept</Body>
+              <Body size={13} weight="bold" color="#fff">{tr("Accept")}</Body>
             </Press>
           </Animated.View>
         ))}
@@ -293,7 +294,7 @@ export default function Rides() {
   if (!signedIn) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top + 60 }}>
-        <Empty icon="car-side" color={C.mint} title="Get a ride to church" body="Sign in to request a free ride from a volunteer driver, or to volunteer as a driver." action="Sign in" onAction={() => router.push("/auth")} />
+        <Empty icon="car-side" color={C.mint} title={tr("Get a ride to church")} body={tr("Sign in to request a free ride from a volunteer driver, or to volunteer as a driver.")} action={tr("Sign in")} onAction={() => router.push("/auth")} />
         <View style={{ position: "absolute", top: insets.top + 6, left: 16 }}><IconButton name="arrow-left" onPress={() => router.back()} /></View>
       </View>
     );
@@ -346,25 +347,25 @@ export default function Rides() {
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
           <IconButton name="arrow-left" onPress={() => router.back()} />
           <View style={{ flex: 1, alignItems: "center" }}>
-            <View style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 12, height: 36, justifyContent: "center" }}><Body size={15} weight="bold">Ride ministry</Body></View>
+            <View style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 12, height: 36, justifyContent: "center" }}><Body size={15} weight="bold">{tr("Ride ministry")}</Body></View>
           </View>
           <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.sun, paddingHorizontal: 12, height: 36, borderRadius: 12 }}>
             <LiveDot color={C.ink} size={6} />
-            <Body size={12} weight="bold">Live</Body>
+            <Body size={12} weight="bold">{tr("Live")}</Body>
           </View>
         </View>
-        <Segmented items={["I need a ride", "I'm driving"]} value={mode} onChange={setMode} />
+        <Segmented items={[tr("I need a ride"), tr("I'm driving")]} value={mode} onChange={setMode} />
         {mode === 0 && eta ? (
           <Animated.View entering={FadeInDown} style={{ alignSelf: "flex-start", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }}>
-            <Body size={12} color={C.muted}>Arriving in about</Body>
-            <Display size={28}>{eta} min</Display>
+            <Body size={12} color={C.muted}>{tr("Arriving in about")}</Body>
+            <Display size={28}>{eta} {tr("min")}</Display>
           </Animated.View>
         ) : null}
         {mode === 0 && locDenied && !ride ? (
           <Animated.View entering={FadeIn} style={{ backgroundColor: "#fff", borderRadius: 16, padding: 12, flexDirection: "row", alignItems: "center", gap: 10 }}>
             <Icon name="map-pin" size={18} />
-            <Body size={13.5} style={{ flex: 1 }}>Allow location so your driver can find you.</Body>
-            <Press onPress={() => Linking.openSettings()}><Body size={13.5} weight="bold" color={C.flame}>Settings</Body></Press>
+            <Body size={13.5} style={{ flex: 1 }}>{tr("Allow location so your driver can find you.")}</Body>
+            <Press onPress={() => Linking.openSettings()}><Body size={13.5} weight="bold" color={C.flame}>{tr("Settings")}</Body></Press>
           </Animated.View>
         ) : null}
       </View>

@@ -8,6 +8,7 @@ import { useAuth } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { leaderboard, listQuestions, myPoints, submitScore, Trivia as TriviaQ, VerseQ } from "@/lib/api";
 import { fmt } from "@/lib/time";
+import { t as tr } from "@/lib/i18n";
 
 const shuffle = <T,>(a: T[]) => [...a].sort(() => Math.random() - 0.5);
 
@@ -63,8 +64,8 @@ function VerseMatch({ items, onPoints, burst }: { items: VerseQ[]; onPoints: (n:
   return (
     <View style={card}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <View style={{ backgroundColor: C.violet, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Verse Match · {(vi % deck.length) + 1}/{deck.length}</Body></View>
-        <Body size={13} weight="semi">🔥 Streak {streak}</Body>
+        <View style={{ backgroundColor: C.violet, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">{tr("Verse Match ·")} {(vi % deck.length) + 1}/{deck.length}</Body></View>
+        <Body size={13} weight="semi">{tr("🔥 Streak")} {streak}</Body>
       </View>
       <View style={{ marginTop: 16 }}><Bar progress={((vi % deck.length) + filled / v.a.length) / deck.length} color={C.mint} height={8} delay={0} /></View>
       <Animated.View key={vi} entering={FadeIn.duration(500)}>
@@ -112,8 +113,8 @@ function Trivia({ items, onPoints, burst }: { items: TriviaQ[]; onPoints: (n: nu
   return (
     <View style={card}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <View style={{ backgroundColor: C.sky, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Trivia · {(qi % deck.length) + 1}/{deck.length}</Body></View>
-        <Body size={13} weight="semi">✓ {right} correct</Body>
+        <View style={{ backgroundColor: C.sky, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">{tr("Trivia ·")} {(qi % deck.length) + 1}/{deck.length}</Body></View>
+        <Body size={13} weight="semi">✓ {right} {tr("correct")}</Body>
       </View>
       <Animated.View key={qi} entering={FadeInDown.springify().damping(16)}>
         <Display size={26} style={{ marginTop: 20 }}>{q.q}</Display>
@@ -157,37 +158,37 @@ export default function Games() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.sun }}>
-      <BackHeader title="Bible games" right={<View style={{ backgroundColor: C.ink, paddingHorizontal: 12, height: 44, borderRadius: 14, justifyContent: "center" }}><Body size={13} weight="bold" color={C.sun}>{fmt(pts)} pts</Body></View>} />
+      <BackHeader title={tr("Bible games")} right={<View style={{ backgroundColor: C.ink, paddingHorizontal: 12, height: 44, borderRadius: 14, justifyContent: "center" }}><Body size={13} weight="bold" color={C.sun}>{fmt(pts)} {tr("pts")}</Body></View>} />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: 20, marginTop: 6 }}>
-          <Display size={34}>Play. Learn.{"\n"}Remember.</Display>
+          <Display size={34}>{tr("Play. Learn.")}{"\n"}{tr("Remember.")}</Display>
           <View pointerEvents="none" style={{ position: "absolute", right: 16, top: -6 }}>
             <Sticker top="Win" bottom="points" bg={C.flame} size={82} />
           </View>
         </View>
         <View style={{ marginHorizontal: 16, marginTop: 18 }}>
-          <Segmented items={["Verse Match", "Trivia"]} value={mode} onChange={setMode} />
+          <Segmented items={[tr("Verse Match"), tr("Trivia")]} value={mode} onChange={setMode} />
         </View>
         <Animated.View key={mode} entering={FadeInDown.springify().damping(18)} style={{ marginHorizontal: 16, marginTop: 14 }}>
           {mode === 0 ? (
-            <Async q={verses} empty={(d) => (d.length ? null : <View style={card}><Empty icon="book" title="No verses yet" body="The team will add Verse Match packs soon." /></View>)}>
+            <Async q={verses} empty={(d) => (d.length ? null : <View style={card}><Empty icon="book" title={tr("No verses yet")} body={tr("The team will add Verse Match packs soon.")} /></View>)}>
               {(d) => <VerseMatch items={d} onPoints={onPoints} burst={burst} />}
             </Async>
           ) : (
-            <Async q={trivia} empty={(d) => (d.length ? null : <View style={card}><Empty icon="help-circle" title="No questions yet" body="The team will add trivia packs soon." /></View>)}>
+            <Async q={trivia} empty={(d) => (d.length ? null : <View style={card}><Empty icon="help-circle" title={tr("No questions yet")} body={tr("The team will add trivia packs soon.")} /></View>)}>
               {(d) => <Trivia items={d} onPoints={onPoints} burst={burst} />}
             </Async>
           )}
-          {!signedIn ? <Label color={C.ink} style={{ textAlign: "center", marginTop: 10 }}>Playing as a guest. Sign in to save your points and join the leaderboard.</Label> : null}
+          {!signedIn ? <Label color={C.ink} style={{ textAlign: "center", marginTop: 10 }}>{tr("Playing as a guest. Sign in to save your points and join the leaderboard.")}</Label> : null}
         </Animated.View>
 
         {signedIn ? (
           <View style={[card, { marginHorizontal: 16, marginTop: 14, minHeight: 0, padding: 16 }]}>
             <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-              <Display size={20}>Leaderboard</Display>
-              <Label>This week · church-wide</Label>
+              <Display size={20}>{tr("Leaderboard")}</Display>
+              <Label>{tr("This week · church-wide")}</Label>
             </View>
-            {rows.length === 0 ? <Label style={{ paddingVertical: 12 }}>No scores yet this week. Be the first!</Label> : null}
+            {rows.length === 0 ? <Label style={{ paddingVertical: 12 }}>{tr("No scores yet this week. Be the first!")}</Label> : null}
             {rows.map((p, i) => {
               const me = p.user_id === session?.user.id;
               const color = COLORS[i % COLORS.length];
@@ -196,7 +197,7 @@ export default function Games() {
                   <Body weight="bold" color={i < 3 ? C.ink : C.muted} style={{ width: 20 }}>{i + 1}</Body>
                   <Avatar name={p.full_name || "?"} color={color} size={36} />
                   <View style={{ flex: 1 }}>
-                    <Body weight="semi" numberOfLines={1}>{me ? "You" : p.full_name || "Member"}</Body>
+                    <Body weight="semi" numberOfLines={1}>{me ? tr("You") : p.full_name || tr("Member")}</Body>
                     <Bar progress={p.points / max} color={color} height={6} delay={100} />
                   </View>
                   <Body weight="bold" style={{ width: 56, textAlign: "right" }}>{fmt(p.points)}</Body>

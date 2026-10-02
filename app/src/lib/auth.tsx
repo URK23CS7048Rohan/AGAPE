@@ -13,7 +13,7 @@ import { clearCache } from "./query";
 
 export type Role = "member" | "volunteer" | "staff" | "admin";
 export type Profile = { id: string; full_name: string | null; role: Role; created_at: string; car: string | null; avatar_url: string | null };
-type Settings = { faceId: boolean };
+type Settings = { faceId: boolean; language: string };
 
 type Auth = {
   ready: boolean;
@@ -47,7 +47,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<Session | null>(null);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [guest, setGuest] = useState(false);
-  const [settings, setSettings] = useState<Settings>({ faceId: false });
+  const [settings, setSettings] = useState<Settings>({ faceId: false, language: "en" });
 
   const loadProfile = useCallback(async (uid?: string) => {
     if (!uid) { setProfile(null); return; }
@@ -60,7 +60,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     let alive = true;
     (async () => {
       const [g, s] = await Promise.all([AsyncStorage.getItem(GUEST_KEY), AsyncStorage.getItem(SETTINGS_KEY)]).catch(() => [null, null]);
-      if (s) try { setSettings({ faceId: false, ...JSON.parse(s) }); } catch {}
+      if (s) try { setSettings({ faceId: false, language: "en", ...JSON.parse(s) }); } catch {}
       const { data } = await supabase.auth.getSession();
       if (!alive) return;
       setSession(data.session);

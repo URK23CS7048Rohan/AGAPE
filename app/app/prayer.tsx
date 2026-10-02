@@ -10,6 +10,7 @@ import { useQuery } from "@/lib/query";
 import { useSiteContent } from "@/lib/content";
 import { deletePrayer, fetchPrayers, markAnswered, postPrayer, Prayer, setPraying } from "@/lib/api";
 import { ago, fmt } from "@/lib/time";
+import { t as tr } from "@/lib/i18n";
 
 const COLORS = [C.rose, C.violet, C.mint, C.sky, C.orange, C.flame];
 
@@ -34,10 +35,10 @@ function PrayerCard({ p, i }: { p: Prayer; i: number }) {
     s.value = withSequence(withSpring(0.88, { damping: 10, stiffness: 400 }), withSpring(1, { damping: 8 }));
     try { await setPraying(p.id, now); } catch { setOn(!now); setCount((c) => c + (now ? -1 : 1)); }
   };
-  const manage = () => Alert.alert("Your prayer request", undefined, [
-    { text: p.answered ? "Mark as still praying" : "Mark as answered 🙏", onPress: () => markAnswered(p.id, !p.answered).catch((e) => Alert.alert("Couldn't update", e.message)) },
-    { text: "Delete", style: "destructive", onPress: () => deletePrayer(p.id).catch((e) => Alert.alert("Couldn't delete", e.message)) },
-    { text: "Cancel", style: "cancel" },
+  const manage = () => Alert.alert(tr("Your prayer request"), undefined, [
+    { text: p.answered ? "Mark as still praying" : "Mark as answered 🙏", onPress: () => markAnswered(p.id, !p.answered).catch((e) => Alert.alert(tr("Couldn't update"), e.message)) },
+    { text: tr("Delete"), style: "destructive", onPress: () => deletePrayer(p.id).catch((e) => Alert.alert(tr("Couldn't delete"), e.message)) },
+    { text: tr("Cancel"), style: "cancel" },
   ]);
   return (
     <Animated.View entering={FadeInDown.delay(Math.min(i, 6) * 60).springify().damping(16)} layout={LinearTransition.springify()} style={{ backgroundColor: p.answered ? C.sunSoft : "#fff", borderRadius: R.lg, padding: 16, borderWidth: 1.5, borderColor: p.answered ? C.sun : C.line }}>
@@ -50,7 +51,7 @@ function PrayerCard({ p, i }: { p: Prayer; i: number }) {
         {p.answered ? (
           <View style={{ flexDirection: "row", alignItems: "center", gap: 5, backgroundColor: C.ink, paddingHorizontal: 10, height: 26, borderRadius: 9 }}>
             <Icon name="star" size={12} color={C.sun} />
-            <Body size={11.5} weight="bold" color="#fff">Answered</Body>
+            <Body size={11.5} weight="bold" color="#fff">{tr("Answered")}</Body>
           </View>
         ) : null}
         {p.mine ? <Press onPress={manage} hitSlop={8}><Icon name="more-horizontal" size={20} color={C.muted} /></Press> : null}
@@ -87,7 +88,7 @@ export default function PrayerWall() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       setTimeout(() => setPosted(false), 2600);
     } catch (e: any) {
-      Alert.alert("Couldn't post", e.message);
+      Alert.alert(tr("Couldn't post"), e.message);
     } finally {
       setPosting(false);
     }
@@ -95,44 +96,44 @@ export default function PrayerWall() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <BackHeader title="Prayer wall" />
+      <BackHeader title={tr("Prayer wall")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 12 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} refreshControl={<RefreshControl refreshing={false} onRefresh={() => list.reload()} />}>
         <View style={{ backgroundColor: C.rose, borderRadius: R.xl, padding: 18, overflow: "hidden" }}>
           <View style={{ position: "absolute", right: -14, top: -14 }}>
             <Starburst size={110} color={C.ink} spikes={10} depth={0.7} spin><Icon name="hands-pray" size={34} color={C.rose} /></Starburst>
           </View>
-          <Display size={30} style={{ maxWidth: "72%" }}>You don't have to carry it alone.</Display>
-          {stats.prayers ? <Label color={C.ink} style={{ marginTop: 6 }}>{fmt(stats.prayers)} prayers prayed this year</Label> : null}
+          <Display size={30} style={{ maxWidth: "72%" }}>{tr("You don't have to carry it alone.")}</Display>
+          {stats.prayers ? <Label color={C.ink} style={{ marginTop: 6 }}>{fmt(stats.prayers)} {tr("prayers prayed this year")}</Label> : null}
           {signedIn ? (
             <View style={{ backgroundColor: "#fff", borderRadius: 18, padding: 14, marginTop: 16 }}>
-              <TextInput value={text} onChangeText={setText} multiline maxLength={500} placeholder="What can we pray with you about?" placeholderTextColor="rgba(20,20,20,0.4)" style={{ fontFamily: F.sans, fontSize: 16, color: C.ink, minHeight: 70, textAlignVertical: "top" }} />
+              <TextInput value={text} onChangeText={setText} multiline maxLength={500} placeholder={tr("What can we pray with you about?")} placeholderTextColor="rgba(20,20,20,0.4)" style={{ fontFamily: F.sans, fontSize: 16, color: C.ink, minHeight: 70, textAlignVertical: "top" }} />
               <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 10 }}>
                 <View style={{ flexDirection: "row", alignItems: "center", gap: 8 }}>
                   <Switch value={anon} onValueChange={setAnon} trackColor={{ true: C.mint, false: "#DCD8D0" }} thumbColor="#fff" />
-                  <Body size={13.5} color={C.muted}>Post anonymously</Body>
+                  <Body size={13.5} color={C.muted}>{tr("Post anonymously")}</Body>
                 </View>
-                <Button label={posting ? "Posting…" : "Share"} icon="send" trail={null} variant="ink" small onPress={post} disabled={!text.trim() || posting} />
+                <Button label={posting ? tr("Posting…") : tr("Share")} icon="send" trail={null} variant="ink" small onPress={post} disabled={!text.trim() || posting} />
               </View>
             </View>
           ) : (
-            <Button label="Sign in to share and pray" icon="log-in" variant="ink" small onPress={() => router.push("/auth")} style={{ marginTop: 16 }} />
+            <Button label={tr("Sign in to share and pray")} icon="log-in" variant="ink" small onPress={() => router.push("/auth")} style={{ marginTop: 16 }} />
           )}
         </View>
         {posted ? (
           <Animated.View entering={ZoomIn.springify()} style={{ flexDirection: "row", alignItems: "center", gap: 10, backgroundColor: C.mint, borderRadius: 16, paddingHorizontal: 16, height: 50 }}>
             <Icon name="check-circle" size={18} color="#fff" />
-            <Body weight="semi" color="#fff">Posted. The family is praying with you.</Body>
+            <Body weight="semi" color="#fff">{tr("Posted. The family is praying with you.")}</Body>
           </Animated.View>
         ) : null}
         {signedIn ? (
           <>
-            <Display size={22} style={{ marginTop: 10, marginBottom: 2, marginLeft: 4 }}>Pray with others</Display>
-            <Async q={list} empty={(d) => (d.length ? null : <Empty icon="heart" color={C.rose} title="No requests yet" body="Be the first to share one." />)}>
+            <Display size={22} style={{ marginTop: 10, marginBottom: 2, marginLeft: 4 }}>{tr("Pray with others")}</Display>
+            <Async q={list} empty={(d) => (d.length ? null : <Empty icon="heart" color={C.rose} title={tr("No requests yet")} body={tr("Be the first to share one.")} />)}>
               {(d) => d.map((p, i) => <PrayerCard key={p.id} p={p} i={i} />)}
             </Async>
           </>
         ) : (
-          <Empty icon="lock" color={C.rose} title="The wall is for members" body="Prayer requests are only visible to signed-in members of the church family." />
+          <Empty icon="lock" color={C.rose} title={tr("The wall is for members")} body={tr("Prayer requests are only visible to signed-in members of the church family.")} />
         )}
       </ScrollView>
     </KeyboardAvoidingView>

@@ -9,6 +9,7 @@ import { useQuery } from "@/lib/query";
 import { listNotes, markNotesRead } from "@/lib/life";
 import { listAnnouncements } from "@/lib/api";
 import { ago } from "@/lib/time";
+import { t } from "@/lib/i18n";
 
 const ICON: Record<string, string> = { testimony: "star", meeting: "home", serve: "heart", announcement: "volume-2" };
 
@@ -23,9 +24,9 @@ export default function Notifications() {
   ].sort((a, b) => b.at.localeCompare(a.at));
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title="Notifications" />
+      <BackHeader title={t("Notifications")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 8 }} refreshControl={<RefreshControl refreshing={false} onRefresh={() => { notes.reload(); news.reload(); }} />}>
-        <Async q={news} empty={() => (items.length ? null : <Empty icon="bell" title="You're all caught up" body="Church news and updates about your meetings, serving and testimonies show up here." />)}>
+        <Async q={news} empty={() => (items.length ? null : <Empty icon="bell" title={t("You're all caught up")} body={t("Church news and updates about your meetings, serving and testimonies show up here.")} />)}>
           {() => items.map((n, i) => (
             <Animated.View key={n.id} entering={FadeInDown.delay(Math.min(i, 10) * 30)}>
               <Press onPress={() => n.route && router.push(n.route as any)} scaleTo={0.98} style={{ flexDirection: "row", gap: 12, backgroundColor: n.unread ? C.sunSoft : "#fff", borderRadius: R.lg, padding: 14, borderWidth: 1.5, borderColor: C.line }}>

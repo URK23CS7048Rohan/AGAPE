@@ -6,6 +6,7 @@ import { C, F, R } from "@/theme";
 import { BackHeader, Body, Display, Icon, IconButton, Press, Starburst, TypingDots } from "@/components/ui";
 import { askAgape, ChatMsg } from "@/lib/api";
 import { useNeedsAccount } from "@/lib/auth";
+import { t as tr } from "@/lib/i18n";
 
 const SUGGEST = ["What does Romans 8:28 mean?", "Give me a devotional on anxiety", "Where's the verse about “be still”?", "Summarize Sunday's sermon"];
 
@@ -54,7 +55,7 @@ export default function Assistant() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <BackHeader title="Ask Agape" right={<Orb size={44} />} />
+      <BackHeader title={tr("Ask Agape")} right={<Orb size={44} />} />
       <FlatList
         ref={list}
         data={msgs}
@@ -65,8 +66,8 @@ export default function Assistant() {
         ListEmptyComponent={
           <Animated.View entering={FadeInDown.duration(600)} style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 30 }}>
             <Orb size={120} />
-            <Display size={34} center style={{ marginTop: 22 }}>Ask anything.{"\n"}At 2 AM too.</Display>
-            <Body center color={C.muted} style={{ marginTop: 10, maxWidth: 300 }}>Bible questions, verse lookups, devotionals, and anything from this week's sermon.</Body>
+            <Display size={34} center style={{ marginTop: 22 }}>{tr("Ask anything.")}{"\n"}{tr("At 2 AM too.")}</Display>
+            <Body center color={C.muted} style={{ marginTop: 10, maxWidth: 300 }}>{tr("Bible questions, verse lookups, devotionals, and anything from this week's sermon.")}</Body>
           </Animated.View>
         }
         renderItem={({ item: m }) => {
@@ -82,15 +83,15 @@ export default function Assistant() {
       />
       <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 12, gap: 8, paddingBottom: 10 }} style={{ flexGrow: 0 }}>
         {SUGGEST.map((s) => (
-          <Press key={s} disabled={busy} onPress={() => ask(s)} style={{ paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.line, justifyContent: "center", opacity: busy ? 0.5 : 1 }}>
-            <Body size={13.5} weight="medium">{s}</Body>
+          <Press key={s} disabled={busy} onPress={() => ask(tr(s))} style={{ paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.line, justifyContent: "center", opacity: busy ? 0.5 : 1 }}>
+            <Body size={13.5} weight="medium">{tr(s)}</Body>
           </Press>
         ))}
       </ScrollView>
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingBottom: insets.bottom + 10 }}>
         <View style={{ flex: 1, minHeight: 52, borderRadius: R.pill, backgroundColor: "#ECE9E3", paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 10 }}>
           <Icon name="message-square" size={17} color={C.muted} />
-          <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => ask(draft)} returnKeyType="send" placeholder="Type something" placeholderTextColor="rgba(20,20,20,0.45)" style={{ flex: 1, fontFamily: F.sans, fontSize: 16, color: C.ink, paddingVertical: 12 }} />
+          <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => ask(draft)} returnKeyType="send" placeholder={tr("Type something")} placeholderTextColor="rgba(20,20,20,0.45)" style={{ flex: 1, fontFamily: F.sans, fontSize: 16, color: C.ink, paddingVertical: 12 }} />
         </View>
         <IconButton name="send" size={52} bg={C.ink} color="#fff" onPress={() => ask(draft)} />
       </View>

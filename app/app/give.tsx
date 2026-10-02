@@ -6,6 +6,7 @@ import { C, F, R } from "@/theme";
 import { BackHeader, Bar, Body, Button, Display, Icon, Label, Press, Segmented, Sticker } from "@/components/ui";
 import { useSiteContent } from "@/lib/content";
 import { fmt } from "@/lib/time";
+import { t as tr } from "@/lib/i18n";
 
 const AMOUNTS = [5, 10, 25, 50, 100];
 const BASE_FUNDS = ["Tithe", "Offering"];
@@ -24,23 +25,23 @@ export default function Give() {
     if (!url) return;
     const sep = url.includes("?") ? "&" : "?";
     const full = `${url}${sep}amount=${encodeURIComponent(amount)}&fund=${encodeURIComponent(fund)}&frequency=${freq ? "monthly" : "once"}`;
-    Linking.openURL(full).catch(() => Alert.alert("Couldn't open the giving page", url));
+    Linking.openURL(full).catch(() => Alert.alert(tr("Couldn't open the giving page"), url));
   };
   const contact = church.whatsapp || church.phone || church.email;
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <BackHeader title="Give" />
+      <BackHeader title={tr("Give")} />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: 20, marginTop: 4 }}>
-          <Display size={32}>Give where it moves.</Display>
-          <Label style={{ marginTop: 2 }}>Choose an amount and where it goes. You'll finish on the church's secure giving page.</Label>
+          <Display size={32}>{tr("Give where it moves.")}</Display>
+          <Label style={{ marginTop: 2 }}>{tr("Choose an amount and where it goes. You'll finish on the church's secure giving page.")}</Label>
         </View>
 
         <Animated.View entering={FadeInDown.delay(80)} style={{ margin: 16, marginTop: 18 }}>
           <View style={{ backgroundColor: C.orange, borderRadius: R.xl, padding: 16 }}>
-            <Segmented items={["One-time", "Monthly"]} value={freq} onChange={setFreq} />
-            <Body size={13} weight="semi" style={{ marginTop: 18, marginBottom: 8 }}>Amount</Body>
+            <Segmented items={[tr("One-time"), tr("Monthly")]} value={freq} onChange={setFreq} />
+            <Body size={13} weight="semi" style={{ marginTop: 18, marginBottom: 8 }}>{tr("Amount")}</Body>
             <View style={{ flexDirection: "row", gap: 6 }}>
               {AMOUNTS.map((a) => {
                 const on = amount === String(a);
@@ -55,7 +56,7 @@ export default function Give() {
               <View style={{ backgroundColor: C.sunSoft, borderRadius: 8, paddingHorizontal: 8, height: 26, justifyContent: "center" }}><Body size={12.5} weight="bold">{currency}</Body></View>
               <TextInput value={amount} onChangeText={(t) => setAmount(t.replace(/[^0-9.]/g, ""))} keyboardType="decimal-pad" style={{ flex: 1, fontFamily: F.display, fontSize: 30, color: C.ink }} />
             </View>
-            <Body size={13} weight="semi" style={{ marginTop: 18, marginBottom: 8 }}>Give to</Body>
+            <Body size={13} weight="semi" style={{ marginTop: 18, marginBottom: 8 }}>{tr("Give to")}</Body>
             <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 6 }}>
               {funds.map((f) => (
                 <Press key={f} onPress={() => setFund(f)} style={{ paddingHorizontal: 13, height: 36, borderRadius: 12, backgroundColor: fund === f ? C.ink : "rgba(255,255,255,0.7)", justifyContent: "center" }}>
@@ -68,13 +69,13 @@ export default function Give() {
                 <Button label={`Give ${currency} ${amount || "—"}${freq ? " / month" : ""}`} icon="heart" variant="ink" block onPress={give} style={{ marginTop: 18 }} disabled={!parseFloat(amount)} />
                 <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 6, marginTop: 10 }}>
                   <Icon name="shield" size={13} />
-                  <Body size={12}>Opens the church's secure giving page</Body>
+                  <Body size={12}>{tr("Opens the church's secure giving page")}</Body>
                 </View>
               </>
             ) : (
               <View style={{ marginTop: 18, backgroundColor: "rgba(255,255,255,0.75)", borderRadius: 16, padding: 14, gap: 4 }}>
-                <Body weight="semi">Online giving is coming soon</Body>
-                <Body size={13.5}>Until then, give at any service{contact ? ` or contact the church office (${contact})` : ""}. Thank you for your generosity!</Body>
+                <Body weight="semi">{tr("Online giving is coming soon")}</Body>
+                <Body size={13.5}>{tr("Until then, give at any service")}{contact ? ` or contact the church office (${contact})` : ""}{tr(". Thank you for your generosity!")}</Body>
               </View>
             )}
           </View>
@@ -85,7 +86,7 @@ export default function Give() {
 
         {campaigns.length ? (
           <>
-            <Display size={22} style={{ marginHorizontal: 20, marginTop: 10, marginBottom: 12 }}>Campaigns</Display>
+            <Display size={22} style={{ marginHorizontal: 20, marginTop: 10, marginBottom: 12 }}>{tr("Campaigns")}</Display>
             <View style={{ paddingHorizontal: 16, gap: 12 }}>
               {campaigns.map((c, i) => (
                 <Animated.View key={c.id} entering={FadeInDown.delay(150 + i * 70)}>
@@ -99,7 +100,7 @@ export default function Give() {
                       {c.goal ? (
                         <>
                           <View style={{ marginTop: 10 }}><Bar progress={Math.min(1, c.raised / c.goal)} color={c.color} height={8} delay={300 + i * 150} /></View>
-                          <Body size={12.5} style={{ marginTop: 6 }}><Body size={12.5} weight="bold">{currency} {fmt(c.raised)}</Body> of {fmt(c.goal)} · {Math.round((c.raised / c.goal) * 100)}%</Body>
+                          <Body size={12.5} style={{ marginTop: 6 }}><Body size={12.5} weight="bold">{currency} {fmt(c.raised)}</Body> {tr("of {b}", { b: fmt(c.goal) })} · {Math.round((c.raised / c.goal) * 100)}%</Body>
                         </>
                       ) : null}
                     </View>

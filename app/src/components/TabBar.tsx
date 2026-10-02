@@ -52,7 +52,7 @@ export function TabBar({ state, navigation }: any) {
 }
 
 const s = StyleSheet.create({
-  bar: { height: 66, borderRadius: 33, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
+  bar: { direction: "ltr", height: 66, borderRadius: 33, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", paddingHorizontal: 8, shadowColor: "#000", shadowOpacity: 0.18, shadowRadius: 16, shadowOffset: { width: 0, height: 8 }, elevation: 10 },
   indicator: { position: "absolute", left: 0, top: 8, width: IND, height: IND, borderRadius: IND / 2, backgroundColor: "#fff" },
   item: { flex: 1, height: 66, alignItems: "center", justifyContent: "center" },
 });

@@ -11,6 +11,7 @@ import { C, fontMap } from "@/theme";
 import { AuthProvider, useAuth } from "@/lib/auth";
 import { isConfigured } from "@/lib/supabase";
 import { Body, Button, Display, Empty } from "@/components/ui";
+import { I18nProvider, normalizeLang, t } from "@/lib/i18n";
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
 
@@ -18,7 +19,7 @@ SplashScreen.preventAutoHideAsync().catch(() => {});
 function NotConnected() {
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, justifyContent: "center", padding: 24 }}>
-      <Empty icon="cloud-off" color={C.sun} title="This build isn't connected yet" body="Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (in app/.env, or as GitHub secrets for the APK build) and build again." />
+      <Empty icon="cloud-off" color={C.sun} title={t("This build isn't connected yet")} body={t("Set EXPO_PUBLIC_SUPABASE_URL and EXPO_PUBLIC_SUPABASE_ANON_KEY (in app/.env, or as GitHub secrets for the APK build) and build again.")} />
     </View>
   );
 }
@@ -45,23 +46,26 @@ function AppLock({ children }: { children: React.ReactNode }) {
   if (!locked) return <>{children}</>;
   return (
     <View style={{ flex: 1, backgroundColor: C.bg, alignItems: "center", justifyContent: "center", padding: 24, gap: 14 }}>
-      <Display size={28} center>Agape is locked</Display>
-      <Body center color={C.muted}>Use Face ID or your fingerprint to continue.</Body>
-      <Button label="Unlock" icon="unlock" trail={null} variant="ink" onPress={unlock} style={{ alignSelf: "center" }} />
+      <Display size={28} center>{t("Agape is locked")}</Display>
+      <Body center color={C.muted}>{t("Use Face ID or your fingerprint to continue.")}</Body>
+      <Button label={t("Unlock")} icon="unlock" trail={null} variant="ink" onPress={unlock} style={{ alignSelf: "center" }} />
     </View>
   );
 }
 
 function Root() {
-  const { ready } = useAuth();
+  const { ready, settings } = useAuth();
+  const lang = normalizeLang(settings.language);
   const [loaded] = useFonts(fontMap);
   useEffect(() => {
     if (loaded && ready) SplashScreen.hideAsync().catch(() => {});
   }, [loaded, ready]);
   if (!loaded || !ready) return null;
   if (!isConfigured) return <NotConnected />;
+  // keyed by language so every screen re-renders its t() strings when the member switches
   return (
-    <AppLock>
+    <I18nProvider language={lang}>
+    <AppLock key={lang}>
       <StatusBar style="dark" />
       <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: "slide_from_right" }}>
         <Stack.Screen name="(tabs)" />
@@ -72,6 +76,7 @@ function Root() {
         <Stack.Screen name="games" options={{ contentStyle: { backgroundColor: C.sun } }} />
       </Stack>
     </AppLock>
+    </I18nProvider>
   );
 }
 

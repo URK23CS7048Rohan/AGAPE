@@ -3,12 +3,13 @@
  * Kids / Teens / Squad, serving, check-in, next steps, set lists and notifications.
  * Tables and functions: backend/supabase/migrations/20261004000000_church_life.sql
  */
+import { dateLabel, timeLabel } from "./i18n";
 import { supabase } from "./supabase";
 import { invalidate } from "./query";
 import { C } from "@/theme";
 
 export const KIND_COLORS: Record<string, string> = { prayer: C.rose, "bible study": C.violet, worship: C.sun, fellowship: C.mint };
-export const when = (iso: string) => new Date(iso).toLocaleString(undefined, { weekday: "short", day: "numeric", month: "short", hour: "numeric", minute: "2-digit" });
+export const when = (iso: string) => `${dateLabel(new Date(iso))} · ${timeLabel(new Date(iso))}`;
 
 function ok<T>(r: { data: T; error: any }): T {
   if (r.error) throw new Error(r.error.message || "Something went wrong");

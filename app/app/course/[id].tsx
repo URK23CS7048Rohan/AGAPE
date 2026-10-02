@@ -11,6 +11,7 @@ import { useAuth, useNeedsAccount } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { imageSource } from "@/lib/content";
 import { completedLessons, completeLesson, Lesson, listCourses } from "@/lib/api";
+import { t } from "@/lib/i18n";
 
 const KIND_ICON = { video: "play", pdf: "file-text", quiz: "help-circle" } as const;
 
@@ -29,7 +30,7 @@ export default function CourseScreen() {
   if (!c) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top + 60 }}>
-        {courses.loading ? <Loading label="Loading course…" /> : courses.error ? <ErrorBox error={courses.error} onRetry={courses.reload} /> : <Empty icon="book" title="This course isn't available" action="Back" onAction={() => router.back()} />}
+        {courses.loading ? <Loading label={t("Loading course…")} /> : courses.error ? <ErrorBox error={courses.error} onRetry={courses.reload} /> : <Empty icon="book" title={t("This course isn't available")} action={t("Back")} onAction={() => router.back()} />}
         <View style={{ position: "absolute", top: insets.top + 6, left: 16 }}><IconButton name="arrow-left" onPress={() => router.back()} /></View>
       </View>
     );
@@ -53,7 +54,7 @@ export default function CourseScreen() {
       confetti.current?.burst(undefined, 300, done + 1 >= c.lessons.length ? 90 : 36);
       setOpen(null);
     } catch (e: any) {
-      Alert.alert("Couldn't save", e.message);
+      Alert.alert(t("Couldn't save"), e.message);
     } finally {
       setBusy(false);
     }
@@ -87,8 +88,8 @@ export default function CourseScreen() {
         <View style={{ paddingHorizontal: 16 }}>
           {c.description ? <Body size={15.5} color={C.muted} style={{ marginTop: 18, lineHeight: 23, paddingHorizontal: 4 }}>{c.description}</Body> : null}
 
-          <Display size={22} style={{ marginTop: 24, marginBottom: 12, paddingHorizontal: 4 }}>Lessons</Display>
-          {c.lessons.length === 0 ? <Empty icon="list" title="Lessons coming soon" /> : null}
+          <Display size={22} style={{ marginTop: 24, marginBottom: 12, paddingHorizontal: 4 }}>{t("Lessons")}</Display>
+          {c.lessons.length === 0 ? <Empty icon="list" title={t("Lessons coming soon")} /> : null}
           <View style={{ gap: 8 }}>
             {c.lessons.map((l, i) => {
               const d = isDone(l);
@@ -115,8 +116,8 @@ export default function CourseScreen() {
                     {expanded ? (
                       <Animated.View entering={FadeIn} style={{ marginTop: 12, gap: 10 }}>
                         {l.body ? <Body size={15} color={now ? fg : C.ink} style={{ lineHeight: 22 }}>{l.body}</Body> : null}
-                        {l.url ? <Button label={l.kind === "pdf" ? "Open the study guide" : l.kind === "video" ? "Watch the lesson" : "Open"} icon={KIND_ICON[l.kind] ?? "external-link"} variant="white" small block onPress={() => Linking.openURL(l.url!)} /> : null}
-                        {!d ? <Button label={busy ? "Saving…" : "Mark as complete"} icon="check" trail={null} variant="ink" small block disabled={busy} onPress={() => complete(l)} /> : <Label color={now ? fg : C.muted}>Completed ✓</Label>}
+                        {l.url ? <Button label={l.kind === "pdf" ? t("Open the study guide") : l.kind === "video" ? t("Watch the lesson") : t("Open")} icon={KIND_ICON[l.kind] ?? "external-link"} variant="white" small block onPress={() => Linking.openURL(l.url!)} /> : null}
+                        {!d ? <Button label={busy ? t("Saving…") : t("Mark as complete")} icon="check" trail={null} variant="ink" small block disabled={busy} onPress={() => complete(l)} /> : <Label color={now ? fg : C.muted}>{t("Completed ✓")}</Label>}
                       </Animated.View>
                     ) : null}
                   </Press>
@@ -126,8 +127,8 @@ export default function CourseScreen() {
           </View>
           {finished ? (
             <Animated.View entering={FadeInDown} style={{ marginTop: 18, padding: 18, borderRadius: R.lg, backgroundColor: C.sun }}>
-              <Display size={24}>Course complete! 🎉</Display>
-              <Body style={{ marginTop: 4 }}>Well done. Speak to the Agape Institute team about your certificate.</Body>
+              <Display size={24}>{t("Course complete! 🎉")}</Display>
+              <Body style={{ marginTop: 4 }}>{t("Well done. Speak to the Agape Institute team about your certificate.")}</Body>
             </Animated.View>
           ) : null}
         </View>
@@ -141,7 +142,7 @@ export default function CourseScreen() {
           {signedIn ? (
             <Button label={`${done === 0 ? "Start" : "Continue"}: ${c.lessons[Math.max(0, nextIdx)].title}`} icon="play" variant="ink" block onPress={() => setOpen(c.lessons[Math.max(0, nextIdx)].id)} />
           ) : (
-            <Button label="Sign in to take this course" icon="log-in" variant="ink" block onPress={() => router.push("/auth")} />
+            <Button label={t("Sign in to take this course")} icon="log-in" variant="ink" block onPress={() => router.push("/auth")} />
           )}
         </View>
       ) : null}

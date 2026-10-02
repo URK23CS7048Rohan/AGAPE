@@ -13,6 +13,8 @@ import { useAuth, useNeedsAccount } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { countView, getNote, getVideo, listVideos, liveChat, LiveLine, postLiveChat, savedVideoIds, saveNote, setSaved, subscribeLiveChat, videoThumb } from "@/lib/api";
 import { clock, duration, fmt } from "@/lib/time";
+import { t as tr } from "@/lib/i18n";
+import { dateLabel } from "@/lib/i18n";
 
 const HERO = 380;
 
@@ -26,7 +28,7 @@ function LiveChat({ videoId }: { videoId: string }) {
     load();
     return subscribeLiveChat(videoId, load);
   }, [videoId, signedIn]);
-  if (!signedIn) return <Empty icon="message-circle" title="Join the live chat" body="Sign in to chat with everyone watching." action="Sign in" onAction={() => router.push("/auth")} />;
+  if (!signedIn) return <Empty icon="message-circle" title={tr("Join the live chat")} body={tr("Sign in to chat with everyone watching.")} action={tr("Sign in")} onAction={() => router.push("/auth")} />;
   const send = async () => {
     const t = draft.trim();
     if (!t) return;
@@ -35,7 +37,7 @@ function LiveChat({ videoId }: { videoId: string }) {
   };
   return (
     <View style={{ marginTop: 18, backgroundColor: C.ink, borderRadius: R.lg, padding: 14 }}>
-      {lines === null ? <Loading dark /> : lines.length === 0 ? <Body color="rgba(255,255,255,0.6)" center style={{ paddingVertical: 16 }}>Say hello to everyone watching 👋</Body> : null}
+      {lines === null ? <Loading dark /> : lines.length === 0 ? <Body color="rgba(255,255,255,0.6)" center style={{ paddingVertical: 16 }}>{tr("Say hello to everyone watching 👋")}</Body> : null}
       {(lines ?? []).slice(-30).map((c) => (
         <Animated.View key={c.id} entering={FadeInDown.springify().damping(16)} style={{ flexDirection: "row", gap: 10, paddingVertical: 7 }}>
           <Avatar name={c.name} color={C.violet} size={28} />
@@ -46,7 +48,7 @@ function LiveChat({ videoId }: { videoId: string }) {
         </Animated.View>
       ))}
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 10, backgroundColor: "rgba(255,255,255,0.08)", borderRadius: R.pill, paddingLeft: 16, paddingRight: 5, height: 48 }}>
-        <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={send} maxLength={300} placeholder="Say something kind…" placeholderTextColor="rgba(255,255,255,0.45)" style={{ flex: 1, color: "#fff", fontFamily: F.sans, fontSize: 15 }} />
+        <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={send} maxLength={300} placeholder={tr("Say something kind…")} placeholderTextColor="rgba(255,255,255,0.45)" style={{ flex: 1, color: "#fff", fontFamily: F.sans, fontSize: 15 }} />
         <IconButton name="send" size={38} bg={C.sun} color={C.ink} onPress={send} />
       </View>
     </View>
@@ -62,13 +64,13 @@ function Notes({ videoId }: { videoId: string }) {
     if (signedIn) getNote(videoId).then(setText).catch(() => setText(""));
     return () => clearTimeout(timer.current);
   }, [videoId, signedIn]);
-  if (!signedIn) return <Empty icon="edit-3" title="Take notes as you listen" body="Sign in and your notes are saved to your account, on every device." action="Sign in" onAction={() => router.push("/auth")} />;
+  if (!signedIn) return <Empty icon="edit-3" title={tr("Take notes as you listen")} body={tr("Sign in and your notes are saved to your account, on every device.")} action={tr("Sign in")} onAction={() => router.push("/auth")} />;
   if (text === null) return <Loading />;
   return (
     <View style={{ marginTop: 18, backgroundColor: C.sunSoft, borderRadius: R.lg, padding: 16, minHeight: 200 }}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-        <Body size={13} weight="semi">My notes</Body>
-        <Label>{state === "saving" ? "Saving…" : state === "saved" ? "Saved" : state === "error" ? "Not saved, check connection" : "Syncs to your account"}</Label>
+        <Body size={13} weight="semi">{tr("My notes")}</Body>
+        <Label>{state === "saving" ? tr("Saving…") : state === "saved" ? tr("Saved") : state === "error" ? tr("Not saved, check connection") : tr("Syncs to your account")}</Label>
       </View>
       <TextInput
         multiline
@@ -79,7 +81,7 @@ function Notes({ videoId }: { videoId: string }) {
           clearTimeout(timer.current);
           timer.current = setTimeout(() => saveNote(videoId, t).then(() => setState("saved")).catch(() => setState("error")), 800);
         }}
-        placeholder="Tap to start writing…"
+        placeholder={tr("Tap to start writing…")}
         placeholderTextColor="rgba(20,20,20,0.35)"
         style={{ fontFamily: F.sans, fontSize: 16, lineHeight: 24, color: C.ink, minHeight: 150, textAlignVertical: "top" }}
       />
@@ -113,7 +115,7 @@ export default function SermonScreen() {
   if (!isChannel && !m) {
     return (
       <View style={{ flex: 1, backgroundColor: C.bg, paddingTop: insets.top + 60 }}>
-        {video.loading ? <Loading label="Loading sermon…" /> : video.error ? <ErrorBox error={video.error} onRetry={video.reload} /> : <Empty icon="video-off" title="This sermon isn't available" body="It may have been removed." action="Back" onAction={() => router.back()} />}
+        {video.loading ? <Loading label={tr("Loading sermon…")} /> : video.error ? <ErrorBox error={video.error} onRetry={video.reload} /> : <Empty icon="video-off" title={tr("This sermon isn't available")} body={tr("It may have been removed.")} action={tr("Back")} onAction={() => router.back()} />}
         <View style={{ position: "absolute", top: insets.top + 6, left: 16 }}><IconButton name="arrow-left" onPress={() => router.back()} /></View>
       </View>
     );
@@ -176,13 +178,13 @@ export default function SermonScreen() {
 
         <View style={{ paddingHorizontal: 20, marginTop: 20 }}>
           <Animated.View entering={FadeInDown.delay(80)}>
-            <Label>{[m?.series?.title, m?.published_at ? new Date(m.published_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" }) : null, duration(m?.duration_sec)].filter(Boolean).join(" · ") || church.name}</Label>
+            <Label>{[m?.series?.title, m?.published_at ? dateLabel(new Date(m.published_at), { day: "numeric", month: "short", year: "numeric" }) : null, duration(m?.duration_sec)].filter(Boolean).join(" · ") || church.name}</Label>
             <Display size={30} style={{ marginTop: 4 }}>{title}</Display>
             {m ? (
               <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 12 }}>
                 <Avatar name={(m.speaker || church.short || "Agape").replace("Ps. ", "")} color={C.sun} size={34} />
                 <Body size={14} weight="semi" numberOfLines={1} style={{ flexShrink: 1 }}>{m.speaker || church.name}</Body>
-                <Body size={13} color={C.muted}>· {fmt(m.views)} views</Body>
+                <Body size={13} color={C.muted}>· {fmt(m.views)} {tr("views")}</Body>
               </View>
             ) : null}
           </Animated.View>
@@ -190,16 +192,16 @@ export default function SermonScreen() {
           <Animated.View entering={FadeInDown.delay(160)} style={{ flexDirection: "row", gap: 10, marginTop: 20 }}>
             <Press onPress={play} style={{ flex: 1, height: 54, borderRadius: 18, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 10 }}>
               <Icon name="play" size={18} color="#fff" />
-              <Body weight="semi" color="#fff">{live ? "Watch live" : "Play message"}</Body>
+              <Body weight="semi" color="#fff">{live ? tr("Watch live") : tr("Play message")}</Body>
             </Press>
             {m ? <IconButton name="bookmark" size={54} bg={isSaved ? C.sun : "#fff"} border={isSaved ? C.sun : C.line} onPress={toggleSave} /> : null}
             <IconButton name="share-2" size={54} border={C.line} onPress={() => Share.share({ message: `${title} — ${church.name}\n${shareUrl}` })} />
           </Animated.View>
           {live && !m?.youtube_id ? (
             <View style={{ flexDirection: "row", gap: 8, marginTop: 12, flexWrap: "wrap" }}>
-              <Press onPress={() => { setLiveMode(true); play(); }} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: C.red, justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">Live stream</Body></Press>
-              <Press onPress={() => { setLiveMode(false); play(); }} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.line, justifyContent: "center" }}><Body size={13} weight="semi">Latest uploads</Body></Press>
-              {church.youtube ? <Press onPress={() => Linking.openURL(church.youtube)} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: C.ink, justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">YouTube ↗</Body></Press> : null}
+              <Press onPress={() => { setLiveMode(true); play(); }} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: C.red, justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">{tr("Live stream")}</Body></Press>
+              <Press onPress={() => { setLiveMode(false); play(); }} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.line, justifyContent: "center" }}><Body size={13} weight="semi">{tr("Latest uploads")}</Body></Press>
+              {church.youtube ? <Press onPress={() => Linking.openURL(church.youtube)} style={{ paddingHorizontal: 14, height: 36, borderRadius: 12, backgroundColor: C.ink, justifyContent: "center" }}><Body size={13} weight="semi" color="#fff">{tr("YouTube ↗")}</Body></Press> : null}
             </View>
           ) : null}
 
@@ -209,22 +211,22 @@ export default function SermonScreen() {
 
           {tab === 0 ? (
             <Animated.View entering={FadeIn} style={{ marginTop: 18 }}>
-              <Body size={16} style={{ lineHeight: 25 }}>{m?.description || (isChannel ? "Watch our services live when we're streaming, or catch up on the latest messages from our YouTube channel." : "No description yet.")}</Body>
+              <Body size={16} style={{ lineHeight: 25 }}>{m?.description || (isChannel ? tr("Watch our services live when we're streaming, or catch up on the latest messages from our YouTube channel.") : tr("No description yet."))}</Body>
               <Press onPress={() => router.push("/assistant")} style={{ marginTop: 18, padding: 16, borderRadius: R.lg, backgroundColor: C.sky, flexDirection: "row", alignItems: "center", gap: 12 }}>
                 <Icon name="creation" size={22} />
-                <Body weight="semi" style={{ flex: 1 }}>Ask Agape about this sermon</Body>
+                <Body weight="semi" style={{ flex: 1 }}>{tr("Ask Agape about this sermon")}</Body>
                 <Icon name="arrow-up-right" size={18} />
               </Press>
             </Animated.View>
           ) : null}
 
-          {tab === 1 ? (m ? <Notes videoId={m.id} /> : <Empty icon="edit-3" title="Notes are for sermons" body="Open a sermon from the library to take notes on it." />) : null}
+          {tab === 1 ? (m ? <Notes videoId={m.id} /> : <Empty icon="edit-3" title={tr("Notes are for sermons")} body={tr("Open a sermon from the library to take notes on it.")} />) : null}
 
           {tab === 2 && live && m ? <LiveChat videoId={m.id} /> : null}
 
           {tab === 2 && !(live && m) ? (
             <View style={{ marginTop: 18, gap: 10 }}>
-              {related.length === 0 ? <Empty icon="film" title="Nothing else yet" body="More messages will appear here." /> : null}
+              {related.length === 0 ? <Empty icon="film" title={tr("Nothing else yet")} body={tr("More messages will appear here.")} /> : null}
               {related.map((s) => (
                 <Press key={s.id} onPress={() => router.replace(`/sermon/${s.id}`)} style={{ flexDirection: "row", gap: 12, alignItems: "center", backgroundColor: "#fff", padding: 8, borderRadius: R.md, borderWidth: 1.5, borderColor: C.line }}>
                   <Image source={imageSource(videoThumb(s), IMG.homeWorship)} style={{ width: 64, height: 64, borderRadius: 16 }} />

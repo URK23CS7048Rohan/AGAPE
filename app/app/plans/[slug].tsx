@@ -8,6 +8,7 @@ import { imageSource } from "@/lib/content";
 import { useAuth, useNeedsAccount } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { getPlan, leavePlan, myProgress, startPlan } from "@/lib/life";
+import { t } from "@/lib/i18n";
 
 export default function PlanView() {
   const { slug } = useLocalSearchParams<{ slug: string }>();
@@ -21,11 +22,11 @@ export default function PlanView() {
   const done = mine?.done ?? [];
   const nextDay = (p.days.findIndex((_, i) => !done.includes(i + 1)) + 1) || 1;
   const open = (d: number) => router.push({ pathname: "/plans/day", params: { slug: p.slug, day: String(d) } });
-  const start = async () => { if (needs("start a reading plan")) return; try { await startPlan(p.id); await prog.reload(); open(1); } catch (e: any) { Alert.alert("Couldn't start", e.message); } };
+  const start = async () => { if (needs("start a reading plan")) return; try { await startPlan(p.id); await prog.reload(); open(1); } catch (e: any) { Alert.alert(t("Couldn't start"), e.message); } };
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title={p.title} right={mine ? <Press onPress={() => Alert.alert("Leave this plan?", "Your progress will be cleared.", [{ text: "Cancel", style: "cancel" }, { text: "Leave", style: "destructive", onPress: async () => { await leavePlan(p.id); prog.reload(); } }])} style={{ width: 44, alignItems: "center" }}><Icon name="log-out" size={18} color={C.muted} /></Press> : undefined} />
+      <BackHeader title={p.title} right={mine ? <Press onPress={() => Alert.alert(t("Leave this plan?"), t("Your progress will be cleared."), [{ text: t("Cancel"), style: "cancel" }, { text: t("Leave"), style: "destructive", onPress: async () => { await leavePlan(p.id); prog.reload(); } }])} style={{ width: 44, alignItems: "center" }}><Icon name="log-out" size={18} color={C.muted} /></Press> : undefined} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60 }}>
         <Image source={imageSource(p.image)} style={{ height: 190, borderRadius: R.xl }} contentFit="cover" />
         <Display size={30} style={{ marginTop: 16 }}>{p.title}</Display>
@@ -33,12 +34,12 @@ export default function PlanView() {
         {p.description ? <Body style={{ marginTop: 10 }} color={C.muted}>{p.description}</Body> : null}
         {mine ? (
           <View style={{ marginTop: 16, backgroundColor: "#fff", borderRadius: R.lg, padding: 16, borderWidth: 1.5, borderColor: C.line, gap: 8 }}>
-            <Body weight="bold">{done.length} of {p.days.length} days done</Body>
+            <Body weight="bold">{t("{a} of {b} days done", { a: done.length, b: p.days.length })}</Body>
             <Bar progress={p.days.length ? done.length / p.days.length : 0} color={p.color || C.flame} />
-            <Button label={done.length >= p.days.length ? "Read it again" : `Continue: day ${nextDay}`} variant="ink" block onPress={() => open(nextDay)} style={{ marginTop: 6 }} />
+            <Button label={done.length >= p.days.length ? t("Read it again") : `Continue: day ${nextDay}`} variant="ink" block onPress={() => open(nextDay)} style={{ marginTop: 6 }} />
           </View>
-        ) : <Button label="Start this plan" variant="ink" block onPress={start} style={{ marginTop: 16 }} />}
-        <Label style={{ marginTop: 22, marginBottom: 8 }}>Days</Label>
+        ) : <Button label={t("Start this plan")} variant="ink" block onPress={start} style={{ marginTop: 16 }} />}
+        <Label style={{ marginTop: 22, marginBottom: 8 }}>{t("Days")}</Label>
         <View style={{ gap: 8 }}>
           {p.days.map((d, i) => {
             const ok = done.includes(i + 1);

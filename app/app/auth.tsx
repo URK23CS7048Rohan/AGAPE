@@ -6,6 +6,7 @@ import { C, F, R } from "@/theme";
 import { BackHeader, Body, Button, Display, Icon, Label, Press, Segmented, Starburst } from "@/components/ui";
 import { GoogleButton, OrLine } from "@/components/GoogleButton";
 import { useAuth } from "@/lib/auth";
+import { t } from "@/lib/i18n";
 
 function Field({ icon, ...p }: { icon: string } & React.ComponentProps<typeof TextInput>) {
   return (
@@ -56,22 +57,22 @@ export default function AuthScreen() {
 
   return (
     <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <BackHeader title={signup ? "Create account" : "Sign in"} />
+      <BackHeader title={signup ? t("Create account") : t("Sign in")} />
       <ScrollView contentContainerStyle={{ padding: 20, paddingBottom: 40, gap: 12 }} keyboardShouldPersistTaps="handled">
         <Animated.View entering={FadeInDown.duration(500)} style={{ backgroundColor: C.violet, borderRadius: R.xl, padding: 20, overflow: "hidden", marginBottom: 8 }}>
           <View style={{ position: "absolute", right: -16, top: -16 }}>
             <Starburst size={110} color={C.sun} spikes={14} spin><Icon name={signup ? "user-plus" : "log-in"} size={30} /></Starburst>
           </View>
-          <Display size={30} style={{ maxWidth: "70%" }}>{signup ? "Join the family." : "Welcome back."}</Display>
-          <Body size={14} style={{ marginTop: 6, maxWidth: "72%" }}>{signup ? "Save sermons, join groups, post prayers and book rides." : "Sign in with the email you used to join."}</Body>
+          <Display size={30} style={{ maxWidth: "70%" }}>{signup ? t("Join the family.") : t("Welcome back.")}</Display>
+          <Body size={14} style={{ marginTop: 6, maxWidth: "72%" }}>{signup ? t("Save sermons, join groups, post prayers and book rides.") : t("Sign in with the email you used to join.")}</Body>
         </Animated.View>
 
-        <Segmented items={["Sign in", "Create account"]} value={mode} onChange={(i) => { setMode(i); setMsg(null); }} />
+        <Segmented items={[t("Sign in"), t("Create account")]} value={mode} onChange={(i) => { setMode(i); setMsg(null); }} />
         <GoogleButton onError={(text) => setMsg({ text })} />
         <OrLine />
-        {signup ? <Field icon="user" placeholder="Full name" value={name} onChangeText={setName} autoComplete="name" textContentType="name" /> : null}
-        <Field icon="mail" placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" />
-        <Field icon="lock" placeholder={signup ? "Password (8+ characters)" : "Password"} value={password} onChangeText={setPassword} secureTextEntry autoComplete={signup ? "new-password" : "current-password"} textContentType={signup ? "newPassword" : "password"} onSubmitEditing={submit} returnKeyType="go" />
+        {signup ? <Field icon="user" placeholder={t("Full name")} value={name} onChangeText={setName} autoComplete="name" textContentType="name" /> : null}
+        <Field icon="mail" placeholder={t("Email")} value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" />
+        <Field icon="lock" placeholder={signup ? t("Password (8+ characters)") : t("Password")} value={password} onChangeText={setPassword} secureTextEntry autoComplete={signup ? "new-password" : "current-password"} textContentType={signup ? "newPassword" : "password"} onSubmitEditing={submit} returnKeyType="go" />
 
         {msg ? (
           <View style={{ flexDirection: "row", gap: 10, padding: 14, borderRadius: 14, backgroundColor: msg.ok ? C.mintSoft : C.roseSoft }}>
@@ -80,13 +81,13 @@ export default function AuthScreen() {
           </View>
         ) : null}
 
-        <Button label={busy ? "Please wait…" : signup ? "Create account" : "Sign in"} icon={signup ? "user-plus" : "log-in"} variant="green" block onPress={submit} disabled={busy} style={{ marginTop: 4 }} />
+        <Button label={busy ? t("Please wait…") : signup ? t("Create account") : t("Sign in")} icon={signup ? "user-plus" : "log-in"} variant="green" block onPress={submit} disabled={busy} style={{ marginTop: 4 }} />
         {!signup ? (
           <Press onPress={forgot} style={{ alignSelf: "center", padding: 10 }}>
-            <Body size={14} weight="semi">Forgot password?</Body>
+            <Body size={14} weight="semi">{t("Forgot password?")}</Body>
           </Press>
         ) : (
-          <Label style={{ textAlign: "center", marginTop: 4 }}>By creating an account you agree to the church's privacy policy. You can delete your account at any time in Me → Settings.</Label>
+          <Label style={{ textAlign: "center", marginTop: 4 }}>{t("By creating an account you agree to the church's privacy policy. You can delete your account at any time in Me → Settings.")}</Label>
         )}
       </ScrollView>
     </KeyboardAvoidingView>

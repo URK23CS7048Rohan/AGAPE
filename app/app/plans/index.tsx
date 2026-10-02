@@ -9,6 +9,7 @@ import { imageSource } from "@/lib/content";
 import { useAuth } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { listPlans, myProgress, planCounts } from "@/lib/life";
+import { t as tr } from "@/lib/i18n";
 
 const AUD = ["adults", "teens", "kids"] as const;
 
@@ -34,9 +35,9 @@ export default function Plans() {
             {prog.data?.[p.id] ? (
               <View style={{ marginTop: 10, gap: 6 }}>
                 <Bar progress={p.days.length ? done / p.days.length : 0} color={p.color || C.flame} height={8} />
-                <Label size={11.5}>{done} of {p.days.length} days</Label>
+                <Label size={11.5}>{tr("{a} of {b} days", { a: done, b: p.days.length })}</Label>
               </View>
-            ) : <Label size={11.5} style={{ marginTop: 8 }}>{p.days.length} days{counts.data?.[p.id] ? ` · ${counts.data[p.id]} reading` : ""}</Label>}
+            ) : <Label size={11.5} style={{ marginTop: 8 }}>{p.days.length} {tr("days")}{counts.data?.[p.id] ? ` · ${counts.data[p.id]} reading` : ""}</Label>}
           </View>
         </Press>
       </Animated.View>
@@ -45,16 +46,16 @@ export default function Plans() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.bg }}>
-      <BackHeader title="Reading plans" />
+      <BackHeader title={tr("Reading plans")} />
       <ScrollView contentContainerStyle={{ padding: 16, paddingBottom: 60, gap: 10 }} refreshControl={<RefreshControl refreshing={false} onRefresh={() => { plans.reload(); prog.reload(); }} />}>
         <View style={{ backgroundColor: C.violet, borderRadius: R.xl, padding: 18, marginBottom: 6 }}>
-          <Display size={28}>A little every day</Display>
-          <Body size={14} style={{ marginTop: 4 }}>Short readings with a devotion and a question to journal on.</Body>
+          <Display size={28}>{tr("A little every day")}</Display>
+          <Body size={14} style={{ marginTop: 4 }}>{tr("Short readings with a devotion and a question to journal on.")}</Body>
         </View>
-        {mine.length ? <><Label style={{ marginTop: 6 }}>My plans</Label>{mine.map((p, i) => <Card key={p.id} p={p} i={i} />)}</> : null}
-        <View style={{ marginTop: 8 }}><Segmented items={["Adults", "Teens", "Kids"]} value={t} onChange={setT} /></View>
-        <Async q={plans} empty={(d) => (d.length ? null : <Empty icon="book-open" title="No plans yet" body="Reading plans will appear here once the church adds them." />)}>
-          {() => (shown.length ? shown.map((p, i) => <Card key={p.id} p={p} i={i} />) : <Empty icon="book-open" title="Nothing here yet" body="Try another tab." />)}
+        {mine.length ? <><Label style={{ marginTop: 6 }}>{tr("My plans")}</Label>{mine.map((p, i) => <Card key={p.id} p={p} i={i} />)}</> : null}
+        <View style={{ marginTop: 8 }}><Segmented items={[tr("Adults"), tr("Teens"), tr("Kids")]} value={t} onChange={setT} /></View>
+        <Async q={plans} empty={(d) => (d.length ? null : <Empty icon="book-open" title={tr("No plans yet")} body={tr("Reading plans will appear here once the church adds them.")} />)}>
+          {() => (shown.length ? shown.map((p, i) => <Card key={p.id} p={p} i={i} />) : <Empty icon="book-open" title={tr("Nothing here yet")} body={tr("Try another tab.")} />)}
         </Async>
       </ScrollView>
     </View>

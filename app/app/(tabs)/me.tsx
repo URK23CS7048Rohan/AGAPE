@@ -13,6 +13,8 @@ import { useAuth } from "@/lib/auth";
 import { useQuery } from "@/lib/query";
 import { deleteAccount, myContact, myStats, requestCare, updateProfile } from "@/lib/api";
 import { fmt } from "@/lib/time";
+import { t as tr, langInfo, normalizeLang } from "@/lib/i18n";
+import { LanguageSheet } from "@/components/LanguagePicker";
 
 const TOOLS = [
   { icon: "edit-3", label: "Journal", sub: "Private notes with God", color: C.sun, route: "/journal" },
@@ -52,8 +54,8 @@ function MemberCard({ onQr }: { onQr: () => void }) {
                   <Image source={IMG.logoMark} style={{ width: 24, height: 30 }} contentFit="contain" />
                 </View>
                 <View>
-                  <Body size={16} weight="bold">Agape</Body>
-                  <Label color={C.ink} size={11.5}>International Ministries</Label>
+                  <Body size={16} weight="bold">{tr("Agape")}</Body>
+                  <Label color={C.ink} size={11.5}>{tr("International Ministries")}</Label>
                 </View>
               </View>
               <Press onPress={onQr} style={{ padding: 6, borderRadius: 12, backgroundColor: "#fff" }}>
@@ -61,7 +63,7 @@ function MemberCard({ onQr }: { onQr: () => void }) {
               </Press>
             </View>
             <Dashes color="rgba(20,20,20,0.25)" style={{ marginVertical: 18 }} />
-            <Label color={C.ink}>Member since {new Date(profile?.created_at || Date.now()).getFullYear()}</Label>
+            <Label color={C.ink}>{tr("Member since")} {new Date(profile?.created_at || Date.now()).getFullYear()}</Label>
             <Display size={30} style={{ marginTop: 2 }} numberOfLines={1}>{profile?.full_name || session?.user.email}</Display>
             <View style={{ flexDirection: "row", gap: 8, marginTop: 10 }}>
               <View style={{ backgroundColor: C.ink, borderRadius: 8, paddingHorizontal: 9, height: 26, justifyContent: "center" }}><Body size={12} weight="semi" color="#fff">{memberNo(id)}</Body></View>
@@ -112,6 +114,7 @@ export default function Me() {
   const { signedIn, profile, session, isStaff, isVolunteer, settings, setSetting, signOut, refreshProfile, firstName } = useAuth();
   const stats = useQuery(signedIn ? "points:stats" : null, myStats);
   const [qr, setQr] = useState(false);
+  const [langOpen, setLangOpen] = useState(false);
   const [edit, setEdit] = useState(false);
   const [care, setCare] = useState(false);
   const [form, setForm] = useState({ name: "", phone: "", car: "" });
@@ -129,30 +132,30 @@ export default function Me() {
     if (v) {
       const has = await LocalAuthentication.hasHardwareAsync().catch(() => false);
       const enrolled = await LocalAuthentication.isEnrolledAsync().catch(() => false);
-      if (!has || !enrolled) return Alert.alert("Not available", "Set up Face ID, Touch ID or a fingerprint on this phone first.");
+      if (!has || !enrolled) return Alert.alert(tr("Not available"), tr("Set up Face ID, Touch ID or a fingerprint on this phone first."));
       const r = await LocalAuthentication.authenticateAsync({ promptMessage: "Turn on app lock" }).catch(() => ({ success: false }));
       if (!r.success) return;
     }
     setSetting("faceId", v);
   };
   const saveProfile = async () => {
-    if (form.name.trim().length < 2) return Alert.alert("Add your name");
+    if (form.name.trim().length < 2) return Alert.alert(tr("Add your name"));
     setBusy(true);
     try { await updateProfile({ full_name: form.name.trim(), phone: form.phone.trim() || null, ...(isVolunteer ? { car: form.car.trim() || null } : {}) }); await refreshProfile(); setEdit(false); }
-    catch (e: any) { Alert.alert("Couldn't save", e.message); }
+    catch (e: any) { Alert.alert(tr("Couldn't save"), e.message); }
     finally { setBusy(false); }
   };
   const sendCare = async () => {
     setBusy(true);
-    try { await requestCare(["visit", "counselling", "other"][careKind], careText.trim()); setCare(false); setCareText(""); Alert.alert("Request sent", "Your request is private and goes only to the pastoral team. Someone will reach out soon."); }
-    catch (e: any) { Alert.alert("Couldn't send", e.message); }
+    try { await requestCare(["visit", "counselling", "other"][careKind], careText.trim()); setCare(false); setCareText(""); Alert.alert(tr("Request sent"), tr("Your request is private and goes only to the pastoral team. Someone will reach out soon.")); }
+    catch (e: any) { Alert.alert(tr("Couldn't send"), e.message); }
     finally { setBusy(false); }
   };
-  const confirmDelete = () => Alert.alert("Delete your account?", "This permanently deletes your account, notes, prayer requests, messages and progress. It can't be undone.", [
-    { text: "Cancel", style: "cancel" },
-    { text: "Delete account", style: "destructive", onPress: async () => {
+  const confirmDelete = () => Alert.alert(tr("Delete your account?"), tr("This permanently deletes your account, notes, prayer requests, messages and progress. It can't be undone."), [
+    { text: tr("Cancel"), style: "cancel" },
+    { text: tr("Delete account"), style: "destructive", onPress: async () => {
       try { await deleteAccount(); await signOut(); router.replace("/welcome"); }
-      catch (e: any) { Alert.alert("Couldn't delete the account", e.message); }
+      catch (e: any) { Alert.alert(tr("Couldn't delete the account"), e.message); }
     } },
   ]);
   const track = { true: C.mint, false: "#DCD8D0" };
@@ -161,7 +164,7 @@ export default function Me() {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 140 }}>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <ScreenTitle title={signedIn ? `Hi, ${firstName}` : "Hi there"} sub={signedIn ? "Welcome home" : "You're exploring as a guest"} />
+          <ScreenTitle title={signedIn ? `Hi, ${firstName}` : tr("Hi there")} sub={signedIn ? tr("Welcome home") : tr("You're exploring as a guest")} />
         </Animated.View>
 
         {signedIn ? (
@@ -170,11 +173,11 @@ export default function Me() {
             <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 26, gap: 10 }}>
               <Press onPress={() => setQr(true)} style={{ flex: 1, height: 50, borderRadius: 16, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <Icon name="qrcode" size={18} color="#fff" />
-                <Body weight="semi" color="#fff" size={14}>Check-in code</Body>
+                <Body weight="semi" color="#fff" size={14}>{tr("Check-in code")}</Body>
               </Press>
               <Press onPress={() => setEdit(true)} style={{ flex: 1, height: 50, borderRadius: 16, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <Icon name="edit-3" size={18} />
-                <Body weight="semi" size={14}>Edit profile</Body>
+                <Body weight="semi" size={14}>{tr("Edit profile")}</Body>
               </Press>
             </View>
             <View style={{ flexDirection: "row", marginHorizontal: 16, marginTop: 12, gap: 10 }}>
@@ -188,10 +191,10 @@ export default function Me() {
           </>
         ) : (
           <View style={{ marginHorizontal: 16, marginTop: 20, backgroundColor: C.violet, borderRadius: R.xl, padding: 20, gap: 12 }}>
-            <Display size={26}>Join the Agape family</Display>
-            <Body>Create a free account to save sermons, take courses, post prayers, chat with your groups and book rides.</Body>
-            <Button label="Create account" icon="user-plus" variant="ink" block onPress={() => router.push("/auth?mode=signup")} />
-            <Button label="Sign in" icon="log-in" variant="light" block onPress={() => router.push("/auth")} />
+            <Display size={26}>{tr("Join the Agape family")}</Display>
+            <Body>{tr("Create a free account to save sermons, take courses, post prayers, chat with your groups and book rides.")}</Body>
+            <Button label={tr("Create account")} icon="user-plus" variant="ink" block onPress={() => router.push("/auth?mode=signup")} />
+            <Button label={tr("Sign in")} icon="log-in" variant="light" block onPress={() => router.push("/auth")} />
           </View>
         )}
 
@@ -199,15 +202,15 @@ export default function Me() {
           <Press onPress={() => router.push("/staff")} style={{ marginHorizontal: 16, marginTop: 16, borderRadius: R.lg, backgroundColor: C.ink, padding: 16, flexDirection: "row", alignItems: "center", gap: 12 }}>
             <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: C.sun, alignItems: "center", justifyContent: "center" }}><Icon name="shield" size={20} /></View>
             <View style={{ flex: 1 }}>
-              <Body weight="semi" color="#fff">Staff tools</Body>
-              <Label color="rgba(255,255,255,0.7)">Prayer moderation, rides, care requests, news</Label>
+              <Body weight="semi" color="#fff">{tr("Staff tools")}</Body>
+              <Label color="rgba(255,255,255,0.7)">{tr("Prayer moderation, rides, care requests, news")}</Label>
             </View>
             <Icon name="arrow-up-right" size={20} color="#fff" />
           </Press>
         ) : null}
 
         {/* tools */}
-        <Display size={22} style={{ marginHorizontal: 20, marginTop: 28, marginBottom: 12 }}>Everything else</Display>
+        <Display size={22} style={{ marginHorizontal: 20, marginTop: 28, marginBottom: 12 }}>{tr("Everything else")}</Display>
         <View style={{ marginHorizontal: 16, flexDirection: "row", flexWrap: "wrap", gap: 10 }}>
           {TOOLS.map((t, i) => {
             const fg = onColor(t.color);
@@ -221,8 +224,8 @@ export default function Me() {
                     <Icon name="arrow-up-right" size={18} color={fg} />
                   </View>
                   <View>
-                    <Body weight="semi" size={15.5} color={fg}>{t.label}</Body>
-                    <Label numberOfLines={1} color={fg} style={{ opacity: 0.8 }}>{t.sub}</Label>
+                    <Body weight="semi" size={15.5} color={fg}>{tr(t.label)}</Body>
+                    <Label numberOfLines={1} color={fg} style={{ opacity: 0.8 }}>{tr(t.sub)}</Label>
                   </View>
                 </Press>
               </Animated.View>
@@ -231,29 +234,34 @@ export default function Me() {
         </View>
 
         {/* settings */}
-        <Display size={22} style={{ marginHorizontal: 20, marginTop: 28, marginBottom: 12 }}>Settings</Display>
+        <Display size={22} style={{ marginHorizontal: 20, marginTop: 28, marginBottom: 12 }}>{tr("Settings")}</Display>
         <View style={{ marginHorizontal: 16, backgroundColor: "#fff", borderRadius: R.lg, borderWidth: 1.5, borderColor: C.line }}>
-          {signedIn ? <Row icon="face-recognition" label="Lock app with Face ID" color={C.ink}><Switch value={settings.faceId} onValueChange={toggleFaceId} trackColor={track} thumbColor="#fff" /></Row> : null}
+          <Press onPress={() => setLangOpen(true)}>
+            <Row icon="globe" label={tr("Language")} color={C.sky}><Body size={14} color={C.muted}>{langInfo(normalizeLang(settings.language)).name}</Body><Icon name="chevron-right" size={18} color={C.muted} /></Row>
+          </Press>
+          {signedIn ? <Row icon="face-recognition" label={tr("Lock app with Face ID")} color={C.ink}><Switch value={settings.faceId} onValueChange={toggleFaceId} trackColor={track} thumbColor="#fff" /></Row> : null}
           <Press onPress={() => (signedIn ? setCare(true) : router.push("/auth"))}>
-            <Row icon="shield" label="Confidential pastoral care" color={C.rose}><Icon name="chevron-right" size={18} color={C.muted} /></Row>
+            <Row icon="shield" label={tr("Confidential pastoral care")} color={C.rose}><Icon name="chevron-right" size={18} color={C.muted} /></Row>
           </Press>
           {signedIn ? (
             <Press onPress={confirmDelete}>
-              <Row icon="trash-2" label="Delete my account" color={C.red} last><Icon name="chevron-right" size={18} color={C.muted} /></Row>
+              <Row icon="trash-2" label={tr("Delete my account")} color={C.red} last><Icon name="chevron-right" size={18} color={C.muted} /></Row>
             </Press>
           ) : null}
         </View>
 
         <Press onPress={async () => { await signOut(); router.replace("/welcome"); }} style={{ marginHorizontal: 16, marginTop: 16, height: 52, borderRadius: 16, borderWidth: 1.5, borderColor: C.ink, alignItems: "center", justifyContent: "center", flexDirection: "row", gap: 8 }}>
           <Icon name="log-out" size={17} />
-          <Body weight="semi">{signedIn ? "Sign out" : "Leave guest mode"}</Body>
+          <Body weight="semi">{signedIn ? tr("Sign out") : tr("Leave guest mode")}</Body>
         </Press>
-        <Label style={{ marginTop: 14, textAlign: "center" }}>Agape International Ministries · v1.0{session?.user.email ? ` · ${session.user.email}` : ""}</Label>
+        <Label style={{ marginTop: 14, textAlign: "center" }}>{tr("Agape International Ministries · v1.0")}{session?.user.email ? ` · ${session.user.email}` : ""}</Label>
       </ScrollView>
 
+      <LanguageSheet visible={langOpen} onClose={() => setLangOpen(false)} />
+
       {/* check-in code */}
-      <Sheet visible={qr} onClose={() => setQr(false)} title="Check-in code">
-        <Body color={C.muted}>Show this at the welcome desk or an event.</Body>
+      <Sheet visible={qr} onClose={() => setQr(false)} title={tr("Check-in code")}>
+        <Body color={C.muted}>{tr("Show this at the welcome desk or an event.")}</Body>
         {session ? (
           <View style={{ alignSelf: "center", padding: 16, backgroundColor: "#fff", borderRadius: 24, borderWidth: 1.5, borderColor: C.line, marginVertical: 8 }}>
             <QRCode value={`agape:member:${session.user.id}`} size={220} />
@@ -263,20 +271,20 @@ export default function Me() {
       </Sheet>
 
       {/* edit profile */}
-      <Sheet visible={edit} onClose={() => setEdit(false)} title="Edit profile">
-        <TextInput value={form.name} onChangeText={(name) => setForm((f) => ({ ...f, name }))} placeholder="Full name" placeholderTextColor="rgba(20,20,20,0.4)" style={input} />
-        <TextInput value={form.phone} onChangeText={(phone) => setForm((f) => ({ ...f, phone }))} placeholder="Phone (shared only with your ride driver)" keyboardType="phone-pad" placeholderTextColor="rgba(20,20,20,0.4)" style={input} />
-        {isVolunteer ? <TextInput value={form.car} onChangeText={(car) => setForm((f) => ({ ...f, car }))} placeholder="Your car, e.g. White Toyota · KW 12 3456" placeholderTextColor="rgba(20,20,20,0.4)" style={input} /> : null}
-        <Label>Your phone number is private: only the volunteer driving you (or the member you're driving) can see it, during the ride.</Label>
-        <Button label={busy ? "Saving…" : "Save"} icon="check" trail={null} variant="ink" block onPress={saveProfile} disabled={busy} />
+      <Sheet visible={edit} onClose={() => setEdit(false)} title={tr("Edit profile")}>
+        <TextInput value={form.name} onChangeText={(name) => setForm((f) => ({ ...f, name }))} placeholder={tr("Full name")} placeholderTextColor="rgba(20,20,20,0.4)" style={input} />
+        <TextInput value={form.phone} onChangeText={(phone) => setForm((f) => ({ ...f, phone }))} placeholder={tr("Phone (shared only with your ride driver)")} keyboardType="phone-pad" placeholderTextColor="rgba(20,20,20,0.4)" style={input} />
+        {isVolunteer ? <TextInput value={form.car} onChangeText={(car) => setForm((f) => ({ ...f, car }))} placeholder={tr("Your car, e.g. White Toyota · KW 12 3456")} placeholderTextColor="rgba(20,20,20,0.4)" style={input} /> : null}
+        <Label>{tr("Your phone number is private: only the volunteer driving you (or the member you're driving) can see it, during the ride.")}</Label>
+        <Button label={busy ? tr("Saving…") : tr("Save")} icon="check" trail={null} variant="ink" block onPress={saveProfile} disabled={busy} />
       </Sheet>
 
       {/* pastoral care */}
-      <Sheet visible={care} onClose={() => setCare(false)} title="Pastoral care">
-        <Body color={C.muted}>Private. Only the pastoral team sees this request.</Body>
-        <Segmented items={["A visit", "Counselling", "Other"]} value={careKind} onChange={setCareKind} />
-        <TextInput value={careText} onChangeText={setCareText} multiline maxLength={2000} placeholder="Tell us a little about how we can help (optional)" placeholderTextColor="rgba(20,20,20,0.4)" style={[input, { height: 120, paddingTop: 12, textAlignVertical: "top" }]} />
-        <Button label={busy ? "Sending…" : "Send request"} icon="send" trail={null} variant="ink" block onPress={sendCare} disabled={busy} />
+      <Sheet visible={care} onClose={() => setCare(false)} title={tr("Pastoral care")}>
+        <Body color={C.muted}>{tr("Private. Only the pastoral team sees this request.")}</Body>
+        <Segmented items={[tr("A visit"), tr("Counselling"), tr("Other")]} value={careKind} onChange={setCareKind} />
+        <TextInput value={careText} onChangeText={setCareText} multiline maxLength={2000} placeholder={tr("Tell us a little about how we can help (optional)")} placeholderTextColor="rgba(20,20,20,0.4)" style={[input, { height: 120, paddingTop: 12, textAlignVertical: "top" }]} />
+        <Button label={busy ? tr("Sending…") : tr("Send request")} icon="send" trail={null} variant="ink" block onPress={sendCare} disabled={busy} />
       </Sheet>
     </View>
   );

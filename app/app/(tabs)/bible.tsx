@@ -9,6 +9,7 @@ import { BOOKS, book, lastPosition, passage, Position, refLabel, translation, TR
 import { useMarks, useReaderPrefs } from "@/lib/scripture";
 import { useSiteContent } from "@/lib/content";
 import { parseRef } from "@/lib/bible";
+import { t as tr } from "@/lib/i18n";
 
 const BOOK_COLORS = [C.peach, C.lilac, C.mintSoft, C.sunSoft, C.skySoft, C.roseSoft];
 
@@ -46,14 +47,14 @@ export default function Bible() {
     <View style={{ flex: 1, backgroundColor: C.bg }}>
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={{ paddingTop: insets.top + 10, paddingBottom: 140 }}>
         <Animated.View entering={FadeInDown.duration(500)}>
-          <ScreenTitle title="Bible" sub={`${T.name} · reads offline once opened`} />
+          <ScreenTitle title={tr("Bible")} sub={`${T.name} · reads offline once opened`} />
         </Animated.View>
 
         {/* verse of the day */}
         <Animated.View entering={FadeInDown.delay(60)} style={{ marginHorizontal: 16, marginTop: 20 }}>
           <View style={{ backgroundColor: C.ink, borderRadius: R.xl, padding: 20, overflow: "hidden" }}>
             <View style={{ position: "absolute", right: -22, top: -22 }}><Starburst size={120} color={C.sun} spikes={12} depth={0.7} spin><Icon name="sun" size={30} /></Starburst></View>
-            <Label color={C.sun}>Verse of the day</Label>
+            <Label color={C.sun}>{tr("Verse of the day")}</Label>
             <Display size={23} color="#fff" style={{ marginTop: 10, maxWidth: "88%" }}>{votd?.text ? `“${votd.text}”` : "…"}</Display>
             <View style={{ flexDirection: "row", alignItems: "center", gap: 10, marginTop: 14 }}>
               <Body weight="semi" color="#fff" style={{ flex: 1 }}>{votd?.ref}</Body>
@@ -63,7 +64,7 @@ export default function Bible() {
                 </Press>
               ) : null}
               <Press onPress={() => { const r = votdRef(); open(r.book, r.chapter, r.from); }} style={{ paddingHorizontal: 14, height: 40, borderRadius: 12, backgroundColor: C.sun, alignItems: "center", justifyContent: "center" }}>
-                <Body weight="bold" size={13.5}>Read chapter</Body>
+                <Body weight="bold" size={13.5}>{tr("Read chapter")}</Body>
               </Press>
             </View>
           </View>
@@ -75,7 +76,7 @@ export default function Bible() {
             <Press onPress={() => open(pos.book, pos.chapter)} scaleTo={0.98} style={{ flexDirection: "row", alignItems: "center", gap: 14, backgroundColor: C.flame, borderRadius: R.lg, padding: 16 }}>
               <View style={{ width: 52, height: 52, borderRadius: 16, backgroundColor: C.ink, alignItems: "center", justifyContent: "center" }}><Icon name="book-open" size={22} color="#fff" /></View>
               <View style={{ flex: 1 }}>
-                <Label color={C.ink}>Continue reading</Label>
+                <Label color={C.ink}>{tr("Continue reading")}</Label>
                 <Display size={22}>{book(pos.book).name} {pos.chapter}</Display>
               </View>
               <Icon name="arrow-right" size={22} />
@@ -87,18 +88,18 @@ export default function Bible() {
         <View style={{ flexDirection: "row", gap: 10, marginHorizontal: 16, marginTop: 12 }}>
           <Press onPress={() => router.push("/bible/marks")} scaleTo={0.97} style={{ flex: 1, backgroundColor: C.lilac, borderRadius: R.lg, padding: 14, gap: 8 }}>
             <Icon name="bookmark" size={20} color={C.ink} />
-            <Body weight="bold">My highlights</Body>
-            <Label>{saved.length ? `${saved.length} saved` : "Tap a verse to save it"}</Label>
+            <Body weight="bold">{tr("My highlights")}</Body>
+            <Label>{saved.length ? `${saved.length} saved` : tr("Tap a verse to save it")}</Label>
           </Press>
           <Press onPress={() => router.push("/songs")} scaleTo={0.97} style={{ flex: 1, backgroundColor: C.mintSoft, borderRadius: R.lg, padding: 14, gap: 8 }}>
             <Icon name="music-note" size={20} color={C.ink} />
-            <Body weight="bold">Song book</Body>
-            <Label>Lyrics & chords</Label>
+            <Body weight="bold">{tr("Song book")}</Body>
+            <Label>{tr("Lyrics & chords")}</Label>
           </Press>
         </View>
 
         {/* translation */}
-        <Label style={{ marginHorizontal: 20, marginTop: 24 }}>Translation</Label>
+        <Label style={{ marginHorizontal: 20, marginTop: 24 }}>{tr("Translation")}</Label>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 8, paddingHorizontal: 16, paddingTop: 10 }}>
           {TRANSLATIONS.map((x) => {
             const on = x.code === prefs.tr;
@@ -112,13 +113,13 @@ export default function Bible() {
 
         {/* books */}
         <View style={{ marginHorizontal: 16, marginTop: 24 }}>
-          <Segmented items={["Old Testament", "New Testament"]} value={t} onChange={setT} />
+          <Segmented items={[tr("Old Testament"), tr("New Testament")]} value={t} onChange={setT} />
         </View>
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 8, marginHorizontal: 16, marginTop: 14 }}>
           {books.map((b, i) => (
             <Press key={b.id} onPress={() => open(b.id)} scaleTo={0.95} style={{ width: "31.6%", backgroundColor: BOOK_COLORS[i % BOOK_COLORS.length], borderRadius: 14, paddingVertical: 12, paddingHorizontal: 10 }}>
               <Body weight="bold" size={14} numberOfLines={1}>{b.name}</Body>
-              <Label size={11.5}>{b.chapters} ch</Label>
+              <Label size={11.5}>{b.chapters} {tr("ch")}</Label>
             </Press>
           ))}
         </View>

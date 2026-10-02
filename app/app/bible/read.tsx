@@ -9,6 +9,7 @@ import { Body, Button, Icon, IconButton, Label, Press, Segmented } from "@/compo
 import { BOOKS, HIGHLIGHTS, TRANSLATIONS, book, lastPosition, savePosition, translation, useBookNames, useChapter, Verse } from "@/lib/bible";
 import { hasVoice, useReader, voiceFor } from "@/lib/audio";
 import { useMarks, useReaderPrefs } from "@/lib/scripture";
+import { t as tl } from "@/lib/i18n";
 
 export default function Reader() {
   const p = useLocalSearchParams<{ b?: string; c?: string; v?: string }>();
@@ -50,7 +51,7 @@ export default function Reader() {
 
   async function listen(from = 0) {
     const lang = voiceFor(tr);
-    if (!(await hasVoice(lang))) { Alert.alert("No voice for this language", `Install the ${T.name} voice in your phone's text-to-speech settings, or switch to an English Bible.`); return; }
+    if (!(await hasVoice(lang))) { Alert.alert(tl("No voice for this language"), `Install the ${T.name} voice in your phone's text-to-speech settings, or switch to an English Bible.`); return; }
     keepPlaying.current = true;
     reader.play(verses, Math.max(0, from), lang, prefs.rate);
   }
@@ -60,7 +61,7 @@ export default function Reader() {
   const selText = selected.map((v) => v.text).join(" ");
   const base = (v: Verse) => ({ book: b, chapter: c, verse: v.verse, translation: tr, verse_text: v.text });
   const allBookmarked = selected.length > 0 && selected.every((v) => marks.get("bookmark", b, c, v.verse));
-  const safe = (f: () => Promise<any>) => f().catch((e) => Alert.alert("Couldn't save", e.message));
+  const safe = (f: () => Promise<any>) => f().catch((e) => Alert.alert(tl("Couldn't save"), e.message));
 
   const highlight = (color: string | null) => safe(async () => {
     for (const v of selected) color ? await marks.put({ kind: "highlight", color, ...base(v) }) : await marks.remove("highlight", b, c, v.verse);
@@ -98,8 +99,8 @@ export default function Reader() {
         {error ? (
           <View style={{ alignItems: "center", paddingVertical: 40, gap: 12 }}>
             <Icon name="wifi-off" size={26} color={C.muted} />
-            <Body center color={C.muted}>This chapter needs the internet the first time you open it. After that it's saved on your phone.</Body>
-            <Button label="Try again" variant="white" small trail={null} onPress={retry} />
+            <Body center color={C.muted}>{tl("This chapter needs the internet the first time you open it. After that it's saved on your phone.")}</Body>
+            <Button label={tl("Try again")} variant="white" small trail={null} onPress={retry} />
           </View>
         ) : null}
         {verses.map((v) => {
@@ -126,11 +127,11 @@ export default function Reader() {
         })}
         {verses.length ? (
           <View style={{ flexDirection: "row", gap: 10, marginTop: 28 }}>
-            <Button label="Previous" variant="white" icon="chevron-left" trail={null} small onPress={prev} style={{ flex: 1 }} disabled={b === 1 && c === 1} />
-            <Button label="Next chapter" variant="ink" trail="chevron-right" small onPress={() => next(reader.playing)} style={{ flex: 1.4 }} disabled={b === 66 && c === 22} />
+            <Button label={tl("Previous")} variant="white" icon="chevron-left" trail={null} small onPress={prev} style={{ flex: 1 }} disabled={b === 1 && c === 1} />
+            <Button label={tl("Next chapter")} variant="ink" trail="chevron-right" small onPress={() => next(reader.playing)} style={{ flex: 1.4 }} disabled={b === 66 && c === 22} />
           </View>
         ) : null}
-        <Body size={11.5} color={C.muted} style={{ marginTop: 22, textAlign: "center" }}>{T.name} · public domain · bolls.life</Body>
+        <Body size={11.5} color={C.muted} style={{ marginTop: 22, textAlign: "center" }}>{T.name} {tl("· public domain · bolls.life")}</Body>
       </ScrollView>
 
       {/* actions for the selected verses */}
@@ -166,7 +167,7 @@ export default function Reader() {
           <Icon name="headphones" size={18} color={C.sun} />
           <View style={{ flex: 1 }}>
             <Body weight="semi" size={14} color="#fff" numberOfLines={1}>{name} {c}{reader.current ? `:${reader.current}` : ""}</Body>
-            <Body size={12} color="rgba(255,255,255,0.6)">Audio Bible · {prefs.rate}×</Body>
+            <Body size={12} color="rgba(255,255,255,0.6)">{tl("Audio Bible ·")} {prefs.rate}×</Body>
           </View>
           <IconButton name="skip-back" bg="transparent" color="#fff" size={40} onPress={() => reader.skip(-1)} />
           <IconButton name={reader.paused ? "play" : "pause"} bg="#fff" color={C.ink} size={40} onPress={() => (reader.paused ? reader.resume() : reader.pause())} />
@@ -179,10 +180,10 @@ export default function Reader() {
       ) : null}
 
       {/* sheets */}
-      <Sheet open={sheet === "book"} onClose={() => setSheet(null)} title="Go to">
+      <Sheet open={sheet === "book"} onClose={() => setSheet(null)} title={tl("Go to")}>
         <BookPicker names={names} current={b} onPick={(nb, nc) => { setSheet(null); go(nb, nc); }} />
       </Sheet>
-      <Sheet open={sheet === "tr"} onClose={() => setSheet(null)} title="Translation">
+      <Sheet open={sheet === "tr"} onClose={() => setSheet(null)} title={tl("Translation")}>
         {TRANSLATIONS.map((x) => (
           <Press key={x.code} onPress={() => { setPrefs({ tr: x.code }); setSheet(null); }} style={{ flexDirection: "row", alignItems: "center", paddingVertical: 14, borderBottomWidth: 1, borderColor: C.line }}>
             <View style={{ flex: 1 }}><Body weight="semi">{x.name}</Body><Label>{x.short}</Label></View>
@@ -190,10 +191,10 @@ export default function Reader() {
           </Press>
         ))}
       </Sheet>
-      <Sheet open={sheet === "aa"} onClose={() => setSheet(null)} title="Text size">
+      <Sheet open={sheet === "aa"} onClose={() => setSheet(null)} title={tl("Text size")}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 10 }}>
           <IconButton name="minus" border={C.line} onPress={() => setPrefs({ size: Math.max(14, prefs.size - 1) })} />
-          <Text style={{ flex: 1, textAlign: "center", fontFamily: F.serif, fontSize: prefs.size, color: C.ink }}>In the beginning was the Word</Text>
+          <Text style={{ flex: 1, textAlign: "center", fontFamily: F.serif, fontSize: prefs.size, color: C.ink }}>{tl("In the beginning was the Word")}</Text>
           <IconButton name="plus" border={C.line} onPress={() => setPrefs({ size: Math.min(30, prefs.size + 1) })} />
         </View>
       </Sheet>
@@ -202,13 +203,13 @@ export default function Reader() {
       <Modal visible={!!noteFor} transparent animationType="fade" onRequestClose={() => setNoteFor(null)}>
         <View style={{ flex: 1, backgroundColor: "rgba(0,0,0,0.45)", justifyContent: "center", padding: 20 }}>
           <View style={{ backgroundColor: "#fff", borderRadius: R.lg, padding: 18 }}>
-            <Label>Note on {name} {c}:{noteFor?.verse}</Label>
+            <Label>{tl("Note on")} {name} {c}:{noteFor?.verse}</Label>
             <Body size={14} color={C.muted} style={{ marginTop: 6 }} numberOfLines={3}>{noteFor?.text}</Body>
-            <TextInput value={noteText} onChangeText={setNoteText} placeholder="What is God saying to you here?" placeholderTextColor={C.muted} multiline autoFocus
+            <TextInput value={noteText} onChangeText={setNoteText} placeholder={tl("What is God saying to you here?")} placeholderTextColor={C.muted} multiline autoFocus
               style={{ marginTop: 12, minHeight: 100, borderRadius: 14, borderWidth: 1.5, borderColor: C.line, padding: 12, fontFamily: F.sans, fontSize: 15, color: C.ink, textAlignVertical: "top" }} />
             <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-              <Button label="Cancel" variant="white" small trail={null} onPress={() => setNoteFor(null)} style={{ flex: 1 }} />
-              <Button label="Save note" variant="ink" small trail="check" onPress={saveNote} style={{ flex: 1 }} />
+              <Button label={tl("Cancel")} variant="white" small trail={null} onPress={() => setNoteFor(null)} style={{ flex: 1 }} />
+              <Button label={tl("Save note")} variant="ink" small trail="check" onPress={saveNote} style={{ flex: 1 }} />
             </View>
           </View>
         </View>
@@ -222,7 +223,7 @@ function BookPicker({ names, current, onPick }: { names: Record<number, string>;
   const [open, setOpen] = useState<number | null>(current);
   return (
     <View>
-      <Segmented items={["Old Testament", "New Testament"]} value={t} onChange={setT} />
+      <Segmented items={[tl("Old Testament"), tl("New Testament")]} value={t} onChange={setT} />
       <View style={{ marginTop: 12 }}>
         {BOOKS.filter((x) => x.testament === (t ? "NT" : "OT")).map((x) => (
           <View key={x.id} style={{ borderBottomWidth: 1, borderColor: C.line }}>
