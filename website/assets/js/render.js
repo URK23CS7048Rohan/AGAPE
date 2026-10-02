@@ -63,23 +63,46 @@
     if (word) { word.dataset.words = JSON.stringify(H.words && H.words.length ? H.words : ["shows up."]); word.textContent = (H.words || ["shows up."])[0]; }
     const slides = $(".js-hero-slides");
     if (slides) slides.innerHTML = (H.slides || []).map((s, i) => `<img src="${img(s.image)}" alt="${esc(s.caption)}" data-caption="${esc(s.caption)}" decoding="async" />`).join("");
+    const ring = $(".js-ring");
+    if (ring) {
+      const seen = new Set();
+      const pics = [...(H.slides || []), ...(C.gallery || [])].filter((p) => p.image && !seen.has(p.image) && seen.add(p.image));
+      const target = pics.length ? Math.max(16, Math.ceil(16 / pics.length) * pics.length) : 0;
+      const list = []; for (let i = 0; i < Math.min(target, 24); i++) list.push(pics[i % pics.length]);
+      ring.innerHTML = list.map((p) => `<figure class="h3__card"><img src="${img(p.image)}" alt="${esc(p.caption)}" draggable="false" decoding="async" />${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ""}</figure>`).join("");
+    }
     const dots = $(".js-hero-dots");
     if (dots) dots.innerHTML = (H.slides || []).map(() => "<i></i>").join("");
 
-    /* promos */
-    const pt = $(".promos__track");
-    if (pt) pt.innerHTML = C.promos.map((p, i) => `
-      <article class="promo" ${i === 0 ? 'id="worship"' : ""} style="--accent:${esc(p.color)}">
-        <img src="${img(p.image)}" alt="" class="promo__img" ${i > 1 ? 'loading="lazy"' : ""} />
-        <div class="promo__shade"></div>
-        ${p.sticker1 || p.sticker2 ? `<div class="promo__sticker" style="background:${esc(p.color)};color:${light(p.color) ? "#0F0B12" : "#fff"}"><b>${esc(p.sticker1)}</b><span>${esc(p.sticker2)}</span></div>` : ""}
-        <div class="promo__body">
-          <span class="chip chip--solid" style="color:${light(p.color) ? "#0F0B12" : "#fff"}">${esc(p.kicker)}</span>
-          <h3 class="promo__title">${esc(p.title)}<br/><em>${esc(p.accent)}</em></h3>
-          <p>${esc(p.body)}</p>
-          <a href="${esc(p.link || "#")}" class="btn btn--light" data-magnetic><span>${esc(p.cta || "Learn more")}</span><i>${ic("arrow-right")}</i></a>
+    /* promos — stacked posters */
+    const pc = $(".js-pcards");
+    const ringText = (unit, max = 40) => { unit = unit + " · "; let out = unit; while ((out + unit).length <= max) out += unit; return out; };
+    const seal = (t, id) => `<svg viewBox="0 0 200 200" aria-hidden="true"><defs><path id="${id}" d="M100,100 m-80,0 a80,80 0 1,1 160,0 a80,80 0 1,1 -160,0"/></defs><text><textPath href="#${id}" textLength="498" lengthAdjust="spacing">${esc(t)}</textPath></text></svg>`;
+    if (pc) pc.innerHTML = C.promos.map((p, i) => {
+      const lt = light(p.color);
+      const st = `${p.sticker1 || ""} ${p.sticker2 || ""}`.trim().toUpperCase();
+      return `
+      <article class="poster ${lt ? "is-lt" : "is-dk"}" ${i === 0 ? 'id="worship"' : ""} style="--c:${esc(p.color)};--i:${i}">
+        <div class="poster__in">
+          <div class="poster__copy">
+            <div class="poster__top"><span class="poster__chip">${esc(p.kicker)}</span><span class="poster__idx">${String(i + 1).padStart(2, "0")} / ${String(C.promos.length).padStart(2, "0")}</span></div>
+            <span class="poster__big" aria-hidden="true">${String(i + 1).padStart(2, "0")}</span>
+            <h3 class="poster__title"><span>${esc(p.title)}</span><em>${esc(p.accent)}</em></h3>
+            <div class="poster__foot">
+              <p>${esc(p.body)}</p>
+              <a href="${esc(p.link || "#")}" class="xbtn ${lt ? "xbtn--ink" : "xbtn--light"}" data-magnetic><span class="xbtn__t" data-roll>${esc(p.cta || "Learn more")}</span><i>${ic("arrow-right")}</i></a>
+            </div>
+          </div>
+          <div class="poster__art">
+            <figure class="poster__photo"><img src="${img(p.image)}" alt="" ${i > 1 ? 'loading="lazy"' : ""} /></figure>
+            ${st ? `<div class="poster__seal">${seal(ringText(st), "ps" + i)}<span><b>${esc(p.sticker1)}</b><small>${esc(p.sticker2)}</small></span></div>` : ""}
+          </div>
         </div>
-      </article>`).join("");
+        <span class="poster__glare" aria-hidden="true"></span>
+      </article>`;
+    }).join("");
+    const pb = $(".js-pbars"); if (pb) pb.innerHTML = C.promos.map(() => "<i><b></b></i>").join("");
+    set(".js-ptot", String(C.promos.length).padStart(2, "0"));
 
     /* live */
     const L = C.live;
@@ -93,7 +116,7 @@
     const half = Math.ceil(g.length / 2);
     const gRow = (list) => list.map((p) => `<figure class="gphoto"><img src="${img(p.image)}" alt="${esc(p.caption)}" loading="lazy" />${p.caption ? `<figcaption>${esc(p.caption)}</figcaption>` : ""}</figure>`).join("");
     const gt = $$(".gq__track");
-    if (gt[0]) gt[0].innerHTML = gRow(g.slice(0, half));
+    if (gt[0]) gt[0].innerHTML = gt.length === 1 ? gRow(g) : gRow(g.slice(0, half));
     if (gt[1]) gt[1].innerHTML = gRow(g.slice(half).length ? g.slice(half) : g.slice(0, half));
 
     /* events */
@@ -110,7 +133,7 @@
     const camps = $(".camps");
     if (camps) camps.innerHTML = C.campaigns.map((c) => {
       const p = c.goal ? Math.min(100, Math.round((c.raised / c.goal) * 100)) : 0;
-      return `<article class="camp" style="--c:${esc(c.color)}"><div class="camp__img"><img src="${img(c.image)}" alt="" loading="lazy" /></div><div class="camp__body"><h3>${esc(c.title)} <em>${esc(c.accent)}</em></h3><p>${esc(c.body)}</p><div class="camp__meter"><div class="dial" data-p="${p}"><span class="dial__v">0%</span></div><div><b>${esc(C.church.currency)} ${fmt(c.raised)}</b><small>of ${fmt(c.goal)} goal</small></div></div></div></article>`;
+      return `<article class="jar" style="--c:${esc(c.color)}" data-p="${p}"><div class="jar__glass"><canvas class="jar__cv"></canvas><span class="jar__pct"><b>0</b>%</span></div><img class="jar__img" src="${img(c.image)}" alt="" loading="lazy" /><h3>${esc(c.title)} <em>${esc(c.accent)}</em></h3><p>${esc(c.body)}</p><div class="jar__nums"><b>${esc(C.church.currency)} ${fmt(c.raised)}</b><small>of ${fmt(c.goal)} goal</small></div></article>`;
     }).join("");
     const funds = $(".gbox__funds");
     if (funds) funds.innerHTML = ["Tithe", ...C.campaigns.map((c) => `${c.title} ${c.accent}`)].map((f, i) => `<button type="button" class="${i ? "" : "is-on"}">${esc(f)}</button>`).join("");
@@ -121,8 +144,31 @@
     const th = Math.ceil(t.length / 2);
     const tRow = (list) => list.map((q) => `<figure class="tcard" style="--c:${esc(q.color)}"><blockquote>“${esc(q.quote)}”</blockquote><figcaption><span style="--c:${esc(q.accent)}">${esc((q.name || "?")[0])}</span><b>${esc(q.name)}</b><small>${esc(q.role)}</small></figcaption></figure>`).join("");
     const tq = $$(".tq__track");
-    if (tq[0]) tq[0].innerHTML = tRow(t.slice(0, th));
-    if (tq[1]) tq[1].innerHTML = tRow(t.slice(th).length ? t.slice(th) : t.slice(0, th));
+    if (tq.length > 2) {
+      // 3D marquee: spread testimonies across columns, doubled for a seamless vertical loop
+      const cols = innerWidth <= 900 ? 2 : tq.length;
+      tq.forEach((col, ci) => {
+        const mine = t.filter((_, i) => i % cols === ci % cols);
+        const list = mine.length ? mine : t.slice(0, 2);
+        const html = tRow([...list, ...t.filter((_, i) => i % tq.length !== ci).slice(0, Math.max(0, 3 - list.length))]);
+        col.innerHTML = html + html;
+      });
+    } else {
+      if (tq[0]) tq[0].innerHTML = tRow(t.slice(0, th));
+      if (tq[1]) tq[1].innerHTML = tRow(t.slice(th).length ? t.slice(th) : t.slice(0, th));
+    }
+    /* bible verses */
+    const V = (C.verses || []).filter((v) => v && v.text);
+    const vbg = $(".js-vbg");
+    if (vbg) vbg.innerHTML = V.map((v, i) => `<img src="${img(v.image || "assets/img/mountain-open-arms.jpg")}" alt="" decoding="async" ${i > 1 ? 'loading="lazy"' : ""} />`).join("");
+    const vch = $(".js-vchips");
+    if (vch) vch.innerHTML = V.map((v, i) => `<button type="button" class="vchip" role="tab" data-i="${i}" aria-label="${esc(v.ref)}"><i class="vchip__fill"></i><b>${esc(v.ref)}</b><small>${esc(v.theme || v.translation || "")}</small></button>`).join("");
+    set(".js-vtotal", String(V.length).padStart(2, "0"));
+    if (V[0]) { set(".js-verse-q", `“${V[0].text}”`); set(".js-vref", V[0].ref); set(".js-vtr", V[0].translation || ""); set(".js-vtheme", V[0].theme || ""); }
+    const vs = $("#verse"); if (vs) vs.hidden = !V.length;
+
+    const nn = $(".js-nations-n"); if (nn) nn.textContent = C.stats.nations;
+    const bl = $(".js-bento-live"); if (bl && C.live && C.live.image) bl.src = img(C.live.image);
   }
 
   window.AgapeRender = render;

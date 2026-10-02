@@ -24,7 +24,8 @@ ap.write_text(a)
 
 # ---- shared asset map: every image referenced by content.js
 content_js = (root/'assets/js/content.js').read_text()
-paths = sorted(set(re.findall(r'"(assets/img/[^"]+)"', content_js)) | {'assets/img/logo-full.png','assets/img/logo-mark.png','assets/img/logo-mark-light.png'})
+extra_js = ''.join((root/f).read_text() for f in ['assets/js/v4.js','assets/js/main.js'] if (root/f).exists())
+paths = sorted(set(re.findall(r'"(assets/img/[^"]+)"', content_js + extra_js)) | {'assets/img/logo-full.png','assets/img/logo-mark.png','assets/img/logo-mark-light.png'})
 assets = {p: data_uri(root/p) for p in paths}
 assets_js = 'window.AGAPE_ASSETS=' + json.dumps(assets) + ';'
 
@@ -39,7 +40,7 @@ def inline_scripts(doc, base):
     return re.sub(r'<script src="([^"]+)"></script>', rep, doc)
 
 def site_single(include_assets=True, preview=False):
-    out = html.replace('<link rel="stylesheet" href="assets/css/style.css" />', '<style>' + inline_css(root/'assets/css/style.css', pathlib.Path('assets')) + '</style>')
+    out = re.sub(r'<link rel="stylesheet" href="(assets/css/[^"]+)" />', lambda m: '<style>' + inline_css(root/m.group(1), pathlib.Path('assets')) + '</style>', html)
     out = re.sub(r'<link rel="preload"[^>]+>\n', '', out)
     out = inline_scripts(out, root)
     cache = {}

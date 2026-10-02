@@ -5,18 +5,21 @@
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
 <title>Agape International Ministries</title>
 <meta name="description" content="Agape International Ministries: sermons, live services, courses, community, prayer, Bible games and a ride to church, all in one place." />
-<meta name="theme-color" content="#0F0B12" />
+<meta name="theme-color" content="#07050A" />
 <meta property="og:title" content="Agape International Ministries" />
 <meta property="og:description" content="Sermons, live services, courses, community, prayer and a ride to church, all week long." />
 <meta property="og:image" content="assets/img/agape-home-worship.jpg" />
 <link rel="preload" href="assets/fonts/bricolage.woff" as="font" type="font/woff" crossorigin />
 <link rel="preload" href="assets/fonts/instrument-serif-italic.woff" as="font" type="font/woff" crossorigin />
 <link rel="stylesheet" href="assets/css/style.css" />
+<link rel="stylesheet" href="assets/css/v3.css" />
+<link rel="stylesheet" href="assets/css/v4.css" />
 </head>
 <body class="is-loading" data-page="site">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs>
 <symbol id="i-play" viewBox="0 0 24 24"><path d="M5 5a2 2 0 0 1 3.008-1.728l11.997 6.998a2 2 0 0 1 .003 3.458l-12 7A2 2 0 0 1 5 19z" /></symbol>
 <symbol id="i-pause" viewBox="0 0 24 24"><rect x="14" y="3" width="5" height="18" rx="1" /> <rect x="5" y="3" width="5" height="18" rx="1" /></symbol>
+<symbol id="i-arrow-left" viewBox="0 0 24 24"><path d="m12 19-7-7 7-7" /> <path d="M19 12H5" /></symbol>
 <symbol id="i-arrow-right" viewBox="0 0 24 24"><path d="M5 12h14" /> <path d="m12 5 7 7-7 7" /></symbol>
 <symbol id="i-arrow-up-right" viewBox="0 0 24 24"><path d="M7 7h10v10" /> <path d="M7 17 17 7" /></symbol>
 <symbol id="i-arrow-down" viewBox="0 0 24 24"><path d="M12 5v14" /> <path d="m19 12-7 7-7-7" /></symbol>
@@ -103,16 +106,13 @@
   <div class="loader__count"><span class="js-count">000</span><small>%</small></div>
 </div>
 
+<div class="sprog" aria-hidden="true"></div>
+
 <!-- ============ CURSOR ============ -->
 <div class="cursor" aria-hidden="true"><div class="cursor__dot"></div><div class="cursor__label"></div></div>
 
 <!-- ============ NAV ============ -->
 <header class="nav">
-  <a href="#" target="_blank" rel="noopener" class="nav__promo">
-    <span class="nav__promo-dot"></span>
-    <span class="js-ann"></span>
-    <span class="nav__promo-cta"><span class="js-ann-cta">Watch now</span> <svg class="ic"><use href="#i-arrow-right"/></svg></span>
-  </a>
   <div class="nav__bar">
     <a href="#top" class="logo" aria-label="Agape International Ministries home">
       <img class="logo__img" src="assets/img/logo-mark.png" alt="" />
@@ -153,51 +153,56 @@
 <main id="top">
 
 <!-- ============ HERO ============ -->
-<section class="hero2" id="hero">
-  <div class="hero2__stage">
-    <div class="hero2__glow" aria-hidden="true"></div>
-    <div class="hero2__media js-hero-media" data-cursor="Scroll">
-      <div class="hero2__slides js-hero-slides"></div>
-      <div class="hero2__shade"></div>
-      <div class="hero2__reveal">
-        <span class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span><span class="js-church-name">Agape International Ministries</span></span>
-        <h2 class="hero2__big"><span class="js-reveal-title">You belong</span> <em class="js-reveal-accent">here.</em></h2>
-        <div class="hero__ctas">
-          <a href="#visit" class="btn btn--brand" data-magnetic><span>Plan your visit</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
-          <a href="#watch" class="btn btn--glass" data-magnetic><span>Watch live</span><i><svg class="ic"><use href="#i-play"/></svg></i></a>
-        </div>
-      </div>
-      <div class="hero2__caption"><span class="hero2__dots js-hero-dots"></span><span class="js-hero-caption"></span></div>
-    </div>
-    <div class="hero2__line hero2__line--1">
-      <span class="chip hero2__kicker"><svg class="ic"><use href="#i-sparkles"/></svg><span class="js-hero-kicker"></span></span>
-      <h1 class="hero2__l1"><span class="js-hero-line1">Love that</span></h1>
-    </div>
-    <div class="hero2__line hero2__line--2" aria-hidden="true"><span class="hero2__word js-hero-word">shows up.</span></div>
-    <div class="hero2__side hero2__side--left">
-      <p class="hero2__lead js-hero-lead"></p>
-      <div class="hero__ctas">
-        <a href="#visit" class="btn btn--brand" data-magnetic><span>Plan your visit</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
-        <a href="#watch" class="btn btn--ghost-light" data-magnetic><span class="live-dot"></span><span>Watch live</span></a>
-      </div>
-    </div>
-    <div class="hero2__side hero2__side--right">
-      <div class="hero2__next">
-        <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--live"></span>Next service</span>
-        <b class="hero2__next-label js-hero-next">Sunday Celebration</b>
-        <div class="hero2__cd"><span><b class="js-h-d">00</b><small>days</small></span><span><b class="js-h-h">00</b><small>hrs</small></span><span><b class="js-h-m">00</b><small>min</small></span><span><b class="js-h-s">00</b><small>sec</small></span></div>
-      </div>
-      <div class="hero__social hero2__social">
-        <div class="faces"><span style="--c:#FF5A1F">D</span><span style="--c:#6E4BFF">S</span><span style="--c:#2ED3A0">M</span><span style="--c:#FFC23D">A</span></div>
-        <p><b data-stat="members" data-suffix="+">0</b> members<br/><b data-stat="nations">0</b> nations, one family</p>
-      </div>
-    </div>
-    <a href="#promos" class="hero2__scroll" aria-label="Scroll"><span>Scroll</span><i></i></a>
+<section class="hx" id="hero" data-page-bg="#0B0710" >
+  <div class="hx__media" data-cursor="Move">
+    <div class="hx__imgs js-hero-slides"></div>
+    <canvas class="hx__gl" aria-hidden="true"></canvas>
+    <div class="hx__shade" aria-hidden="true"></div>
   </div>
+
+  <div class="hx__top">
+    <a href="#" target="_blank" rel="noopener" class="nav__promo hx__ann">
+      <span class="hx__ann-new">New</span>
+      <span class="hx__ann-text js-ann"></span>
+      <span class="hx__ann-cta"><span class="js-ann-cta">Watch now</span><svg class="ic"><use href="#i-arrow-right"/></svg></span>
+    </a>
+    <div class="hx__count"><b class="js-hx-idx">01</b><i></i><span class="js-hx-total">05</span></div>
+  </div>
+
+  <div class="hx__main">
+    <p class="hx__kicker"><span class="live-dot"></span><span class="js-hero-kicker">An international family of faith</span></p>
+    <h1 class="hx__title">
+      <span class="hx__l1 js-hero-line1">Love that</span>
+      <span class="hx__l2"><span class="hx__word js-hero-word">shows up.</span></span>
+    </h1>
+    <div class="hx__row">
+      <p class="hx__lead js-hero-lead"></p>
+      <div class="hx__ctas">
+        <a href="#visit" class="xbtn xbtn--fire" data-magnetic><span class="xbtn__t" data-roll>Plan your visit</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
+        <a href="#watch" class="xbtn xbtn--glass" data-magnetic><span class="live-dot"></span><span class="xbtn__t" data-roll>Watch live</span></a>
+      </div>
+    </div>
+  </div>
+
+  <a href="#watch" class="hx__seal" aria-label="Watch Prayer and Worship">
+    <svg viewBox="0 0 200 200" class="hx__seal-ring" aria-hidden="true"><defs><path id="sealPath" d="M100,100 m-78,0 a78,78 0 1,1 156,0 a78,78 0 1,1 -156,0"/></defs><text><textPath href="#sealPath" class="js-seal-text" textLength="488" lengthAdjust="spacing">PRAYER &amp; WORSHIP · LIVE EVERY WEEK · AGAPE · </textPath></text></svg>
+    <span class="hx__seal-core"><svg class="ic"><use href="#i-play"/></svg></span>
+  </a>
+
+  <div class="hx__thumbs js-hx-thumbs" aria-label="Photos"></div>
+
+  <div class="hx__foot">
+    <div class="hx__stat hx__stat--next"><span class="live-dot"></span><span class="js-hero-next">Next service</span><span class="hx__cd"><b class="js-h-d">00</b>d <b class="js-h-h">00</b>h <b class="js-h-m">00</b>m <b class="js-h-s">00</b>s</span></div>
+    <div class="hx__stat"><b data-stat="members" data-suffix="+">0</b><span>members</span></div>
+    <div class="hx__stat"><b data-stat="nations">0</b><span>nations</span></div>
+    <div class="hx__stat"><b data-stat="prayers" data-sep>0</b><span>prayers this year</span></div>
+    <p class="hx__belong"><span class="js-reveal-title">You belong</span> <em class="js-reveal-accent">here.</em></p>
+  </div>
+  <span class="js-hero-dots" hidden></span><span class="js-hero-caption" hidden></span>
 </section>
 
 <!-- ============ MARQUEE ============ -->
-<section class="marquees" aria-hidden="true">
+<section class="marquees" aria-hidden="true" data-page-bg="#0B0710">
   <div class="mq mq--ink" data-dir="-1"><div class="mq__track">
     <span>Sermons</span><i>✦</i><span class="serif">Courses</span><i>✦</i><span>Community</span><i>✦</i><span class="serif">Prayer</span><i>✦</i><span>Bible Games</span><i>✦</i><span class="serif">Rides</span><i>✦</i>
   </div></div>
@@ -206,132 +211,200 @@
   </div></div>
 </section>
 
-<!-- ============ PROMOS ============ -->
-<section class="promos" id="promos">
-  <div class="container section-head">
-    <div>
-      <span class="eyebrow"><span class="eyebrow__dot"></span>Happening at Agape</span>
-      <h2 class="h2" data-split>Don't miss <em>what's next.</em></h2>
+<!-- ============ PROMOS — stacked posters ============ -->
+<section class="pstack" id="promos" data-page-bg="#0B0710" >
+  <div class="pstack__stage">
+    <div class="container pstack__head">
+      <div>
+        <span class="eyebrow"><span class="eyebrow__dot"></span>Happening at Agape</span>
+        <h2 class="h2">Don't miss <em>what's next.</em></h2>
+      </div>
+      <div class="pstack__nav"><div class="pstack__bars js-pbars"></div><span class="pstack__num"><b class="js-pnum">01</b> / <span class="js-ptot">05</span></span></div>
     </div>
-    <div class="promos__ctrl">
-      <div class="promos__bars"></div>
-      <button class="round-btn js-prev" aria-label="Previous"><svg class="ic"><use href="#i-chevron-left"/></svg></button>
-      <button class="round-btn js-next" aria-label="Next"><svg class="ic"><use href="#i-chevron-right"/></svg></button>
-    </div>
+    <div class="pstack__cards js-pcards"></div>
   </div>
-  <div class="promos__track" data-cursor="Drag"></div>
 </section>
 
-<!-- ============ LIVE ============ -->
-<section class="live sheet sheet--ink" id="watch">
-  <div class="container">
-    <div class="section-head section-head--light">
-      <div>
-        <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--live"></span>Streaming every Sunday</span>
-        <h2 class="h2" data-split>Wherever you are, <em>you're in the room.</em></h2>
+<!-- ============ A WEEK AT AGAPE — pinned horizontal scroll ============ -->
+<section class="week" id="features" data-page-bg="#0B0710" >
+  <div class="week__pin">
+    <div class="week__track">
+      <div class="week__intro">
+        <span class="eyebrow"><span class="eyebrow__dot"></span>Everything in one place</span>
+        <h2 class="week__h">One church.<br/><em>Every day</em><br/>of the week.</h2>
+        <p>Scroll through a week at Agape. Every day has something for you, and it all lives in one app.</p>
+        <span class="week__hint"><i></i>Keep scrolling</span>
       </div>
-      <p class="section-sub">Join the service live from anywhere, chat with the family, and take notes that sync to your phone.</p>
-    </div>
-    <div class="live__grid">
-      <div class="player" data-cursor="Play">
-        <img src="assets/img/agape-home-worship.jpg" alt="Prayer and worship at Agape" class="player__img" />
-        <div class="player__shade"></div>
-        <div class="player__top">
-          <span class="badge-live"><span class="live-dot"></span>LIVE</span>
-          <a class="player__viewers js-yt" target="_blank" rel="noopener"><svg class="ic"><use href="#i-youtube-play"/></svg>Agape International Media</a>
+
+      <article class="day day--dk" style="--c:#FF5A1F">
+        <span class="day__name">Sun</span>
+        <div class="day__media sh-arch"><img src="assets/img/agape-home-worship.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-live"><span class="badge-live"><span class="live-dot"></span>LIVE</span><span><b class="js-dw-viewers">1,248</b> watching</span></div>
+        <div class="day__txt">
+          <span class="day__k">Sunday · 10:00 AM &amp; 6:00 PM</span>
+          <h3>Celebrate <em>together.</em></h3>
+          <p>Worship in the room or stream live from anywhere, with live chat and sermon notes that sync.</p>
+          <a href="#watch" class="day__go"><span data-roll>Watch live</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
         </div>
-        <button class="player__play" aria-label="Play live stream"><span class="ripple"></span><span class="ripple"></span><svg class="ic"><use href="#i-play"/></svg></button>
-        <div class="player__bottom">
-          <p class="player__series">Live &amp; on demand · YouTube</p>
-          <h3 class="player__title">Prayer <em>&amp; Worship</em></h3>
-          <p class="player__meta">Tap play to watch the latest from Agape International Media</p>
-          <div class="player__bar"><span></span></div>
+      </article>
+
+      <article class="day day--dk" style="--c:#6E4BFF">
+        <span class="day__name">Mon</span>
+        <div class="day__media sh-circle"><img src="assets/img/agape-institute.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-ring"><span class="dw-ring__c" style="--p:0"><b class="js-dw-ring">0%</b></span><span><b>Foundations</b><small>Lesson 4 of 6</small></span></div>
+        <div class="day__txt">
+          <span class="day__k">Agape Institute of Ministry</span>
+          <h3>Learn <em>deeper.</em></h3>
+          <p>Courses with video, PDFs and quizzes. Your progress saves itself, so you can always pick up where you stopped.</p>
+          <a href="#app" class="day__go"><span data-roll>Start a course</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
         </div>
-        <div class="hearts" aria-hidden="true"></div>
+      </article>
+
+      <article class="day day--lt" style="--c:#FFC23D">
+        <span class="day__name">Tue</span>
+        <div class="day__media sh-blob"><img src="assets/img/agape-kids-hearts.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-streak"><span class="dw-fire">🔥</span><span><b>7-day streak</b><small>+120 pts today</small></span></div>
+        <div class="day__txt">
+          <span class="day__k">Bible games</span>
+          <h3>Play &amp; <em>remember.</em></h3>
+          <p>Verse Match, trivia packs and church-wide leaderboards. It turns out Sunday school can be competitive.</p>
+          <a href="#games" class="day__go"><span data-roll>Play a round</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="day day--dk" style="--c:#FF3D7F">
+        <span class="day__name">Wed</span>
+        <div class="day__media sh-leaf"><img src="assets/img/agape-prayer-worship.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-pray"><span class="dw-avs"><i style="--c:#FFC23D">P</i><i style="--c:#6E4BFF">J</i><i style="--c:#2ED3A0">M</i></span><span><b class="js-dw-pray">312</b> praying now</span></div>
+        <div class="day__txt">
+          <span class="day__k">Wednesday Prayer · 7:30 PM</span>
+          <h3>Pray <em>with us.</em></h3>
+          <p>Post a request on the prayer wall and feel the whole family stand with you, in real time.</p>
+          <a href="#prayer" class="day__go"><span data-roll>Share a request</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="day day--lt" style="--c:#4CC3FF">
+        <span class="day__name">Thu</span>
+        <div class="day__media sh-pill"><img src="assets/img/bible-coffee.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-ai"><span class="ai-orb"></span><span class="js-dw-type" data-text="Romans 8:28 means nothing in your story is wasted.">Romans 8:28 means…</span></div>
+        <div class="day__txt">
+          <span class="day__k">Ask Agape · AI assistant</span>
+          <h3>Ask <em>anything.</em></h3>
+          <p>Bible questions, verse lookups and devotionals, at 2 AM too. It even knows this week's sermon.</p>
+          <a href="#ai" class="day__go"><span data-roll>Try it now</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="day day--lt" style="--c:#2ED3A0">
+        <span class="day__name">Fri</span>
+        <div class="day__media sh-arch-down"><img src="assets/img/agape-families.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-rsvp"><span class="dw-avs"><i style="--c:#FF5A1F">R</i><i style="--c:#6E4BFF">A</i><i style="--c:#FF3D7F">N</i><i style="--c:#0B0710">+9</i></span><span><b>Home prayer</b><small>8:00 PM · RSVP</small></span></div>
+        <div class="day__txt">
+          <span class="day__k">Small groups &amp; home gatherings</span>
+          <h3>Gather <em>at home.</em></h3>
+          <p>Host or join a prayer meeting in someone's living room, with RSVP and directions in the app.</p>
+          <a href="#community" class="day__go"><span data-roll>Find a group</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+      </article>
+
+      <article class="day day--lt" style="--c:#B7A5FF">
+        <span class="day__name">Sat</span>
+        <div class="day__media sh-squircle"><img src="assets/img/agape-squad-band.jpg" alt="" loading="lazy" /></div>
+        <div class="day__widget dw-ride"><span class="dw-car"><svg class="ic"><use href="#i-car"/></svg></span><span><b>David is 4 min away</b><small>Ride ministry</small></span></div>
+        <div class="day__txt">
+          <span class="day__k">Serve &amp; ride ministry</span>
+          <h3>Serve <em>someone.</em></h3>
+          <p>Drive for the ride ministry, lead with the Agape Squad, or help on the tech team. Sign up in one tap.</p>
+          <a href="#rides" class="day__go"><span data-roll>Volunteer</span><svg class="ic"><use href="#i-arrow-up-right"/></svg></a>
+        </div>
+      </article>
+
+      <div class="week__end">
+        <h3>Seven days.<br/><em>One family.</em></h3>
+        <a href="#download" class="xbtn xbtn--fire" data-magnetic><span class="xbtn__t" data-roll>Get the app</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
       </div>
-      <aside class="chat">
-        <div class="chat__head"><b>Live chat · in the app</b><span><span class="live-dot"></span> <span class="js-chatters">312</span> in chat</span></div>
-        <p class="chat__note">Preview of the in-app live chat that runs alongside every stream.</p>
-        <div class="chat__list js-chat"></div>
-        <div class="chat__input"><span>Say something kind…</span><button aria-label="Send heart" class="chat__heart js-heart"><svg class="ic"><use href="#i-heart"/></svg></button></div>
-      </aside>
     </div>
-    <div class="countdown">
-      <div class="countdown__label"><span class="eyebrow eyebrow--light">Next service</span><p class="js-next-label">Sunday Celebration · 10:00 AM</p></div>
-      <div class="countdown__digits">
+    <div class="week__bar"><i></i></div>
+  </div>
+</section>
+
+<!-- ============ LIVE — scroll-expanding cinema ============ -->
+<section class="cine" id="watch" data-page-bg="#050307" >
+  <div class="cine__pin">
+    <div class="container cine__head">
+      <span class="eyebrow"><span class="eyebrow__dot eyebrow__dot--live"></span>Streaming every week</span>
+      <h2 class="cine__h">Wherever you are, <em>you're in the room.</em></h2>
+    </div>
+    <div class="cine__frame player" data-cursor="Play">
+      <img src="assets/img/agape-home-worship.jpg" alt="Prayer and worship at Agape" class="player__img" />
+      <div class="player__shade"></div>
+      <div class="player__top">
+        <span class="badge-live"><span class="live-dot"></span>LIVE</span>
+        <span class="cine__viewers"><svg class="ic"><use href="#i-eye"/></svg><b class="js-viewers">1,248</b> watching</span>
+        <a class="player__viewers js-yt" target="_blank" rel="noopener"><svg class="ic"><use href="#i-youtube-play"/></svg>Agape International Media</a>
+      </div>
+      <button class="player__play" aria-label="Play live stream"><span class="ripple"></span><span class="ripple"></span><svg class="ic"><use href="#i-play"/></svg></button>
+      <div class="player__bottom">
+        <p class="player__series">Live &amp; on demand · YouTube</p>
+        <h3 class="player__title">Prayer <em>&amp; Worship</em></h3>
+      </div>
+      <div class="cine__chat"><div class="cine__chat-list js-chat"></div><div class="cine__chat-in"><span>Say something kind… <small>· <b class="js-chatters">312</b> in chat</small></span><button aria-label="Send hearts" class="chat__heart js-heart"><svg class="ic"><use href="#i-heart"/></svg></button></div></div>
+      <div class="hearts" aria-hidden="true"></div>
+    </div>
+  </div>
+  <div class="container cine__after">
+    <div class="cdown">
+      <div class="cdown__label"><span class="eyebrow">Next service</span><p class="js-next-label">Sunday Celebration · 10:00 AM</p></div>
+      <div class="cdown__digits" aria-live="off">
         <div><b class="js-cd-d">00</b><small>days</small></div><i>:</i>
         <div><b class="js-cd-h">00</b><small>hours</small></div><i>:</i>
         <div><b class="js-cd-m">00</b><small>mins</small></div><i>:</i>
         <div><b class="js-cd-s">00</b><small>secs</small></div>
       </div>
-      <a href="#" class="btn btn--brand" data-magnetic><span>Remind me</span><i><svg class="ic"><use href="#i-bell"/></svg></i></a>
+      <a href="#download" class="xbtn xbtn--fire" data-magnetic><span class="xbtn__t" data-roll>Remind me</span><i><svg class="ic"><use href="#i-bell"/></svg></i></a>
     </div>
-    <a class="ytcard js-yt" target="_blank" rel="noopener" data-cursor="YouTube">
+    <a class="ytcard ytrow js-yt" target="_blank" rel="noopener" data-cursor="YouTube">
       <div class="ytcard__thumb"><img src="assets/img/agape-prayer-worship.jpg" alt="Prayer and Worship, Session 1" /><span class="ytcard__play"><svg class="ic"><use href="#i-play"/></svg></span></div>
-      <div class="ytcard__body">
-        <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--live"></span>Agape International Media</span>
-        <h3>Every message, <em>on YouTube.</em></h3>
-        <p>Prayer &amp; Worship sessions, sermons and specials. Subscribe so you never miss a service.</p>
-        <span class="btn btn--light" style="align-self:flex-start"><span>Open the channel</span><i><svg class="ic"><use href="#i-arrow-up-right"/></svg></i></span>
-      </div>
+      <div class="ytcard__body"><small>Agape International Media · YouTube</small><h3>Every message, <em>on YouTube.</em></h3></div>
+      <span class="ytrow__go"><svg class="ic"><use href="#i-arrow-up-right"/></svg></span>
     </a>
   </div>
 </section>
 
-<!-- ============ SERIES ============ -->
-<section class="series sheet sheet--ink2" id="series">
-  <div class="series__pin">
-    <div class="container series__head">
-      <div>
-        <span class="eyebrow eyebrow--light"><span class="eyebrow__dot"></span>Sermon library</span>
-        <h2 class="h2">Sorted by <em>the Book,</em><br/>not the upload date.</h2>
-      </div>
-      <div class="filter-chips">
-        <button class="fchip is-on">All</button><button class="fchip">Romans</button><button class="fchip">Psalms</button><button class="fchip">Acts</button><button class="fchip">Faith</button><button class="fchip">Family</button>
-      </div>
+<!-- ============ SERMON LIBRARY — draggable 3D cylinder ============ -->
+<section class="lib" id="series" data-page-bg="#120817" >
+  <div class="container lib__head">
+    <span class="eyebrow"><span class="eyebrow__dot"></span>Sermon library</span>
+    <h2 class="lib__h">Sorted by <em>the Book,</em><br/>not the upload date.</h2>
+    <div class="filter-chips lib__chips">
+      <button class="fchip is-on">All</button><button class="fchip">Romans</button><button class="fchip">Psalms</button><button class="fchip">Acts</button><button class="fchip">Faith</button><button class="fchip">Family</button><button class="fchip">John</button>
     </div>
-    <div class="series__track">
-      <article class="scard" style="--tint:#FF5A1F" data-cursor="Watch">
-        <div class="scard__img"><img src="assets/img/cross-mountain.jpg" alt="" /></div>
-        <div class="scard__body"><span class="scard__book">Romans</span><h3>Unshake<em>able</em></h3><p>8 messages · Ps. John Mathew</p></div>
-        <span class="scard__num">01</span>
-      </article>
-      <article class="scard scard--arch" style="--tint:#6E4BFF" data-cursor="Watch">
-        <div class="scard__img"><img src="assets/img/woman-forest.jpg" alt="" /></div>
-        <div class="scard__body"><span class="scard__book">Psalms</span><h3>Psalms <em>after dark</em></h3><p>6 messages · Night worship</p></div>
-        <span class="scard__num">02</span>
-      </article>
-      <article class="scard" style="--tint:#2ED3A0" data-cursor="Watch">
-        <div class="scard__img"><img src="assets/img/city-night.jpg" alt="" /></div>
-        <div class="scard__body"><span class="scard__book">Acts</span><h3>A church <em>on the move</em></h3><p>12 messages · Series</p></div>
-        <span class="scard__num">03</span>
-      </article>
-      <article class="scard scard--arch" style="--tint:#FFC23D" data-cursor="Watch">
-        <div class="scard__img"><img src="assets/img/hand-sunset.jpg" alt="" /></div>
-        <div class="scard__body"><span class="scard__book">Faith</span><h3>Faith <em>over fear</em></h3><p>5 messages · Ps. Sarah Thomas</p></div>
-        <span class="scard__num">04</span>
-      </article>
-      <article class="scard" style="--tint:#FF3D7F" data-cursor="Watch">
-        <div class="scard__img"><img src="assets/img/dove.jpg" alt="" /></div>
-        <div class="scard__body"><span class="scard__book">Matthew 5–7</span><h3>The upside-<em>down kingdom</em></h3><p>9 messages · Sermon on the Mount</p></div>
-        <span class="scard__num">05</span>
-      </article>
-      <article class="scard scard--arch" style="--tint:#4CC3FF" data-cursor="Watch">
-        <div class="scard__img"><img src="assets/img/mountain-peaks.jpg" alt="" /></div>
-        <div class="scard__body"><span class="scard__book">Genesis</span><h3>In the <em>beginning</em></h3><p>10 messages · Foundations</p></div>
-        <span class="scard__num">06</span>
-      </article>
-      <a href="#app" class="scard scard--more">
-        <span class="scard__more-num" data-count="420" data-suffix="+">0</span>
-        <p>messages in the library, streamed straight to your phone. Download them for offline listening.</p>
-        <span class="btn btn--brand"><span>Open library</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></span>
-      </a>
+  </div>
+  <div class="lib__stage" data-cursor="Drag">
+    <div class="lib__ring js-lib-ring">
+      <a class="lcard" href="#" data-book="romans" style="--tint:#FF5A1F" data-cursor="Watch"><img src="assets/img/cross-mountain.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">01</span><span class="lcard__book">Romans</span><span class="lcard__t"><b>Unshake</b><em>able</em><small>8 messages · Ps. John Mathew</small></span></a>
+      <a class="lcard" href="#" data-book="psalms" style="--tint:#6E4BFF" data-cursor="Watch"><img src="assets/img/woman-forest.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">02</span><span class="lcard__book">Psalms</span><span class="lcard__t"><b>Psalms</b><em>after dark</em><small>6 messages · Night worship</small></span></a>
+      <a class="lcard" href="#" data-book="acts" style="--tint:#2ED3A0" data-cursor="Watch"><img src="assets/img/city-night.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">03</span><span class="lcard__book">Acts</span><span class="lcard__t"><b>A church</b><em>on the move</em><small>12 messages · Series</small></span></a>
+      <a class="lcard" href="#" data-book="faith" style="--tint:#FFC23D" data-cursor="Watch"><img src="assets/img/hand-sunset.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">04</span><span class="lcard__book">Faith</span><span class="lcard__t"><b>Faith</b><em>over fear</em><small>5 messages · Ps. Sarah Thomas</small></span></a>
+      <a class="lcard" href="#" data-book="matthew" style="--tint:#FF3D7F" data-cursor="Watch"><img src="assets/img/dove.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">05</span><span class="lcard__book">Matthew</span><span class="lcard__t"><b>The upside-</b><em>down kingdom</em><small>9 messages · Sermon on the Mount</small></span></a>
+      <a class="lcard" href="#" data-book="genesis" style="--tint:#4CC3FF" data-cursor="Watch"><img src="assets/img/mountain-peaks.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">06</span><span class="lcard__book">Genesis</span><span class="lcard__t"><b>In the</b><em>beginning</em><small>10 messages · Foundations</small></span></a>
+      <a class="lcard" href="#" data-book="john" style="--tint:#FF8A3D" data-cursor="Watch"><img src="assets/img/candle-hands.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">07</span><span class="lcard__book">John</span><span class="lcard__t"><b>Grace upon</b><em>grace</em><small>7 messages · Gospel of John</small></span></a>
+      <a class="lcard" href="#" data-book="psalms" style="--tint:#B25BFF" data-cursor="Watch"><img src="assets/img/sunrise-silhouettes.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">08</span><span class="lcard__book">Psalms</span><span class="lcard__t"><b>Songs for</b><em>the valley</em><small>6 messages · Psalm 23</small></span></a>
+      <a class="lcard" href="#" data-book="family" style="--tint:#2ED3A0" data-cursor="Watch"><img src="assets/img/agape-families.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">09</span><span class="lcard__book">Family</span><span class="lcard__t"><b>Kingdom</b><em>families</em><small>4 messages · Ephesians 5–6</small></span></a>
+      <a class="lcard" href="#" data-book="faith" style="--tint:#FF5A1F" data-cursor="Watch"><img src="assets/img/girl-praying-light.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">10</span><span class="lcard__book">Faith</span><span class="lcard__t"><b>Prayer that</b><em>moves mountains</em><small>5 messages · James 5</small></span></a>
+      <a class="lcard" href="#" data-book="romans" style="--tint:#FFC23D" data-cursor="Watch"><img src="assets/img/bible-dark.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">11</span><span class="lcard__book">Romans</span><span class="lcard__t"><b>No</b><em>condemnation</em><small>6 messages · Romans 8</small></span></a>
+      <a class="lcard" href="#" data-book="acts" style="--tint:#FF3D7F" data-cursor="Watch"><img src="assets/img/worship-orange.jpg" alt="" loading="lazy" draggable="false" /><span class="lcard__num">12</span><span class="lcard__book">Acts</span><span class="lcard__t"><b>Fire</b><em>& wind</em><small>8 messages · Pentecost</small></span></a>
     </div>
+  </div>
+  <div class="container lib__foot">
+    <p><b class="lib__count" data-count="420" data-suffix="+">0</b> messages, streamed to your phone and ready for offline listening.</p>
+    <a href="#download" class="xbtn xbtn--fire" data-magnetic><span class="xbtn__t" data-roll>Open the library</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
   </div>
 </section>
 
 <!-- ============ APP SHOWCASE ============ -->
-<section class="showcase sheet" id="app">
+<section class="showcase sheet" id="app" data-page-bg="#0B0710">
   <div class="container showcase__intro">
     <span class="eyebrow"><span class="eyebrow__dot"></span>The Agape app</span>
     <h2 class="h2 h2--xl" data-split>Your church, <em>in your pocket.</em></h2>
@@ -431,37 +504,37 @@
       </div>
     </div>
     <div class="showcase__steps">
-      <div class="step is-active" data-step="0" data-bg="#F4EEE4">
+      <div class="step is-active" data-step="0" data-bg="#F4EEE4" >
         <span class="step__num">01</span>
         <h3>Everything, <em>one tap away</em></h3>
         <p>Your home screen knows what's next: the live service, today's verse, your small group, and the events you've RSVP'd to.</p>
         <ul class="step__tags"><li>Verse-of-the-day widget</li><li>Event RSVP + QR check-in</li><li>Dark mode</li></ul>
       </div>
-      <div class="step" data-step="1" data-bg="#FFE3D6">
+      <div class="step" data-step="1" data-bg="#FFE3D6" >
         <span class="step__num">02</span>
         <h3>Watch live, <em>take notes</em></h3>
         <p>Stream every service from Agape International Media, chat with the family while it's on, and keep sermon notes that sync across all your devices.</p>
         <ul class="step__tags"><li>Live chat</li><li>Synced notes</li><li>Offline downloads</li></ul>
       </div>
-      <div class="step" data-step="2" data-bg="#E6DEFF">
+      <div class="step" data-step="2" data-bg="#E6DEFF" >
         <span class="step__num">03</span>
         <h3>Courses that <em>go deeper</em></h3>
         <p>The Agape Institute of Ministry, in your pocket. Structured courses with video, PDFs and quizzes in every lesson. Your progress saves itself, so you can always pick up where you stopped.</p>
         <ul class="step__tags"><li>Modules → lessons</li><li>PDF study guides</li><li>Progress tracking</li></ul>
       </div>
-      <div class="step" data-step="3" data-bg="#FFF0B8">
+      <div class="step" data-step="3" data-bg="#FFF0B8" >
         <span class="step__num">04</span>
         <h3>Play, learn, <em>remember</em></h3>
         <p>Bible trivia and verse-memory games with church-wide leaderboards. It turns out Sunday school can be competitive.</p>
         <ul class="step__tags"><li>Trivia packs</li><li>Verse match</li><li>Leaderboards</li></ul>
       </div>
-      <div class="step" data-step="4" data-bg="#DDF1FF">
+      <div class="step" data-step="4" data-bg="#DDF1FF" >
         <span class="step__num">05</span>
         <h3>Ask <em>anything</em></h3>
         <p>An AI Bible assistant for questions, verse lookups and devotionals. It can also answer questions about this week's sermon.</p>
         <ul class="step__tags"><li>Verse lookup</li><li>Devotionals</li><li>Scoped to our teaching</li></ul>
       </div>
-      <div class="step" data-step="5" data-bg="#D5F5E8">
+      <div class="step" data-step="5" data-bg="#D5F5E8" >
         <span class="step__num">06</span>
         <h3>A ride, <em>every Sunday</em></h3>
         <p>Request a ride and a volunteer driver accepts it. Then you can follow them on a live map, just like a taxi app, except it's free and it's family.</p>
@@ -472,7 +545,7 @@
 </section>
 
 <!-- ============ RIDES ============ -->
-<section class="rides sheet sheet--ink" id="rides">
+<section class="rides rides--full" id="rides" data-page-bg="#0B0710">
   <div class="container rides__grid">
     <div class="rides__copy">
       <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--mint"></span>Ride ministry</span>
@@ -508,7 +581,7 @@
 </section>
 
 <!-- ============ GAMES ============ -->
-<section class="games sheet sheet--gold" id="games">
+<section class="games games--v4" id="games" data-page-bg="#FFC23D" data-tone="light">
   <div class="games__stickers" aria-hidden="true">
     <span class="gs gs--1">Play!</span><span class="gs gs--2">+120 pts</span><span class="gs gs--3">7-day streak</span>
   </div>
@@ -528,16 +601,17 @@
       <p class="vm__verse js-verse"></p>
       <p class="vm__ref js-ref"></p>
       <div class="vm__opts js-opts"></div>
-      <p class="vm__hint js-hint">Tap the missing words in order.</p>
+      <p class="vm__hint js-hint">Drag the words into the gaps, or tap them in order.</p>
       <canvas class="confetti"></canvas>
     </div>
   </div>
 </section>
 
 <!-- ============ AI ============ -->
-<section class="ai sheet sheet--sky" id="ai">
+<section class="ai ai--v4" id="ai" data-page-bg="#140826">
   <div class="container ai__grid">
     <div class="ai__chat" data-cursor="Ask">
+      <div class="ai__halo" aria-hidden="true"><i></i><i></i><i></i></div>
       <div class="ai__chat-head"><span class="ai-orb ai-orb--lg"></span><div><b>Ask Agape</b><small>Your Bible study companion</small></div></div>
       <div class="ai__msgs js-ai"></div>
       <div class="ai__sugg js-ai-sugg">
@@ -561,7 +635,7 @@
 </section>
 
 <!-- ============ PRAYER WALL ============ -->
-<section class="prayer sheet sheet--violet" id="prayer">
+<section class="prayer prayer--v4" id="prayer" data-page-bg="#26091F">
   <div class="container prayer__grid">
     <div class="prayer__copy">
       <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--rose"></span>Prayer wall</span>
@@ -576,16 +650,14 @@
       </form>
       <p class="prayer__total"><b data-stat="prayers" data-sep>0</b> prayers prayed this year</p>
     </div>
-    <div class="prayer__wall" aria-label="Prayer requests">
-      <div class="pcol" data-dur="38"></div>
-      <div class="pcol pcol--rev" data-dur="46"></div>
-      <div class="pcol" data-dur="32"></div>
+    <div class="pnotes prayer__wall" aria-label="Prayer requests" data-cursor="Drag">
+      <p class="pnotes__hint"><span>✦</span> Pick up a note, throw it around, tap “Praying”</p>
     </div>
   </div>
 </section>
 
 <!-- ============ GIVING ============ -->
-<section class="give sheet" id="give">
+<section class="give give--v4" id="give" data-page-bg="#FF5A1F">
   <div class="container">
     <div class="section-head">
       <div>
@@ -613,7 +685,7 @@
 </section>
 
 <!-- ============ EVENTS ============ -->
-<section class="events sheet sheet--paper" id="events">
+<section class="events events--v4" id="events" data-page-bg="#F4EEE4" data-tone="light">
   <div class="container">
     <div class="section-head">
       <div>
@@ -628,17 +700,31 @@
 </section>
 
 <!-- ============ VERSE ============ -->
-<section class="verse" id="verse">
-  <div class="verse__bg"><img src="assets/img/mountain-open-arms.jpg" alt="" /></div>
-  <div class="container verse__inner">
-    <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--gold"></span>Verse of the day</span>
-    <blockquote class="verse__q js-verse-q">“Come to me, all you who are weary and burdened, and I will give you rest.”</blockquote>
-    <div class="verse__foot"><span>Matthew 11:28</span><button class="btn btn--glass js-share" data-magnetic><span>Share as a card</span><i><svg class="ic"><use href="#i-share-2"/></svg></i></button></div>
-  </div>
-</section>
+<section class="verse" id="verse" aria-roledescription="carousel" aria-label="Bible verses" data-page-bg="#07050A">
+      <div class="verse__bg js-vbg"></div>
+      <div class="verse__grain"></div>
+      <div class="container verse__inner">
+        <div class="verse__top">
+          <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--gold"></span><span class="js-vlabel">Verse of the day</span></span>
+          <span class="verse__count"><b class="js-vnum">01</b><i></i><span class="js-vtotal">12</span></span>
+        </div>
+        <span class="verse__theme js-vtheme">Rest</span>
+        <blockquote class="verse__q js-verse-q" aria-live="polite">“Come to me, all you who labor and are heavily burdened, and I will give you rest.”</blockquote>
+        <div class="verse__foot">
+          <span class="verse__ref"><b class="js-vref">Matthew 11:28</b><small class="js-vtr">WEB</small></span>
+          <div class="verse__ctrl">
+            <button class="verse__nav js-vprev" aria-label="Previous verse"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
+            <button class="verse__nav verse__play js-vplay" aria-label="Pause"><svg class="ic ic-pause"><use href="#i-pause"/></svg><svg class="ic ic-play"><use href="#i-play"/></svg></button>
+            <button class="verse__nav js-vnext" aria-label="Next verse"><svg class="ic"><use href="#i-arrow-right"/></svg></button>
+          </div>
+          <button class="btn btn--glass js-share" data-magnetic><span>Share as a card</span><i><svg class="ic"><use href="#i-share-2"/></svg></i></button>
+        </div>
+      </div>
+      <div class="verse__rail"><div class="verse__chips js-vchips" role="tablist"></div></div>
+    </section>
 
 <!-- ============ COMMUNITY ============ -->
-<section class="community sheet sheet--ink" id="community">
+<section class="community sheet sheet--ink" id="community" data-page-bg="#0B0710">
   <div class="container">
     <div class="section-head section-head--light">
       <div>
@@ -651,33 +737,55 @@
   </div>
 </section>
 
-<!-- ============ GALLERY ============ -->
-<section class="gallery sheet sheet--paper" id="life">
-  <div class="container section-head">
-    <div>
-      <span class="eyebrow"><span class="eyebrow__dot"></span>Life at Agape</span>
-      <h2 class="h2" data-split>Real people. Real faith. <em>Real community.</em></h2>
+<!-- ============ GLOBE ============ -->
+<section class="globe-sec sheet" id="nations" data-page-bg="#070A16">
+  <div class="container globe-sec__grid">
+    <div class="globe-sec__copy">
+      <span class="eyebrow"><span class="eyebrow__dot eyebrow__dot--live"></span>An international family</span>
+      <h2 class="h2" data-split><span class="js-nations-n">31</span> nations. <em>One family.</em></h2>
+      <p class="section-sub">From Kerala to Kampala, Manila to Manchester: every Sunday, people from across the world worship together in one room, and online from wherever they are.</p>
+      <div class="nation-chips js-nation-chips"></div>
     </div>
-    <a href="#" target="_blank" rel="noopener" class="btn btn--ink js-yt" data-magnetic><span>More on YouTube</span><i><svg class="ic"><use href="#i-arrow-up-right"/></svg></i></a>
+    <div class="globe" data-cursor="Drag">
+      <div class="globe__glow"></div>
+      <canvas class="globe__cv"></canvas>
+      <div class="globe__tag"><span class="live-dot"></span>Agape International · Kuwait</div>
+    </div>
   </div>
-  <div class="gq" data-dir="-1"><div class="gq__track"></div></div>
-  <div class="gq" data-dir="1"><div class="gq__track"></div></div>
+</section>
+
+<!-- ============ GALLERY — cursor image trail ============ -->
+<section class="gallery gallery--v4" id="life" data-page-bg="#F4EEE4" data-tone="light">
+  <div class="trail" data-cursor="Move">
+    <div class="trail__imgs js-trail" aria-hidden="true"></div>
+    <div class="trail__center">
+      <span class="eyebrow"><span class="eyebrow__dot"></span>Life at Agape</span>
+      <h2 class="trail__h"><span>Real people.</span><span>Real faith.</span><em>Real community.</em></h2>
+      <p class="trail__hint"><i></i><span class="js-trail-hint">Move your cursor around</span></p>
+      <a href="#" target="_blank" rel="noopener" class="xbtn xbtn--ink js-yt" data-magnetic><span class="xbtn__t" data-roll>More on YouTube</span><i><svg class="ic"><use href="#i-arrow-up-right"/></svg></i></a>
+    </div>
+  </div>
+  <div class="gq" data-dir="-1" data-skew><div class="gq__track"></div></div>
 </section>
 
 <!-- ============ TESTIMONIES ============ -->
-<section class="testi sheet sheet--cream">
+<section class="testi sheet sheet--cream" data-page-bg="#0B0710">
   <div class="container section-head section-head--center">
     <div>
       <span class="eyebrow"><span class="eyebrow__dot"></span>Testimonies</span>
       <h2 class="h2" data-split>Stories of <em>answered prayer.</em></h2>
     </div>
   </div>
-  <div class="tq" data-dir="-1"><div class="tq__track"></div></div>
-  <div class="tq" data-dir="1"><div class="tq__track"></div></div>
+  <div class="t3d"><div class="t3d__plane">
+    <div class="t3d__col"><div class="tq__track"></div></div>
+    <div class="t3d__col t3d__col--rev"><div class="tq__track"></div></div>
+    <div class="t3d__col"><div class="tq__track"></div></div>
+    <div class="t3d__col t3d__col--rev"><div class="tq__track"></div></div>
+  </div></div>
 </section>
 
 <!-- ============ VISIT ============ -->
-<section class="visit sheet sheet--brand" id="visit">
+<section class="visit sheet sheet--brand" id="visit" data-page-bg="#0B0710">
   <div class="container visit__grid">
     <div class="visit__copy">
       <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--light"></span>First time?</span>
@@ -701,7 +809,7 @@
 </section>
 
 <!-- ============ DOWNLOAD ============ -->
-<section class="download" id="download">
+<section class="download" id="download" data-page-bg="#0B0710">
   <div class="download__inner">
     <div class="download__copy">
       <h2 class="h2 h2--xl" data-split>Take Agape <em>everywhere.</em></h2>
@@ -750,6 +858,7 @@
 
 <script src="assets/js/config.js"></script>
 <script src="assets/js/content.js"></script>
+<script src="assets/js/globe-dots.js"></script>
 <script src="assets/js/store.js"></script>
 <script src="assets/js/vendor/gsap.min.js"></script>
 <script src="assets/js/vendor/ScrollTrigger.min.js"></script>
@@ -758,6 +867,8 @@
 <script src="assets/js/vendor/Draggable.min.js"></script>
 <script src="assets/js/vendor/InertiaPlugin.min.js"></script>
 <script src="assets/js/main.js"></script>
+<script src="assets/js/v3.js"></script>
+<script src="assets/js/v4.js"></script>
 <script src="assets/js/render.js"></script>
 </body>
 </html>
