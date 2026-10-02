@@ -4,6 +4,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { router, useLocalSearchParams } from "expo-router";
 import { C, F, R } from "@/theme";
 import { BackHeader, Body, Button, Display, Icon, Label, Press, Segmented, Starburst } from "@/components/ui";
+import { GoogleButton, OrLine } from "@/components/GoogleButton";
 import { useAuth } from "@/lib/auth";
 
 function Field({ icon, ...p }: { icon: string } & React.ComponentProps<typeof TextInput>) {
@@ -66,6 +67,8 @@ export default function AuthScreen() {
         </Animated.View>
 
         <Segmented items={["Sign in", "Create account"]} value={mode} onChange={(i) => { setMode(i); setMsg(null); }} />
+        <GoogleButton onError={(text) => setMsg({ text })} />
+        <OrLine />
         {signup ? <Field icon="user" placeholder="Full name" value={name} onChangeText={setName} autoComplete="name" textContentType="name" /> : null}
         <Field icon="mail" placeholder="Email" value={email} onChangeText={setEmail} autoCapitalize="none" keyboardType="email-address" autoComplete="email" textContentType="emailAddress" />
         <Field icon="lock" placeholder={signup ? "Password (8+ characters)" : "Password"} value={password} onChangeText={setPassword} secureTextEntry autoComplete={signup ? "new-password" : "current-password"} textContentType={signup ? "newPassword" : "password"} onSubmitEditing={submit} returnKeyType="go" />

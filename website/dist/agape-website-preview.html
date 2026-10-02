@@ -3718,6 +3718,15 @@ window.AGAPE_DEFAULT = {
     const s = readSession();
     return s && s.expires_at * 1000 > Date.now() ? s : null;
   }
+  /** Saves a fresh session, then lets it in only if the profile is staff or admin. */
+  async function startSession(j) {
+    localStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || Date.now() / 1000 + j.expires_in, user: j.user }));
+    const me = await rest(`profiles?id=eq.${j.user.id}&select=role,full_name`).catch(() => []);
+    if (!me[0] || !["staff", "admin"].includes(me[0].role)) { localStorage.removeItem(SESSION_KEY); throw new Error(`${j.user.email || "This account"} isn't a staff account. Ask an admin to set your role to staff.`); }
+    const s = readSession(); s.role = me[0].role; s.name = me[0].full_name; localStorage.setItem(SESSION_KEY, JSON.stringify(s));
+    return true;
+  }
+
   /** Keeps the staff session alive: refreshes the access token shortly before it expires. */
   async function ensureFresh() {
     const s = readSession();
@@ -3806,11 +3815,22 @@ window.AGAPE_DEFAULT = {
       const r = await fetch(`${URL_}/auth/v1/token?grant_type=password`, { method: "POST", headers: { apikey: KEY, "Content-Type": "application/json" }, body: JSON.stringify({ email, password }) });
       const j = await r.json();
       if (!r.ok) throw new Error(j.error_description || j.msg || "Sign-in failed");
-      localStorage.setItem(SESSION_KEY, JSON.stringify({ access_token: j.access_token, refresh_token: j.refresh_token, expires_at: j.expires_at || Date.now() / 1000 + j.expires_in, user: j.user }));
-      const me = await rest(`profiles?id=eq.${j.user.id}&select=role,full_name`).catch(() => []);
-      if (!me[0] || !["staff", "admin"].includes(me[0].role)) { localStorage.removeItem(SESSION_KEY); throw new Error("This account isn't a staff account. Ask an admin to set your role to staff."); }
-      const s = readSession(); s.role = me[0].role; s.name = me[0].full_name; localStorage.setItem(SESSION_KEY, JSON.stringify(s));
-      return true;
+      return startSession(j);
+    },
+    /** Where the "Continue with Google" button sends the browser; Supabase brings it back here with the tokens in the hash. */
+    googleUrl() {
+      return `${URL_}/auth/v1/authorize?provider=google&redirect_to=${encodeURIComponent(location.origin + location.pathname)}`;
+    },
+    /** Finishes a Google sign-in when the page loads with #access_token=… (or #error=…). Returns true when signed in. */
+    async fromRedirect() {
+      const h = new URLSearchParams(location.hash.slice(1));
+      if (!h.get("access_token") && !h.get("error")) return false;
+      history.replaceState(null, "", location.pathname + location.search);
+      if (h.get("error")) throw new Error(/provider is not enabled/i.test(h.get("error_description") || "") ? "Google sign-in isn't switched on yet (Supabase → Authentication → Providers → Google)." : h.get("error_description") || "Google sign-in failed");
+      const access_token = h.get("access_token");
+      const r = await fetch(`${URL_}/auth/v1/user`, { headers: { apikey: KEY, Authorization: `Bearer ${access_token}` } });
+      if (!r.ok) throw new Error("Google sign-in failed. Please try again.");
+      return startSession({ access_token, refresh_token: h.get("refresh_token"), expires_at: +h.get("expires_at") || 0, expires_in: +h.get("expires_in") || 3600, user: await r.json() });
     },
     async restore() {
       if (!LIVE) return false;

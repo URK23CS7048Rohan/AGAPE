@@ -21,7 +21,7 @@ import { C, F, R, onColor } from "@/theme";
 const { width: SW, height: SH } = Dimensions.get("window");
 
 /* ---------------------------------------------------------------- Icons */
-const MCI = new Set(["car", "car-side", "hands-pray", "gamepad-variant", "cross", "church", "fire", "trophy", "robot-happy", "hand-heart", "account-group", "bookshelf", "piggy-bank", "baby-face-outline", "face-recognition", "wallet", "qrcode", "creation", "star-four-points", "star", "youtube", "lightning-bolt", "music-note", "party-popper"]);
+const MCI = new Set(["car", "car-side", "hands-pray", "gamepad-variant", "cross", "church", "fire", "trophy", "robot-happy", "hand-heart", "account-group", "bookshelf", "piggy-bank", "baby-face-outline", "face-recognition", "wallet", "qrcode", "creation", "star-four-points", "star", "youtube", "lightning-bolt", "music-note", "party-popper", "google"]);
 export function Icon({ name, size = 20, color = C.ink }: { name: string; size?: number; color?: string }) {
   if (MCI.has(name)) return <MaterialCommunityIcons name={name as any} size={size} color={color} />;
   return <Feather name={name as any} size={size} color={color} />;

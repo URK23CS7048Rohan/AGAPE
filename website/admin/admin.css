@@ -62,6 +62,10 @@ em{font-family:var(--f-serif);font-style:italic;font-weight:400;color:var(--bran
 .login__logo{width:150px;margin-bottom:10px}
 .login__form h1{font:800 3.4rem/.9 var(--f-display);font-stretch:75%;font-variation-settings:"wdth" 75;letter-spacing:-.04em;margin:0}
 .login__form h1 em{font-size:1.1em}
+.login__google{padding:0 20px;background:#fff;color:#1f1f1f;border:1.5px solid var(--line,#ddd);justify-content:center;gap:10px}
+.login__google:hover{background:#f6f6f6}
+.login__or{display:flex;align-items:center;gap:10px;color:var(--muted,#888);font-size:.85rem}
+.login__or::before,.login__or::after{content:"";flex:1;height:1px;background:var(--line,#ddd)}
 .login__form .muted{margin:0 0 8px}
 .login__err{color:#D92D4B;min-height:1.4em;margin:0;font-size:14px}
 

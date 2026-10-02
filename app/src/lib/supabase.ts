@@ -15,7 +15,7 @@ export const isLive = isConfigured;
  * "not connected" screen instead of any content, so screens can use this without null checks.
  */
 export const supabase: SupabaseClient = createClient(isConfigured ? url! : "https://not-configured.invalid", isConfigured ? anon! : "not-configured", {
-  auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false },
+  auth: { storage: AsyncStorage, autoRefreshToken: true, persistSession: true, detectSessionInUrl: false, flowType: "pkce" },
 });
 
 // Refresh the session only while the app is in the foreground (Supabase's recommended setup for React Native).

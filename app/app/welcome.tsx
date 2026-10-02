@@ -7,6 +7,7 @@ import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG } from "@/theme";
 import { Body, Button, Icon, Press, Starburst } from "@/components/ui";
+import { GoogleButton } from "@/components/GoogleButton";
 import { useAuth } from "@/lib/auth";
 
 const { width: SW, height: SH } = Dimensions.get("window");
@@ -94,7 +95,8 @@ export default function Welcome() {
           <View pointerEvents="none" style={{ position: "absolute", left: 46, top: -7, width: 14, height: 14, borderRadius: 7, backgroundColor: BG }} />
           <View pointerEvents="none" style={{ position: "absolute", left: 46, bottom: -7, width: 14, height: 14, borderRadius: 7, backgroundColor: BG }} />
         </View>
-        <Button label="Sign in" icon="log-in" variant="white" block onPress={() => router.push("/auth")} />
+        <GoogleButton />
+        <Button label="Sign in with email" icon="log-in" variant="white" block onPress={() => router.push("/auth")} />
         <Press onPress={guest} style={{ height: 40, alignItems: "center", justifyContent: "center" }}>
           <Body size={13.5} color={C.muted}>Just looking? <Body size={13.5} weight="bold" color={C.flame}>Explore as a guest</Body></Body>
         </Press>

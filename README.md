@@ -83,11 +83,15 @@ Store builds: `npx eas-cli build -p ios` / `-p android --profile production` (cr
 3. **Already done for this project:** the Project URL and publishable key are in `website/assets/js/config.js` and `app/.env` (both public by design, so they're committed and the APK builds connected). Optional GitHub secrets: `EXPO_PUBLIC_SITE_URL` (your website address) and `GOOGLE_MAPS_ANDROID_KEY` (ride map on Android).
 
    Never put the `service_role` key in the app or website.
-4. **Authentication → URL Configuration:** set the Site URL to your website (used by the email confirmation and password-reset links). Email sign-in is on by default.
-5. Sign up once (in the app, or create the user under Authentication → Users), then in the SQL Editor run
+4. **Authentication → URL Configuration:** set the Site URL to your website (used by the email confirmation and password-reset links), and add these **Redirect URLs**: `https://agape.rohanchowdhary.workers.dev/**` and `agape://**` (the app's Google sign-in comes back to `agape://auth-callback`). Email sign-in is on by default.
+5. **Google sign-in** (app and admin):
+   - [Google Cloud Console](https://console.cloud.google.com/apis/credentials) → **Create credentials → OAuth client ID → Web application**. Under *Authorized redirect URIs* add `https://sgwnjtrnvofczjxzrmeq.supabase.co/auth/v1/callback`. (First time: set up the OAuth consent screen with the church name and logo, and publish it.)
+   - Supabase → **Authentication → Sign In / Providers → Google** → turn it on and paste the Client ID and Client secret → Save.
+   - That's it: "Continue with Google" works in the app and on `/admin`. New Google users get a member profile with their Google name and photo; staff still need their role set (step 6).
+6. Sign up once (in the app, or create the user under Authentication → Users), then in the SQL Editor run
    `update public.profiles set role = 'admin' where email = 'you@example.com';`
    From then on, change roles in the admin → Members & roles.
-6. Ask Agape (AI): `supabase functions deploy ask-agape` and `supabase secrets set ANTHROPIC_API_KEY=…` (the key stays server-side; there's a per-user daily limit).
+7. Ask Agape (AI): `supabase functions deploy ask-agape` and `supabase secrets set ANTHROPIC_API_KEY=…` (the key stays server-side; there's a per-user daily limit).
 
 The migrations and their security rules were tested on a local Supabase stack: 57 end-to-end checks of the app's own data layer as a guest, members, a volunteer driver and staff, plus the admin in a browser.
 

@@ -1072,8 +1072,8 @@
 
   document.addEventListener("DOMContentLoaded", () => {
     loginArt();
-    $(".js-login-mode").textContent = S.live ? "Sign in with your staff account (the same email and password as the app)." : "Not connected yet: add the Supabase project URL and anon key to assets/js/config.js.";
-    if (!S.live) $$("#loginForm input, #loginForm button").forEach((x) => (x.disabled = true));
+    $(".js-login-mode").textContent = S.live ? "Sign in with your staff account: Google, or the same email and password as the app." : "Not connected yet: add the Supabase project URL and anon key to assets/js/config.js.";
+    if (!S.live) $$("#loginForm input, #loginForm button, #googleBtn").forEach((x) => (x.disabled = true));
     $("#loginForm").addEventListener("submit", async (e) => {
       e.preventDefault();
       const fd = new FormData(e.target);
@@ -1098,6 +1098,10 @@
     $("#closePreview").addEventListener("click", () => { pvOn = false; $("#app").classList.remove("has-preview"); });
     $("#deviceSeg").addEventListener("click", (e) => { const b = e.target.closest("button"); if (!b) return; $$("#deviceSeg button").forEach((x) => x.classList.toggle("is-on", x === b)); setDevice(+b.dataset.w); loadPreview(); });
     addEventListener("resize", () => pvOn && setDevice(+$("#deviceSeg .is-on").dataset.w));
-    S.restore().then((ok) => ok && enter());
+    $("#googleBtn").addEventListener("click", () => { if (S.live) location.href = S.googleUrl(); });
+    S.fromRedirect()
+      .then((ok) => (ok ? true : S.restore()))
+      .then((ok) => ok && enter())
+      .catch((err) => { $("#loginErr").textContent = err.message; });
   });
 })();

@@ -5,6 +5,8 @@ import React, { createContext, useCallback, useContext, useEffect, useMemo, useS
 import { Alert } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { router } from "expo-router";
+import * as Linking from "expo-linking";
+import * as WebBrowser from "expo-web-browser";
 import type { Session } from "@supabase/supabase-js";
 import { supabase, isConfigured } from "./supabase";
 import { clearCache } from "./query";
@@ -24,6 +26,8 @@ type Auth = {
   isVolunteer: boolean;
   firstName: string;
   signIn: (email: string, password: string) => Promise<void>;
+  /** Opens Google in a browser sheet; resolves true when signed in, false if the person backed out. */
+  signInWithGoogle: () => Promise<boolean>;
   signUp: (name: string, email: string, password: string) => Promise<{ needsConfirm: boolean }>;
   resetPassword: (email: string) => Promise<void>;
   signOut: () => Promise<void>;
@@ -85,6 +89,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { error } = await supabase.auth.signInWithPassword({ email: email.trim(), password });
         if (error) throw error;
         clearCache();
+      },
+      async signInWithGoogle() {
+        // Supabase does the Google OAuth dance, then sends the browser back to agape://auth-callback?code=…
+        const redirectTo = Linking.createURL("auth-callback");
+        const { data, error } = await supabase.auth.signInWithOAuth({ provider: "google", options: { redirectTo, skipBrowserRedirect: true } });
+        if (error) throw error;
+        const res = await WebBrowser.openAuthSessionAsync(data.url, redirectTo);
+        if (res.type !== "success") return false;
+        const back = new URL(res.url.replace("#", "?"));
+        const err = back.searchParams.get("error_description");
+        if (err) throw new Error(err);
+        const code = back.searchParams.get("code");
+        if (!code) throw new Error("Google sign-in didn't finish. Please try again.");
+        const { error: ex } = await supabase.auth.exchangeCodeForSession(code);
+        if (ex) throw ex;
+        clearCache();
+        return true;
       },
       async signUp(name, email, password) {
         const { data, error } = await supabase.auth.signUp({ email: email.trim(), password, options: { data: { full_name: name.trim() } } });
