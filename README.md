@@ -72,7 +72,19 @@ npx expo install --fix      # aligns every native package to the installed Expo 
 cp .env.example .env         # optional: connect Supabase (without it the app runs on demo data)
 npx expo start               # scan the QR with Expo Go, or press i / a for a simulator
 ```
-Screens: Welcome (Apple / Google / e-mail code / guest) · Onboarding · Home (hero, promos, week strip, verse deck, continue-learning, events, prayer) · Notifications · Watch · Sermon (YouTube player, save, notes synced, live chat) · Grow (streak, courses, study guides) · Course → Lesson (video / PDF / quiz) · Community (chats, groups, news) · Chat (realtime) · Me (member card, settings, Face ID lock, delete account) · Pastoral care · Volunteer · Bible games (live leaderboard) · Ask Agape (AI) · Rides (member + driver modes, live GPS) · Prayer wall · Give (Tap checkout) · Events (RSVP + ticket).
+Tabs: **Home · Bible · Watch · Community · Me** (calm, native-style design: standard tab bar, grouped lists, solid buttons).
+
+Screens:
+* **Bible:** reader in 9 free public-domain translations (WEB, KJV, BSB, ASV, YLT, Hindi O.V., Malayalam O.V., Tamil O.V., Arabic Van Dyke) with offline cache, highlights in 5 colours, bookmarks, verse notes, copy/share, shareable verse images, and an **Audio Bible** (the phone's voice reads verse by verse, highlights and follows the verse, speeds 0.75–1.5×, carries on to the next chapter).
+* **Reading plans:** for adults, teens and kids. Day-by-day readings with devotions, daily reminders, streaks and a private journal.
+* **Song book:** lyrics with chords, change key, capo, chords on/off, text size, auto-scroll, keep-awake, and set lists with a key per song. Ships with 28 public-domain hymns; the worship team adds songs in /admin.
+* **Games:** Daily Challenge, Bible Trivia, Verse Match, Who Said It?, True or False speed round, Emoji Bible, Books in Order and Memory Match, with personal bests and per-game weekly leaderboards. Kids get easier packs.
+* **Agape Kids:** kid-safe section with memory verse, stories read aloud, videos, kids' games and kids' plans. **Kids mode** locks the phone to it with a parent PIN.
+* **Agape Teens / Agape Squad:** events, challenges, devotions and their group chat. Squad also links to the song book.
+* **Community:** Testimonies (members share, pastors approve, everyone says Amen); **Home prayer meetings** (host or join; the address is shown only after you RSVP, then a map and directions); prayer wall, groups, chat and announcements.
+* **Church life:** Serve board (shift sign-ups with reminders), QR check-in (member card plus scanning the church's code; the welcome team scans cards), new-member "Getting started" checklist, events, giving, rides, pastoral care, Ask Agape (AI), sermons with notes and live chat, and the Agape Institute courses.
+* **Languages:** English, हिन्दी, മലയാളം, தமிழ், العربية. Choose on the welcome screen or in Me → Language (Arabic switches the layout to right-to-left after a restart). The Bible follows the language.
+* **Me:** member card, Face ID lock, larger text, language, Bible translation, Kids mode, delete account. Staff can send targeted push notifications from the app.
 
 ### Why Expo?
 Expo is the toolkit around React Native. It produces a normal native Android app (APK/AAB) and iPhone app from one codebase, plus a web version. It isn't "Expo Go": the APK on the website is a standalone app.
@@ -112,9 +124,15 @@ Everything is wired end to end. There is no demo logic left when the keys are se
 | Giving | Tap Payments hosted checkout (KNET, Visa/Mastercard, Apple Pay). A gift only counts after the webhook re-checks the charge with Tap; then campaign jars rise and the donor is thanked. Works for website visitors without an account. |
 | Push | Every notification row (ride updates, messages, announcements, prayers, gifts) triggers the `push` function → Expo → phones. Members can switch it off. |
 | Website | Prayer form, welcome card, giving and the prayer wall talk to the database; admin edits publish instantly. |
+| Bible & plans | Text from bolls.life (free, public-domain translations), cached on the phone. Highlights, bookmarks, notes, plan progress and the journal are private to each member (RLS). |
+| Song book | `songs` + `set_lists` tables; shared set lists from the worship team. Chords are transposed on the phone. |
+| Testimonies | Members submit; nothing shows until staff approve (members can't approve or feature themselves); the author is notified when it's live and when people say Amen. |
+| Home meetings | Anyone signed in sees the area and time; the exact address is only readable by the host, staff and people who RSVP'd. Capacity is enforced; the host hears about each RSVP; cancelling notifies guests. |
+| Serve & check-in | Shift sign-ups with slot limits. Check-in codes are made per day in /admin (with a full-screen QR to project); volunteers/staff can scan member cards. Attendance shows in /admin. |
+| Push campaigns | Staff send to everyone, volunteers, a group, Teens/Squad/Kids, a language or a plan's readers. Send now or schedule (sent by pg_cron every minute). |
 | Security | Row-level security on every table; members can't promote themselves, forge prayer counts, read others' chats, care requests or rides. |
 
-**Tested:** `.github/workflows/backend-e2e.yml` starts the whole stack on GitHub and runs 17 end-to-end tests (sign-in by e-mail code, RLS, realtime ride tracking, chat, push delivery, checkout + webhook, account deletion…). `.github/workflows/app-live-e2e.yml` builds the app and website against that stack and walks a new member and a staff member through every feature in a real browser, with screenshots.
+**Tested:** `.github/workflows/backend-e2e.yml` starts the whole stack on GitHub and runs 23 end-to-end tests (sign-in by e-mail code, RLS, realtime ride tracking, chat, push delivery, checkout + webhook, account deletion…). `.github/workflows/app-live-e2e.yml` builds the app and website against that stack and walks a new member and a staff member through every feature in a real browser, with screenshots.
 
 ## 4. Going live — the church's checklist
 Accounts to create (all under the church's name and billing):
@@ -153,5 +171,7 @@ Accounts to create (all under the church's name and billing):
 ## Known limits (honest list)
 * Drivers share their location while the app is open. Screen-locked tracking needs `expo-task-manager` background updates in a custom build.
 * Giving is one-time gifts. Automatic monthly giving needs Tap's subscription/saved-card feature (phase 2).
-* Event tickets show the member's name and number; door scanning (QR) is phase 2.
+* The Audio Bible uses the phone's own text-to-speech voices. Malayalam and Tamil voices may need installing in Android's text-to-speech settings. Recorded human narration would need a licensed audio provider.
+* A home-screen widget (verse of the day) needs native widget code, which is not included yet.
+* Only public-domain hymns are bundled. Add modern worship songs only under the church's CCLI licence.
 * Wallet passes and offline sermon downloads are not included.
