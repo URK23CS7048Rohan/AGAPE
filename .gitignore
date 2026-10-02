@@ -5,6 +5,7 @@ Desktop.ini
 
 # Environment files
 .env
+!app/.env
 .env.local
 *.env.local
 
