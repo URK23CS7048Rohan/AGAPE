@@ -17,12 +17,12 @@
     "currency": "KWD"
   },
   "stats": {
-    "members": 2400,
-    "nations": 31,
-    "rides": 1286,
-    "drivers": 64,
-    "rating": 4.9,
-    "prayers": 18432
+    "members": 0,
+    "nations": 0,
+    "rides": 0,
+    "drivers": 0,
+    "rating": 0,
+    "prayers": 0
   },
   "services": [
     {

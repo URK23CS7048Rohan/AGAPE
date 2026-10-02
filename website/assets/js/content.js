@@ -21,7 +21,7 @@ window.AGAPE_DEFAULT = {
     tzOffsetHours: 3,
     currency: "KWD",
   },
-  stats: { members: 2400, nations: 31, rides: 1286, drivers: 64, rating: 4.9, prayers: 18432 },
+  stats: { members: 0, nations: 0, rides: 0, drivers: 0, rating: 0, prayers: 0 },  // real numbers only: set them in /admin; a 0 stays hidden
   services: [
     { day: 0, h: 10, m: 0, label: "Sunday Celebration", time: "10:00 AM", note: "Celebration · English" },
     { day: 0, h: 18, m: 0, label: "Sunday Evening", time: "6:00 PM", note: "Evening service" },

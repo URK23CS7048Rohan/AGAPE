@@ -728,7 +728,7 @@
           { k: "time", label: "Time as shown", ph: "10:00 AM" }, { k: "note", label: "Short note", ph: "Celebration · English" },
         ],
       })));
-      v.appendChild(card("Numbers", "Animated counters around the site.", fieldsGrid([{ k: "members", label: "Members", type: "number" }, { k: "nations", label: "Nations", type: "number" }, { k: "prayers", label: "Prayers this year", type: "number" }, { k: "rides", label: "Rides given", type: "number" }, { k: "drivers", label: "Volunteer drivers", type: "number" }, { k: "rating", label: "Ride rating", type: "number" }], C.stats, 3)));
+      v.appendChild(card("Numbers", "Real counts shown around the site. Leave a number at 0 to hide it.", fieldsGrid([{ k: "members", label: "Members", type: "number" }, { k: "nations", label: "Nations", type: "number" }, { k: "prayers", label: "Prayers this year", type: "number" }, { k: "rides", label: "Rides given", type: "number" }, { k: "drivers", label: "Volunteer drivers", type: "number" }, { k: "rating", label: "Ride rating", type: "number" }], C.stats, 3)));
       const danger = card("Reset", "Throw away all edits and go back to the original content.", null);
       const rb = document.createElement("button"); rb.className = "btn btn--danger"; rb.textContent = "Reset all content";
       rb.addEventListener("click", async () => { if (!confirm("Reset every section to the original content? This can't be undone.")) return; await S.reset(); C = S.defaults(); saved = JSON.stringify(C); markDirty(); toast("Content reset"); go(route); });

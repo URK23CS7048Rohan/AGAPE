@@ -352,18 +352,18 @@ void main(){
   const arcs = $$(".arc__a").sort((x, y) => (+x.dataset.d || 0) - (+y.dataset.d || 0));
   const door = $(".arc__door");
   gsap.set(".hx .pl", { yPercent: 110 });
-  gsap.set(".hx__word, .hx__kicker, .hx__lead, .hx__ctas > *, .hx__ann, .arc__emblem", { opacity: 0, y: 30 });
+  gsap.set(".hx__word, .hx__kicker, .hx__lead, .hx__verse, .hx__ctas > *, .hx__ann, .arc__heaven", { opacity: 0, y: 30 });
   gsap.set(".hx__word", { filter: "blur(14px)" });
   if (!reduce) gsap.set(arcs, { yPercent: 104 });
   const heroIntro = () => {
     const tl = gsap.timeline({ defaults: { ease: "expo.out" }, onComplete: () => { if (WORDS.length > 1 && !reduce) setInterval(() => !document.hidden && heroVis && cycleWord(), 3000); } });
     // the arches rise out of the floor, the great door first, then outward
     tl.to(arcs, { yPercent: 0, duration: 1.6, stagger: { each: 0.1 } }, 0)
-      .to(".arc__emblem", { opacity: 1, y: 0, duration: 1.2 }, 0.55)
+      .to(".arc__heaven", { opacity: 1, y: 0, duration: 1.6 }, 0.45)
       .to(".hx__ann, .hx__kicker", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 0.5)
       .to(".hx .pl", { yPercent: 0, duration: 1.3, stagger: 0.045 }, 0.6)
       .to(".hx__word", { opacity: 1, y: 0, filter: "blur(0px)", duration: 1.4 }, 0.9)
-      .to(".hx__lead", { opacity: 1, y: 0, duration: 1.1 }, 1)
+      .to(".hx__lead, .hx__verse", { opacity: 1, y: 0, duration: 1.1 }, 1)
       .to(".hx__ctas > *", { opacity: 1, y: 0, duration: 1.1, stagger: 0.08 }, 1.1)
       .add(() => heroEl.classList.add("is-in"), 2.2)
       .add(() => $$(".hx [data-count]").forEach((el) => {
@@ -372,13 +372,32 @@ void main(){
       }), 1);
     return tl;
   };
+  // ---------- scripture: a new verse every few seconds ----------
+  (() => {
+    const V = ((SITE && SITE.verses) || []).filter((v) => v && v.text && v.text.length < 170);
+    const qs = $$(".js-hv-q"), rs = $$(".js-hv-ref"), bar = $(".js-hv-bar");
+    if (!V.length || !qs.length) return;
+    let i = Math.floor(Date.now() / 864e5) % V.length;
+    const DUR = 8;
+    const show = (first) => {
+      const v = V[i];
+      const swap = () => { qs.forEach((q) => (q.textContent = `“${v.text}”`)); rs.forEach((r) => (r.textContent = v.ref)); };
+      if (first || reduce) swap();
+      else gsap.timeline().to([...qs, ...rs], { opacity: 0, y: -12, duration: 0.45, ease: "power2.in", onComplete: swap })
+        .fromTo([...qs, ...rs], { opacity: 0, y: 14 }, { opacity: 1, y: 0, duration: 0.8, ease: "expo.out", stagger: 0.06 });
+      if (bar && !reduce) gsap.fromTo(bar, { scaleX: 0 }, { scaleX: 1, duration: DUR, ease: "none" });
+    };
+    show(true);
+    if (!reduce && V.length > 1) setInterval(() => { if (document.hidden || !heroVis) return; i = (i + 1) % V.length; show(false); }, DUR * 1000);
+  })();
+
   if (!reduce && door) {
     // scrolling walks you through the great door: the side arches part, the door swallows the screen
     const cover = () => { const r = door.getBoundingClientRect(); return Math.max(innerWidth / r.width, innerHeight / r.height) * 2.4; };
     const side = (dir) => arcs.filter((a) => a.classList.contains(`arc__a--${a.dataset.d}${dir}`));
     const st = gsap.timeline({ scrollTrigger: { trigger: heroEl, start: "top top", end: "+=110%", pin: true, scrub: 0.8, refreshPriority: 10, invalidateOnRefresh: true } });
     st.to(".hx--arc .hx__main", { y: () => -innerHeight * 0.12, opacity: 0, ease: "power1.in", duration: 0.35 }, 0)
-      .to(".arc__emblem", { scale: 0.4, opacity: 0, duration: 0.3 }, 0)
+      .to(".arc__heaven", { y: () => -innerHeight * 0.1, opacity: 0, duration: 0.4 }, 0)
       .to(side("l"), { xPercent: (i, el) => -(80 + el.dataset.d * 60), y: (i, el) => innerHeight * 0.05 * el.dataset.d, ease: "power2.in", duration: 0.75 }, 0)
       .to(side("r"), { xPercent: (i, el) => 80 + el.dataset.d * 60, y: (i, el) => innerHeight * 0.05 * el.dataset.d, ease: "power2.in", duration: 0.75 }, 0)
       .to(door, { scale: cover, transformOrigin: "50% 62%", ease: "power2.in", duration: 1 }, 0.05)

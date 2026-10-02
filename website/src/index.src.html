@@ -77,13 +77,20 @@
 <!-- ============ HERO ============ -->
 <section class="hx hx--arc" id="hero" data-page-bg="#0B0710" >
   <!-- the arcade: a row of church arches, the great door in the middle -->
+  <div class="arc__sky" aria-hidden="true">
+    <svg class="arc__skycloud" style="--x:6%;--y:16%;--w:220px;--t:70s;--o:.16" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+    <svg class="arc__skycloud" style="--x:72%;--y:10%;--w:280px;--t:90s;--o:.12" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+    <svg class="arc__skycloud" style="--x:84%;--y:34%;--w:170px;--t:60s;--o:.2" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+    <svg class="arc__skycloud" style="--x:14%;--y:40%;--w:150px;--t:80s;--o:.14" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+    <i class="arc__twinkle" style="--x:20%;--y:12%;--d:0s"></i><i class="arc__twinkle" style="--x:31%;--y:28%;--d:1.4s"></i><i class="arc__twinkle" style="--x:66%;--y:22%;--d:.7s"></i><i class="arc__twinkle" style="--x:79%;--y:8%;--d:2.1s"></i><i class="arc__twinkle" style="--x:90%;--y:24%;--d:3s"></i><i class="arc__twinkle" style="--x:8%;--y:30%;--d:2.6s"></i>
+  </div>
   <div class="arc" aria-label="Welcome">
     <div class="arc__a arc__a--3l" data-d="3" aria-hidden="true">
       <div class="arc__rings"><i></i><i></i><i></i><i></i></div>
       <span class="arc__tag">Wed · Prayer</span>
     </div>
     <div class="arc__a arc__a--2l" data-d="2" aria-hidden="true">
-      <div class="arc__roll"><div><b>Pray</b><em>worship</em><b>Belong</b><em>serve</em><b>Grow</b><em>love</em><b>Pray</b><em>worship</em><b>Belong</b><em>serve</em><b>Grow</b><em>love</em></div></div>
+      <div class="arc__roll"><div><b>Jesus</b><em>grace</em><b>Faith</b><em>mercy</em><b>Hope</b><em>holy</em><b>Love</b><em>amen</em><b>Jesus</b><em>grace</em><b>Faith</b><em>mercy</em><b>Hope</b><em>holy</em><b>Love</b><em>amen</em></div></div>
     </div>
     <div class="arc__a arc__a--1l" data-d="1">
       <svg class="arc__star arc__star--sm" viewBox="0 0 100 100" aria-hidden="true"><use href="#arc-star"/></svg>
@@ -99,7 +106,17 @@
     <div class="arc__a arc__door" data-d="0">
       <div class="arc__rays" aria-hidden="true"></div>
       <div class="arc__glow" aria-hidden="true"></div>
-      <svg class="arc__emblem" viewBox="0 0 100 100" aria-hidden="true"><use href="#arc-star"/><path d="M46 26h8v16h14v8H54v26h-8V50H32v-8h14z" fill="var(--door)"/></svg>
+      <div class="arc__heaven" aria-hidden="true">
+        <svg class="arc__jesus" viewBox="0 0 200 236">
+          <circle class="arc__halo" cx="100" cy="34" r="26"/>
+          <path d="M88 34c0-16 24-16 24 0l2 24c-7 4-21 4-28 0z"/>
+          <path d="M100 54c-9 0-16 3-22 8L28 96c-6 4-5 11 2 10l10-2 36-18c1 7 3 12 5 16-4 40-12 82-22 126 27 8 55 8 82 0-10-44-18-86-22-126 2-4 4-9 5-16l36 18 10 2c7 1 8-6 2-10L122 62c-6-5-13-8-22-8z"/>
+          <path d="M40 104c4 12 14 22 28 24l6-34zM160 104c-4 12-14 22-28 24l-6-34z"/>
+        </svg>
+        <svg class="arc__cloud arc__cloud--a" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+        <svg class="arc__cloud arc__cloud--b" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+        <svg class="arc__cloud arc__cloud--c" viewBox="0 0 200 80"><use href="#arc-cloud"/></svg>
+      </div>
       <div class="hx__main">
         <a href="#" target="_blank" rel="noopener" class="nav__promo hx__ann">
           <span class="hx__ann-new">New</span>
@@ -112,6 +129,7 @@
           <span class="hx__l2"><span class="hx__word js-hero-word">shows up.</span></span>
         </h1>
         <p class="hx__lead js-hero-lead"></p>
+        <p class="hx__verse"><span class="js-hv-q">Be still, and know that I am God.</span> <b class="js-hv-ref">Psalm 46:10</b></p>
         <div class="hx__ctas">
           <a href="#visit" class="xbtn xbtn--ink" data-magnetic><span class="xbtn__t" data-roll>Plan your visit</span><i><svg class="ic"><use href="#i-arrow-right"/></svg></i></a>
           <a href="#watch" class="xbtn xbtn--line" data-magnetic><span class="live-dot"></span><span class="xbtn__t" data-roll>Watch live</span></a>
@@ -119,7 +137,16 @@
       </div>
     </div>
 
-    <a href="#watch" class="arc__a arc__a--1r" data-d="1" aria-label="Watch live">
+    <div class="arc__a arc__a--1r" data-d="1">
+      <svg class="arc__dove" viewBox="0 0 64 40" aria-hidden="true"><path d="M2 22c8-2 15 0 20 4 2-9 8-17 18-22-2 6-2 11 0 15 6-5 13-7 22-6-6 3-10 8-12 14-4 10-16 13-27 10L12 38l3-8c-5 0-10-3-13-8z"/></svg>
+      <figure class="arc__verse">
+        <span class="arc__tag">Word for today</span>
+        <blockquote class="js-hv-q">Be still, and know that I am God.</blockquote>
+        <figcaption class="js-hv-ref">Psalm 46:10</figcaption>
+        <div class="arc__vbar"><i class="js-hv-bar"></i></div>
+      </figure>
+    </div>
+    <a href="#watch" class="arc__a arc__a--2r" data-d="2" aria-label="Watch live">
       <div class="arc__seal" aria-hidden="true">
         <svg class="arc__star" viewBox="0 0 100 100"><use href="#arc-star"/></svg>
         <svg class="arc__ring" viewBox="0 0 200 200"><defs><path id="arcRingP" d="M100,100 m-74,0 a74,74 0 1,1 148,0 a74,74 0 1,1 -148,0"/></defs><text><textPath href="#arcRingP" textLength="462" lengthAdjust="spacing">WATCH LIVE · EVERY SUNDAY · WATCH LIVE · EVERY SUNDAY ·</textPath></text></svg>
@@ -127,19 +154,13 @@
       </div>
       <span class="arc__tag"><span class="live-dot"></span> <span class="js-live-label2">Sundays 10:00</span></span>
     </a>
-    <div class="arc__a arc__a--2r" data-d="2">
-      <div class="arc__stats">
-        <p><b data-stat="members" data-suffix="+">0</b><small>members</small></p>
-        <p><b data-stat="nations">0</b><small>nations</small></p>
-        <p><b data-stat="prayers" data-sep>0</b><small>prayers this year</small></p>
-      </div>
-    </div>
+
     <div class="arc__a arc__a--3r" data-d="3" aria-hidden="true">
       <div class="arc__burst"></div>
       <svg class="arc__cross" viewBox="0 0 40 60"><path d="M16 0h8v18h16v8H24v34h-8V26H0v-8h16z"/></svg>
     </div>
   </div>
-  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><path id="arc-star" d="M50 0 L57 21 L75 7 L71 29 L93 25 L79 43 L100 50 L79 57 L93 75 L71 71 L75 93 L57 79 L50 100 L43 79 L25 93 L29 71 L7 75 L21 57 L0 50 L21 43 L7 25 L29 29 L25 7 L43 21 Z"/></defs></svg>
+  <svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs><linearGradient id="arcMist" gradientUnits="userSpaceOnUse" x1="0" y1="4" x2="0" y2="80"><stop offset="0" stop-color="#FFD27A" stop-opacity="1"/><stop offset="1" stop-color="#FF8A5C" stop-opacity=".15"/></linearGradient><g id="arc-cloud"><circle cx="46" cy="54" r="24"/><circle cx="84" cy="38" r="34"/><circle cx="128" cy="44" r="30"/><circle cx="162" cy="58" r="20"/><rect x="40" y="52" width="128" height="28" rx="14"/></g><path id="arc-star" d="M50 0 L57 21 L75 7 L71 29 L93 25 L79 43 L100 50 L79 57 L93 75 L71 71 L75 93 L57 79 L50 100 L43 79 L25 93 L29 71 L7 75 L21 57 L0 50 L21 43 L7 25 L29 29 L25 7 L43 21 Z"/></defs></svg>
   <span class="js-hero-dots" hidden></span><span class="js-hero-caption" hidden></span><span class="js-reveal-title" hidden></span><span class="js-reveal-accent" hidden></span>
 </section>
 
@@ -684,7 +705,7 @@
   <div class="container globe-sec__grid">
     <div class="globe-sec__copy">
       <span class="eyebrow"><span class="eyebrow__dot eyebrow__dot--live"></span>An international family</span>
-      <h2 class="h2" data-split><span class="js-nations-n">31</span> nations. <em>One family.</em></h2>
+      <h2 class="h2" data-split><span class="js-nations-n">Many</span> nations. <em>One family.</em></h2>
       <p class="section-sub">From Kerala to Kampala, Manila to Manchester: every Sunday, people from across the world worship together in one room, and online from wherever they are.</p>
       <div class="nation-chips js-nation-chips"></div>
     </div>

@@ -43,7 +43,14 @@
     }
 
     /* stats */
-    $$("[data-stat]").forEach((el) => { el.setAttribute("data-count", C.stats[el.dataset.stat] ?? 0); });
+    // only real numbers are shown: a stat the church hasn't filled in (0 / empty) hides its block
+    $$("[data-stat]").forEach((el) => {
+      const v = Number(C.stats[el.dataset.stat]) || 0;
+      el.setAttribute("data-count", v);
+      const box = el.closest("[data-stat-box]") || el.parentElement;
+      if (box) box.hidden = !v;
+    });
+    $$(".rides__stats").forEach((w) => (w.hidden = ![...w.children].some((c) => !c.hidden)));
 
     /* services */
     const svc = C.services || [];
@@ -167,7 +174,7 @@
     if (V[0]) { set(".js-verse-q", `“${V[0].text}”`); set(".js-vref", V[0].ref); set(".js-vtr", V[0].translation || ""); set(".js-vtheme", V[0].theme || ""); }
     const vs = $("#verse"); if (vs) vs.hidden = !V.length;
 
-    const nn = $(".js-nations-n"); if (nn) nn.textContent = C.stats.nations;
+    const nn = $(".js-nations-n"); if (nn) nn.textContent = Number(C.stats.nations) ? C.stats.nations : "Many";
     const bl = $(".js-bento-live"); if (bl && C.live && C.live.image) bl.src = img(C.live.image);
   }
 

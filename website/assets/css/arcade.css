@@ -140,3 +140,53 @@ body[data-tone="light"] .nav.is-solid .nav__bar{background:#F4EEE4}
   .hx--arc .hx__ann{display:none!important}
   .hx--arc .hx__kicker{font-size:10.5px;letter-spacing:.14em}
 }
+
+/* =========================================================
+   Heaven: Jesus on the clouds, verses, sky
+   ========================================================= */
+.arc__a--1r{--c:#F4EEE4}
+.arc__a--2r{--c:#FF7AA8}
+.arc__play{background:var(--c)}
+
+/* night sky with drifting clouds and twinkling stars behind the arcade */
+.arc__sky{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+.arc__skycloud{position:absolute;left:var(--x);top:var(--y);width:var(--w);fill:url(#arcMist);opacity:calc(var(--o) * 2.6);filter:blur(6px);animation:arcDrift var(--t) ease-in-out infinite alternate}
+@keyframes arcDrift{from{translate:-40px 0}to{translate:60px 0}}
+.arc__twinkle{position:absolute;left:var(--x);top:var(--y);width:4px;height:4px;border-radius:50%;background:#FFF3C4;box-shadow:0 0 10px 2px rgba(255,214,120,.6);animation:arcTwinkle 3.6s ease-in-out var(--d) infinite}
+@keyframes arcTwinkle{0%,100%{opacity:.15;scale:.6}50%{opacity:1;scale:1.3}}
+
+/* Jesus with open arms, standing on the clouds, light pouring from behind */
+.hx--arc{--jh:min(calc(var(--dw) * .4),22vh)}
+.arc__rays,.arc__glow{top:calc(clamp(30px,5vh,56px) + var(--jh) * .18)}
+.arc__heaven{position:absolute;left:0;right:0;top:clamp(30px,5vh,56px);height:calc(var(--jh) * 1.12);z-index:1;pointer-events:none}
+.arc__jesus{position:absolute;left:50%;top:0;height:var(--jh);translate:-50% 0;fill:#0B0710;overflow:visible;animation:arcFloat 6s ease-in-out infinite alternate}
+.arc__halo{fill:#FFF6D8;stroke:#0B0710;stroke-width:3;transform-origin:100px 40px;animation:arcHalo 4s ease-in-out infinite alternate}
+@keyframes arcFloat{from{translate:-50% 0}to{translate:-50% -8px}}
+@keyframes arcHalo{from{scale:.94}to{scale:1.08}}
+.arc__cloud{position:absolute;fill:#fff;filter:drop-shadow(0 6px 0 rgba(11,7,16,.08))}
+.arc__cloud--a{width:44%;left:6%;bottom:-2%;animation:arcBob 7s ease-in-out infinite alternate}
+.arc__cloud--b{width:50%;right:4%;bottom:-6%;animation:arcBob 8s ease-in-out -3s infinite alternate-reverse}
+.arc__cloud--c{width:34%;left:33%;bottom:-12%;animation:arcBob 6s ease-in-out -1s infinite alternate}
+@keyframes arcBob{from{translate:-10px 0}to{translate:14px -4px}}
+
+/* verse of the moment */
+.arc__dove{position:absolute;left:50%;top:clamp(36px,6vh,64px);width:44%;translate:-50% 0;fill:#0B0710;animation:arcFly 5s ease-in-out infinite alternate}
+@keyframes arcFly{0%{translate:-50% 0;rotate:-4deg}100%{translate:-44% -10px;rotate:4deg}}
+.arc__verse{position:absolute;inset:auto 0 0;margin:0;padding:0 16px 34px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:10px}
+.arc__verse .arc__tag{position:static}
+.arc__verse blockquote{margin:0;font-family:var(--f-serif);font-style:italic;font-size:clamp(1.05rem,calc(var(--dw) * .034),1.4rem);line-height:1.22;letter-spacing:-.01em;color:#0B0710;min-height:6.2em;display:flex;align-items:flex-end;justify-content:center}
+.arc__verse figcaption{font-family:var(--f-display);font-weight:800;font-variation-settings:"wdth" 75;text-transform:uppercase;font-size:15px;letter-spacing:.02em}
+.arc__vbar{width:60%;height:3px;border-radius:3px;background:rgba(11,7,16,.14);overflow:hidden}
+.arc__vbar i{display:block;height:100%;background:#0B0710;transform-origin:0 50%;transform:scaleX(0)}
+.hx__verse{display:none}
+
+@media (max-width:760px){
+  .hx--arc{--jh:min(calc(var(--dw) * .42),22vh)}
+  .hx--arc .hx__lead{display:none}
+  .hx__verse{display:block;margin:16px 0 0;max-width:300px;font-family:var(--f-serif);font-style:italic;font-size:17px;line-height:1.3;color:#0B0710}
+  .hx__verse b{display:block;margin-top:6px;font-family:var(--f-mono);font-style:normal;font-weight:500;font-size:11px;letter-spacing:.16em;text-transform:uppercase;opacity:.7}
+}
+@media (max-height:860px) and (min-width:761px){.hx--arc .hx__ann{display:none!important}}
+/* warm heavenly glow spilling from the great door into the night */
+.arc__sky::before{content:"";position:absolute;left:50%;top:-10%;width:min(1500px,130vw);aspect-ratio:1.6;translate:-50% 0;background:radial-gradient(closest-side,rgba(255,194,61,.22),rgba(255,122,168,.08) 55%,transparent);animation:arcPulse 6s ease-in-out infinite alternate}
+[hidden]{display:none!important}
