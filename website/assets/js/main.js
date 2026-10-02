@@ -1002,6 +1002,12 @@ void main(){
      AI ASSISTANT DEMO (streams canned answers)
      ======================================================= */
   (() => {
+    // the 3D device leans toward the pointer
+    const ai3 = $(".ai3"), rig = $(".ai3__rig");
+    if (ai3 && rig && !isTouch && !reduce) {
+      ai3.addEventListener("pointermove", (e) => { const r = ai3.getBoundingClientRect(); const nx = (e.clientX - r.left) / r.width - 0.5, ny = (e.clientY - r.top) / r.height - 0.5; rig.style.setProperty("--ry", `${14 + nx * 22}deg`); rig.style.setProperty("--rx", `${7 - ny * 16}deg`); });
+      ai3.addEventListener("pointerleave", () => { rig.style.removeProperty("--ry"); rig.style.removeProperty("--rx"); });
+    }
     const box = $(".js-ai"), sugg = $(".js-ai-sugg");
     const answers = {
       "What does Romans 8:28 mean?": `Romans 8:28 says God works in <b>all things</b> for the good of those who love Him. It doesn't promise that everything will <i>feel</i> good. It promises that nothing is wasted, and that even the hard chapters can become part of His purpose for you.<br/><span class="ref">Read Romans 8:28–30</span> <span class="ref">Watch: Unshakeable · Pt 3</span>`,
