@@ -395,14 +395,16 @@ void main(){
     // scrolling walks you through the great door: the side arches part, the door swallows the screen
     const cover = () => { const r = door.getBoundingClientRect(); return Math.max(innerWidth / r.width, innerHeight / r.height) * 2.4; };
     const side = (dir) => arcs.filter((a) => a.classList.contains(`arc__a--${a.dataset.d}${dir}`));
-    const st = gsap.timeline({ scrollTrigger: { trigger: heroEl, start: "top top", end: "+=110%", pin: true, scrub: 0.8, refreshPriority: 10, invalidateOnRefresh: true } });
+    const st = gsap.timeline({ scrollTrigger: { trigger: heroEl, start: "top top", end: "+=150%", pin: true, scrub: 0.8, refreshPriority: 10, invalidateOnRefresh: true } });
     st.to(".hx--arc .hx__main", { y: () => -innerHeight * 0.12, opacity: 0, ease: "power1.in", duration: 0.35 }, 0)
       .to(".arc__heaven", { y: () => -innerHeight * 0.1, opacity: 0, duration: 0.4 }, 0)
       .to(side("l"), { xPercent: (i, el) => -(80 + el.dataset.d * 60), y: (i, el) => innerHeight * 0.05 * el.dataset.d, ease: "power2.in", duration: 0.75 }, 0)
       .to(side("r"), { xPercent: (i, el) => 80 + el.dataset.d * 60, y: (i, el) => innerHeight * 0.05 * el.dataset.d, ease: "power2.in", duration: 0.75 }, 0)
       .to(door, { scale: cover, transformOrigin: "50% 62%", ease: "power2.in", duration: 1 }, 0.05)
-      .to(door, { backgroundColor: "#0B0710", ease: "none", duration: 0.35 }, 0.7)
-      .to(".arc__rays, .arc__glow", { opacity: 0, duration: 0.3 }, 0.7);
+      // the name over the door: rises in as the gold fills the screen, holds, then lets you through
+      .fromTo(".hx__brand", { opacity: 0, scale: 0.86, y: 40 }, { opacity: 1, scale: 1, y: 0, ease: "power3.out", duration: 0.3 }, 0.38)
+      .fromTo(".hx__brand-mark", { rotate: -25, scale: 0.6 }, { rotate: 0, scale: 1, ease: "back.out(1.6)", duration: 0.35 }, 0.38)
+      .to(".hx__brand", { scale: 1.06, ease: "none", duration: 0.5 }, 0.9);   // hold the name, then it scrolls away with the gold
     // the arcade leans toward the pointer
     if (!isTouch) {
       const movers = arcs.map((a) => ({ d: +a.dataset.d || 0, a, qx: gsap.quickTo(a, "x", { duration: 1.1, ease: "power3.out" }) }));
