@@ -5717,6 +5717,64 @@ void main(){
   })();
 
   /* =======================================================
+     SCROLL JOURNEY — Ask Agape → Many nations
+     Every section moves with the scroll: things rise, turn,
+     slide and settle as you go, and drift on as you leave.
+     ======================================================= */
+  if (!reduce) (() => {
+    const scrub = (trigger, start = "top bottom", end = "top 25%") => ({ trigger, start, end, scrub: 1 });
+    const out = (trigger) => ({ trigger, start: "bottom 85%", end: "bottom top", scrub: 1 });
+    // headings drift up a little slower than the page
+    $$("#ai .h2, #prayer .h2, #give .h2, #events .h2, #community .h2, #nations .h2, .vp__head h2").forEach((h) =>
+      gsap.fromTo(h, { yPercent: 40 }, { yPercent: -20, ease: "none", scrollTrigger: { trigger: h, start: "top bottom", end: "bottom top", scrub: 1 } }));
+
+    // Ask Agape: the device swings up into place, the copy slides in
+    const ai3 = $(".ai3");
+    if (ai3) {
+      gsap.fromTo(ai3, { y: 160, rotateX: 28, rotateZ: -4, scale: 0.86, opacity: 0.2, transformPerspective: 1400 }, { y: 0, rotateX: 0, rotateZ: 0, scale: 1, opacity: 1, ease: "power2.out", scrollTrigger: scrub("#ai", "top bottom", "top 15%") });
+      gsap.to(ai3, { y: -90, scale: 0.94, ease: "none", scrollTrigger: out("#ai") });
+      gsap.fromTo(".ai__copy", { x: 120, opacity: 0 }, { x: 0, opacity: 1, ease: "power2.out", scrollTrigger: scrub("#ai", "top 85%", "top 25%") });
+    }
+
+    // Prayer wall: the sheet lifts over Ask Agape, the notes float at different depths
+    const pr = $("#prayer");
+    if (pr) {
+      gsap.fromTo(pr, { scale: 0.92, borderRadius: "90px 90px 0 0" }, { scale: 1, borderRadius: "56px 56px 0 0", ease: "none", scrollTrigger: scrub(pr, "top bottom", "top 20%") });
+      gsap.fromTo(".pnotes", { y: 140, rotate: 3 }, { y: -60, rotate: -1, ease: "none", scrollTrigger: { trigger: pr, start: "top bottom", end: "bottom top", scrub: 1 } });
+      gsap.fromTo("#prayer .prayer__copy", { y: 60 }, { y: -40, ease: "none", scrollTrigger: { trigger: pr, start: "top bottom", end: "bottom top", scrub: 1 } });
+    }
+
+    // Give: the campaigns fan in from the side, the giving box rises and turns
+    if ($("#give")) {
+      gsap.fromTo(".camps", { x: -160, rotate: -3, opacity: 0.3 }, { x: 0, rotate: 0, opacity: 1, ease: "power2.out", scrollTrigger: scrub("#give", "top 90%", "top 20%") });
+      gsap.fromTo(".give__grid .gbox", { rotateY: -25, transformPerspective: 1200 }, { rotateY: 0, ease: "power2.out", scrollTrigger: scrub("#give", "top 90%", "top 15%") });
+    }
+
+    // Events: each row sweeps in from the right as it reaches you, the big dates lean in
+    $$(".erow").forEach((row, i) => {
+      const st = { trigger: row, start: "top 100%", end: "top 60%", scrub: 0.8 };
+      gsap.fromTo($(".erow__main", row), { x: 220, opacity: 0 }, { x: 0, opacity: 1, ease: "power3.out", scrollTrigger: st });
+      gsap.fromTo($(".erow__date", row), { x: -80, skewX: -12, opacity: 0 }, { x: 0, skewX: 0, opacity: 1, ease: "power3.out", scrollTrigger: st });
+      gsap.fromTo($$(".erow__tags, .erow__go", row), { x: 120, opacity: 0 }, { x: 0, opacity: 1, ease: "power3.out", stagger: 0.1, scrollTrigger: st });
+    });
+
+    // Verse posters: the stack tips up out of the floor
+    if ($(".vp__stage")) {
+      gsap.fromTo(".vp__stage", { y: 140, rotateX: 34, scale: 0.84, transformPerspective: 1600, transformOrigin: "50% 100%" }, { y: 0, rotateX: 0, scale: 1, ease: "power2.out", scrollTrigger: scrub("#verse", "top bottom", "top 10%") });
+      gsap.to(".vp__stage", { y: -80, scale: 0.95, ease: "none", scrollTrigger: out("#verse") });
+    }
+
+    // Community: the ministry panels unfold like cards being dealt
+    if ($(".acc")) gsap.fromTo(".acc", { y: 160, scale: 0.9 }, { y: 0, scale: 1, ease: "power2.out", scrollTrigger: scrub("#community", "top 90%", "top 15%") });
+
+    // Nations: the globe rises and grows into view, the copy settles beside it
+    if ($(".globe")) {
+      gsap.fromTo(".globe", { scale: 0.55, y: 160, rotate: -20 }, { scale: 1, y: 0, rotate: 0, ease: "power2.out", scrollTrigger: scrub("#nations", "top bottom", "top 15%") });
+      gsap.fromTo(".globe-sec__copy", { x: -100, opacity: 0.2 }, { x: 0, opacity: 1, ease: "power2.out", scrollTrigger: scrub("#nations", "top 90%", "top 30%") });
+    }
+  })();
+
+  /* =======================================================
      COMMUNITY ACCORDION
      ======================================================= */
   (() => {
