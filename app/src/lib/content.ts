@@ -47,6 +47,7 @@ export type EventItem = { key: string; title: string; day: string; month: string
 export type Campaign = { id: string; title: string; accent: string; body: string; raised: number; goal: number; image: any; color: string };
 export type AppContent = {
   church: Church; services: Service[]; stats: Record<string, number>; hero: HeroContent; promos: Promo[]; events: EventItem[]; campaigns: Campaign[];
+  verses: { text: string; ref: string; translation?: string; theme?: string }[];
   announcement?: { title: string; text: string; cta?: string; link?: string };
 };
 
@@ -79,6 +80,7 @@ export function mapSite(d: any): AppContent {
     church: { ...D.church, ...(pick("church") || {}) },
     services: Array.isArray(pick("services")) ? pick("services") : [],
     stats: pick("stats") || {},
+    verses: (pick("verses") || []).filter((v: any) => v && v.text && v.ref).map((v: any) => ({ text: String(v.text), ref: String(v.ref), translation: v.translation || "", theme: v.theme || "" })),
     hero: {
       kicker: hero.kicker || "",
       line1: hero.line1 || "",

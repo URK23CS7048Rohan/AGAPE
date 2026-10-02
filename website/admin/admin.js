@@ -530,7 +530,7 @@
     /* ---------------------------------------------------------- BIBLE VERSES */
     verses: { title: "Bible verses", crumb: "Website", icon: "book-open", group: "Website", render(v) {
       if (!Array.isArray(C.verses)) C.verses = [];
-      v.innerHTML = intro("", "The Scripture carousel on the website and the verse deck in the app. One verse is picked as “Verse of the day” each day, and visitors can tap through the rest. Use a public-domain translation (KJV, WEB) or one you have permission to quote. Each verse is shown as a designed poster; upload your own poster image (4:5, e.g. 1080×1350 from Canva) to use it instead.");
+      v.innerHTML = intro("", "The Scripture posters on the website and the verse of the day in the app (Bible tab). One verse is picked as “Verse of the day” each day, the same on both, and visitors can tap through the rest. Use a public-domain translation (KJV, WEB) or one you have permission to quote. Each verse is shown as a designed poster; upload your own poster image (4:5, e.g. 1080×1350 from Canva) to use it instead.");
       v.appendChild(listEditor({
         items: C.verses, image: "image", imageShape: "imgpick--wide", addLabel: "Add a verse",
         title: (x) => `${x.ref || "New verse"}${x.translation ? " · " + x.translation : ""}`, sub: (x) => x.text,

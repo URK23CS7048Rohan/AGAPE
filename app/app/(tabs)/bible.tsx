@@ -7,6 +7,8 @@ import { C, R } from "@/theme";
 import { Body, Display, Icon, Label, Press, ScreenTitle, Segmented, Starburst } from "@/components/ui";
 import { BOOKS, book, lastPosition, passage, Position, refLabel, translation, TRANSLATIONS, verseOfDay } from "@/lib/bible";
 import { useMarks, useReaderPrefs } from "@/lib/scripture";
+import { useSiteContent } from "@/lib/content";
+import { parseRef } from "@/lib/bible";
 
 const BOOK_COLORS = [C.peach, C.lilac, C.mintSoft, C.sunSoft, C.skySoft, C.roseSoft];
 
@@ -19,13 +21,23 @@ export default function Bible() {
   const marks = useMarks();
   const saved = marks.all();
   const T = translation(prefs.tr);
+  const site = useSiteContent();
+  // the same "Bible verses" list the church edits in /admin; falls back to the built-in list
+  const today = React.useMemo(() => {
+    const list = (site.verses || []).filter((v) => parseRef(v.ref));
+    if (!list.length) return null;
+    const d = new Date(), day = Math.floor((d.getTime() - new Date(d.getFullYear(), 0, 0).getTime()) / 86400000);
+    return list[day % list.length];
+  }, [site.verses]);
 
   useFocusEffect(React.useCallback(() => { lastPosition(prefs.tr).then(setPos); }, [prefs.tr]));
   useEffect(() => {
+    if (today) { setVotd({ ref: today.ref, text: today.text.replace(/^[“"]|[”"]$/g, "") }); return; }
     const r = verseOfDay();
     setVotd({ ref: refLabel(r), text: "" });
     passage(prefs.tr, r).then((text) => setVotd({ ref: refLabel(r), text })).catch(() => {});
-  }, [prefs.tr]);
+  }, [prefs.tr, today]);
+  const votdRef = () => (today && parseRef(today.ref)) || verseOfDay();
 
   const open = (b: number, c = 1, v?: number) => router.push({ pathname: "/bible/read", params: { b: String(b), c: String(c), ...(v ? { v: String(v) } : {}) } });
   const books = BOOKS.filter((b) => b.testament === (t === 0 ? "OT" : "NT"));
@@ -50,7 +62,7 @@ export default function Bible() {
                   <Icon name="share-2" size={17} color="#fff" />
                 </Press>
               ) : null}
-              <Press onPress={() => { const r = verseOfDay(); open(r.book, r.chapter, r.from); }} style={{ paddingHorizontal: 14, height: 40, borderRadius: 12, backgroundColor: C.sun, alignItems: "center", justifyContent: "center" }}>
+              <Press onPress={() => { const r = votdRef(); open(r.book, r.chapter, r.from); }} style={{ paddingHorizontal: 14, height: 40, borderRadius: 12, backgroundColor: C.sun, alignItems: "center", justifyContent: "center" }}>
                 <Body weight="bold" size={13.5}>Read chapter</Body>
               </Press>
             </View>
