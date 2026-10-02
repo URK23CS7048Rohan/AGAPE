@@ -117,7 +117,7 @@
     let control = "";
     if (def.type === "bool") { def = { ...def, type: "select", options: [["true", "Yes"], ["false", "No"]], bool: true }; }
     if (def.type === "date") control = `<input type="datetime-local" value="${esc(v ? new Date(new Date(v).getTime() - new Date().getTimezoneOffset() * 60000).toISOString().slice(0, 16) : "")}" />`;
-    else if (def.type === "textarea") control = `<textarea rows="${def.rows || 3}">${esc(v)}</textarea>`;
+    else if (def.type === "textarea") control = `<textarea rows="${def.rows || 3}"${def.mono ? ' class="mono" spellcheck="false"' : ""}>${esc(v)}</textarea>`;
     else if (def.type === "select") control = `<select>${def.options.map(([val, lab]) => `<option value="${esc(val)}" ${String(val) === String(v) ? "selected" : ""}>${esc(lab)}</option>`).join("")}</select>`;
     else if (def.type === "color") control = `<div class="color-in"><input type="color" value="${esc(v || "#FF5A1F")}" /><input type="text" value="${esc(v)}" maxlength="9" /><span class="swatches">${(def.soft ? SOFT : PALETTE).map((c) => `<button type="button" style="background:${c}" data-c="${c}" title="${c}"></button>`).join("")}</span></div>`;
     else if (def.type === "tags") control = `<div class="tags">${(v || []).map((t, i) => `<span>${esc(t)}<button type="button" data-i="${i}">${ic("x")}</button></span>`).join("")}<input placeholder="${esc(def.ph || "Type and press Enter")}" /></div>`;
@@ -622,6 +622,33 @@
         template: { title: "New study guide", url: "", pages: null, color: "#FF5A1F" },
         beforeSave: (out) => { if (!/^https?:\/\//.test(out.url || "")) throw new Error("Add the PDF link (https://…)."); return out; },
         fields: [{ k: "title", label: "Title", wide: true }, { k: "url", label: "PDF link", wide: true, ph: "https://…" }, { k: "pages", label: "Pages", type: "number", nullable: true }, { k: "color", label: "Colour", type: "color" }],
+      })));
+    } },
+
+    /* ---------------------------------------------------------- APP: SONGS */
+    songs: { title: "Song book", crumb: "App", icon: "music", group: "App", render(v) {
+      v.innerHTML = intro("", "Lyrics and chords in the app's song book. Write each section on its own with a heading in curly brackets, and put chords in square brackets right before the syllable they land on. Members can change the key, add a capo or hide the chords.");
+      v.appendChild(card("How to write a song", "", (() => { const d = document.createElement("pre"); d.className = "codehint"; d.textContent = "{Verse 1}\nA[G]mazing grace! How [G7]sweet the [C]sound\nThat [G]saved a wretch like [D]me!\n\n{Chorus}\n…"; return d; })()));
+      v.appendChild(card("Songs", "", dbEditor({
+        table: "songs", query: "songs?select=id,slug,title,author,original_key,tempo,time_sig,tags,body,copyright,published,position&order=position,title", positions: true,
+        addLabel: "Add a song", empty: "No songs yet.",
+        title: (d) => d.title, sub: (d) => [d.author, d.original_key ? `Key ${d.original_key}` : "", d.published === false ? "hidden" : ""].filter(Boolean).join(" · "), thumbColor: () => "#3C8D5E",
+        template: { title: "New song", slug: "", author: "", original_key: "G", tempo: null, time_sig: "4/4", tags: [], body: "{Verse 1}\n[G]First line of the song", copyright: "", published: true },
+        beforeSave: (out) => {
+          if (!out.title || !String(out.title).trim()) throw new Error("Give the song a title.");
+          if (!out.body || !/\S/.test(out.body)) throw new Error("Add the lyrics.");
+          out.slug = (out.slug && String(out.slug).trim()) || String(out.title).toLowerCase().normalize("NFKD").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+          if (out.original_key && !/^[A-G][#b]?m?$/.test(out.original_key)) throw new Error("Key should look like G, Bb, F#m…");
+          return out;
+        },
+        fields: [
+          { k: "title", label: "Title", wide: true }, { k: "author", label: "Writer / credit" }, { k: "original_key", label: "Key", ph: "G" },
+          { k: "tempo", label: "Tempo (bpm)", type: "number", nullable: true }, { k: "time_sig", label: "Time", ph: "4/4" },
+          { k: "tags", label: "Tags (press Enter after each)", type: "tags", wide: true },
+          { k: "body", label: "Lyrics with chords", type: "textarea", wide: true, rows: 16, mono: true },
+          { k: "copyright", label: "Copyright line", wide: true, ph: "Public domain, or CCLI song # / licence" },
+          { k: "published", label: "Show in the app", type: "bool" },
+        ],
       })));
     } },
 

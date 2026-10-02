@@ -17,8 +17,8 @@ import { useRsvps } from "@/lib/hooks";
 import { fmt } from "@/lib/time";
 
 const QUICK = [
-  { icon: "play", label: "Watch", color: C.flame, route: "/watch" },
-  { icon: "book-open", label: "Courses", color: C.violet, route: "/grow" },
+  { icon: "book", label: "Bible", color: C.flame, route: "/bible" },
+  { icon: "music-note", label: "Songs", color: C.violet, route: "/songs" },
   { icon: "hands-pray", label: "Pray", color: C.rose, route: "/prayer" },
   { icon: "gamepad-variant", label: "Games", color: C.sun, route: "/games" },
   { icon: "car-side", label: "Rides", color: C.mint, route: "/rides" },

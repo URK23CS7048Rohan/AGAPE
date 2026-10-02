@@ -6,9 +6,9 @@ import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C } from "@/theme";
 import { Icon } from "./ui";
 
-const ICONS: Record<string, string> = { index: "home", watch: "play-circle", grow: "book-open", community: "users", me: "user" };
-const LABELS: Record<string, string> = { index: "Home", watch: "Watch", grow: "Grow", community: "Family", me: "Me" };
-const IND = 50;
+const ICONS: Record<string, string> = { index: "home", bible: "book", watch: "play-circle", grow: "award", community: "users", me: "user" };
+const LABELS: Record<string, string> = { index: "Home", bible: "Bible", watch: "Watch", grow: "Grow", community: "Family", me: "Me" };
+const IND = 48;
 
 /** Floating black pill; the active tab sits in a white circle. */
 export function TabBar({ state, navigation }: any) {

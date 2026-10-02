@@ -294,3 +294,5 @@ em{font-family:var(--f-serif);font-style:italic;font-weight:400;color:var(--bran
 .app.has-preview .top__actions .btn--ghost span{display:none}
 .app.has-preview .top__actions .btn--ghost{padding:0 12px}
 .app.has-preview .dirty{font-size:0;gap:0}
+textarea.mono{font-family:"Geist Mono",ui-monospace,monospace;font-size:13.5px;line-height:1.55}
+.codehint{margin:0;padding:14px 16px;border-radius:14px;background:#141014;color:#F4EEE4;font:13px/1.6 "Geist Mono",ui-monospace,monospace;white-space:pre-wrap}
