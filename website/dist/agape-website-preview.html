@@ -1761,10 +1761,11 @@ body.menu-open .menu__foot{opacity:.75}
 
 <div class="grain" aria-hidden="true"></div>
 
-<script>/* Connect the website + admin to Supabase. Leave blank to run in demo mode (edits saved in this browser). */
+<script>/* Connect the website + admin to Supabase (Project Settings → API).
+   The URL and publishable key are public by design; never put the secret / service_role key here. */
 window.AGAPE_CONFIG = {
-  supabaseUrl: "",      // e.g. "https://abcd1234.supabase.co"
-  supabaseAnonKey: "",  // Project Settings → API → anon public key
+  supabaseUrl: "https://sgwnjtrnvofczjxzrmeq.supabase.co",
+  supabaseAnonKey: "sb_publishable_yq8lzYyQta8gD3VWbjeMLg_B_yy8Sw4", // publishable (or legacy anon) key
   mediaBucket: "media", // public Storage bucket for uploaded images
 };
 </script>

@@ -80,10 +80,7 @@ Store builds: `npx eas-cli build -p ios` / `-p android --profile production` (cr
 ## 3. Backend (Supabase)
 1. Create a project on [supabase.com](https://supabase.com) (region close to Kuwait, e.g. Frankfurt or Mumbai). Leave the Data API on; "automatic RLS" can be on.
 2. **SQL Editor → New query →** paste all of `backend/supabase/setup.sql` → **Run**. It creates every table, security rule and function, plus the starter Bible games. (It's generated from `migrations/` + `seed.sql` by `make-setup.sh`; with the Supabase CLI you can run `supabase db push` from `backend/` instead.)
-3. **Project Settings → API:** copy the **Project URL** and the **anon public** key into
-   * `website/assets/js/config.js` (`supabaseUrl`, `supabaseAnonKey`),
-   * `app/.env` (`EXPO_PUBLIC_SUPABASE_URL`, `EXPO_PUBLIC_SUPABASE_ANON_KEY`), and
-   * GitHub → Settings → Secrets → Actions, with the same two names, so the APK is built connected. Add `EXPO_PUBLIC_SITE_URL` (your website address) and `GOOGLE_MAPS_ANDROID_KEY` (ride map on Android) there too.
+3. **Already done for this project:** the Project URL and publishable key are in `website/assets/js/config.js` and `app/.env` (both public by design, so they're committed and the APK builds connected). Optional GitHub secrets: `EXPO_PUBLIC_SITE_URL` (your website address) and `GOOGLE_MAPS_ANDROID_KEY` (ride map on Android).
 
    Never put the `service_role` key in the app or website.
 4. **Authentication → URL Configuration:** set the Site URL to your website (used by the email confirmation and password-reset links). Email sign-in is on by default.
