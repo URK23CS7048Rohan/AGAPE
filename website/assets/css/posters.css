@@ -142,3 +142,40 @@
 .lib__ring .lcard:hover{filter:brightness(1.08)}
 .lib__foot p{max-width:420px}
 @media (max-width:760px){.lib__ring{gap:14px}.lib__ring .lcard{width:62vw!important}.lib__ring .lcard:nth-child(even){translate:0 22px}}
+
+/* =========================================================
+   Back to black: Ask Agape, the prayer wall and the posters
+   Ask Agape uses the site's own warm orange → pink → violet
+   ========================================================= */
+.prayer.prayer--v4,.verse.verse--posters{background:#0B0710!important}
+.ai.ai--v4{background:#0B0710!important}
+.ai--v4::before{opacity:.25}
+.ai--v4 .ai__halo i:nth-child(1){background:radial-gradient(circle at 35% 30%,#FF5A1F,transparent 60%)}
+.ai--v4 .ai__halo i:nth-child(2){background:radial-gradient(circle at 70% 45%,#FF3D7F,transparent 58%)}
+.ai--v4 .ai__halo i:nth-child(3){background:radial-gradient(circle at 50% 78%,#6E4BFF,transparent 55%);opacity:.35}
+.ai .h2 em,.ai--v4 .h2 em{-webkit-text-fill-color:transparent!important;color:transparent!important;background:linear-gradient(100deg,#FFC23D,#FF5A1F 40%,#FF3D7F 75%,#B25BFF)!important;-webkit-background-clip:text!important;background-clip:text!important}
+.ai--v4 .ticks .ic{background:linear-gradient(135deg,#FF5A1F,#FF3D7F)!important;color:#fff!important}
+.ai--v4 .ai-orb{background:conic-gradient(from 0deg,#FFC23D,#FF5A1F,#FF3D7F,#B25BFF,#FFC23D)}
+/* the device: dark graphite glass with soft white edges */
+.ai3__floor{background:linear-gradient(rgba(255,255,255,.12) 1px,transparent 1px) 0 0/44px 44px,linear-gradient(90deg,rgba(255,255,255,.12) 1px,transparent 1px) 0 0/44px 44px}
+.ai3__side--back{background:#050308;box-shadow:0 70px 120px -30px rgba(0,0,0,.9),0 0 90px -20px rgba(255,61,127,.35)}
+.ai3__side--r{background:linear-gradient(180deg,#2a2230,#4a3f52 40%,#1e1824)}
+.ai3__side--b{background:linear-gradient(90deg,#1e1824,#3d3346,#1e1824)}
+.ai3__screen{background:radial-gradient(120% 70% at 20% 0%,rgba(255,90,31,.14),transparent 55%),radial-gradient(90% 60% at 100% 100%,rgba(110,75,255,.14),transparent 60%),linear-gradient(165deg,#1d1622,#120d16 60%,#0d0a10);border-color:rgba(255,255,255,.16);box-shadow:inset 0 1px 0 rgba(255,255,255,.2)}
+.ai3__scan{background:linear-gradient(transparent,rgba(255,61,127,.08) 60%,rgba(255,255,255,.16) 98%,transparent)}
+.ai3__head{border-color:rgba(255,255,255,.08)}
+.ai3__wave i{background:linear-gradient(180deg,#FFC23D,#FF3D7F)}
+.ai--v4 .amsg--bot{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:#F4EEE4}
+.ai--v4 .amsg--bot b{color:#FFC23D}
+.ai--v4 .amsg--me{background:linear-gradient(110deg,#FF5A1F,#FF3D7F);color:#fff}
+.ai--v4 .amsg .ref{background:rgba(255,61,127,.14);color:#FFB3CC;border:1px solid rgba(255,61,127,.3)}
+.ai3 .ai__sugg button{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.14)}
+.ai3 .ai__sugg button:hover{background:#fff;color:#0B0710;border-color:#fff}
+.ai3__input{background:rgba(255,255,255,.04);border-color:rgba(255,255,255,.12)}
+.ai3__send{background:linear-gradient(135deg,#FF5A1F,#FF3D7F);color:#fff}
+.ai3__ring{border-color:rgba(255,194,61,.8);box-shadow:0 0 14px rgba(255,90,31,.35)}
+.ai3__ring:nth-child(2){border-color:rgba(255,61,127,.7)}
+.ai3__ring:nth-child(3){border-color:rgba(178,91,255,.75)}
+.ai3__nucleus{background:radial-gradient(circle at 35% 30%,#fff,#FFD27A 25%,#FF5A1F 55%,#FF3D7F 80%,#6E4BFF);box-shadow:0 0 40px 8px rgba(255,90,31,.5),0 0 90px 20px rgba(255,61,127,.25)}
+.ai3__card{background:rgba(20,14,24,.85);border-color:rgba(255,255,255,.14);box-shadow:0 30px 60px -20px rgba(0,0,0,.8),0 0 30px -12px rgba(255,61,127,.4)}
+.ai3__card small{color:#FF8A5C}
