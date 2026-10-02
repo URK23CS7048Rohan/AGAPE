@@ -1,7 +1,8 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Modal, ScrollView, Share, StyleSheet, Text, View } from "react-native";
 import { router, useLocalSearchParams } from "expo-router";
-import { useKeepAwake } from "expo-keep-awake";
+import { activateKeepAwakeAsync, deactivateKeepAwake } from "expo-keep-awake";
+import { Platform } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F } from "@/theme";
 import { Body, Button, Icon, IconButton, Label, Press } from "@/components/ui";
@@ -10,7 +11,8 @@ import { capoShapeKey, interval, keyPlus, lyricsOnly, parseSong, transposeChord 
 import { t } from "@/lib/i18n";
 
 export default function SongView() {
-  useKeepAwake(); // musicians need the screen to stay on
+  // musicians need the screen to stay on (phones only — browsers may refuse the wake lock)
+  useEffect(() => { if (Platform.OS === "web") return; activateKeepAwakeAsync("song").catch(() => {}); return () => { deactivateKeepAwake("song"); }; }, []);
   const p = useLocalSearchParams<{ slug: string; key?: string; set?: string; i?: string }>();
   const insets = useSafeAreaInsets();
   const songs = useSongs().data;

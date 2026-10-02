@@ -271,10 +271,13 @@ await step("language: the app switches to Malayalam and back", async () => {
   await page.waitForTimeout(3000);
   await shot("bible-malayalam");
   const { data } = await admin.from("profiles").select("settings").eq("id", me).single();
+  // back to English through the app itself (also restores the device's own copy of the setting)
+  await go("/me");
+  await click(ml["Language"], { exact: true });
+  await click("English", { exact: true });
+  await page.waitForTimeout(2500);
+  await page.getByText("Bible", { exact: true }).first().waitFor({ timeout: 10000 });
   if (data.settings?.language !== "ml") throw new Error("language not saved to the profile");
-  await admin.from("profiles").update({ settings: { ...data.settings, language: "en", bible: "WEB" } }).eq("id", me);
-  await go("/");
-  await page.waitForTimeout(1500);
 });
 
 await step("rides: request → driver accepts → live location", async () => {

@@ -66,12 +66,12 @@ export default function BibleTab() {
 
         {/* Tools */}
         <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, paddingHorizontal: 16, marginTop: 12 }}>
-          <Tile style={{ width: "31.5%" }} icon="calendar" color={C.flame} label={t("Plans")} sub={t("{n} plans", { n: plans.length })} onPress={() => open("/plans")} />
-          <Tile style={{ width: "31.5%" }} icon="headphones" color={C.violet} label={t("Audio")} sub={t("Listen")} onPress={() => open(`/bible/read?b=${pos?.book || 43}&c=${pos?.chapter || 1}&tr=${tr}&audio=1`)} />
-          <Tile style={{ width: "31.5%" }} icon="edit-3" color="#16A37B" label={t("Journal")} sub={t("Private")} onPress={() => open("/journal")} />
-          <Tile style={{ width: "31.5%" }} icon="bookmark" color={C.rose} label={t("Saved")} sub={t("Highlights")} onPress={() => open("/bible/marks")} />
-          <Tile style={{ width: "31.5%" }} icon="award" color="#2F7DE1" label={t("Courses")} sub={t("Institute")} onPress={() => open("/learn")} />
-          <Tile style={{ width: "31.5%" }} icon="music-clef-treble" color="#B7791F" label={t("Songs")} sub={t("With chords")} onPress={() => open("/songs")} />
+          <Tile style={{ width: "31%" }} icon="calendar" color={C.flame} label={t("Plans")} sub={t("{n} plans", { n: plans.length })} onPress={() => open("/plans")} />
+          <Tile style={{ width: "31%" }} icon="headphones" color={C.violet} label={t("Audio")} sub={t("Listen")} onPress={() => open(`/bible/read?b=${pos?.book || 43}&c=${pos?.chapter || 1}&tr=${tr}&audio=1`)} />
+          <Tile style={{ width: "31%" }} icon="edit-3" color="#16A37B" label={t("Journal")} sub={t("Private")} onPress={() => open("/journal")} />
+          <Tile style={{ width: "31%" }} icon="bookmark" color={C.rose} label={t("Saved")} sub={t("Highlights")} onPress={() => open("/bible/marks")} />
+          <Tile style={{ width: "31%" }} icon="award" color="#2F7DE1" label={t("Courses")} sub={t("Institute")} onPress={() => open("/learn")} />
+          <Tile style={{ width: "31%" }} icon="music-clef-treble" color="#B7791F" label={t("Songs")} sub={t("With chords")} onPress={() => open("/songs")} />
         </View>
 
         {/* My plans */}

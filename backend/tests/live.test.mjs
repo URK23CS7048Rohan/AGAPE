@@ -433,7 +433,9 @@ test("v2 serve board, QR check-in and the new-member checklist", async () => {
   const annNo = ok(await ann.c.from("profiles").select("member_no").eq("id", ann.id).single()).member_no;
   const scanned = ok(await bob.c.rpc("check_in_member", { p_member: `AGAPE:MEMBER:${annNo}`, p_event_key: "youth-night" }));
   assert.equal(scanned.name, "Ann M. Mathews");
-  assert.ok((await eve.c.rpc("check_in_member", { p_member: annNo, p_event_key: "x" })).error, "members can't check others in");
+  const zed = await member("zed", "Zed Member");
+  assert.ok((await zed.c.rpc("check_in_member", { p_member: annNo, p_event_key: "x" })).error, "members can't check others in");
+  zed.c.realtime.disconnect();
 
   const w = ok(await ann.c.rpc("welcome_progress"));
   assert.equal(w.visit, true); assert.equal(w.plan, true); assert.equal(w.serve, true);

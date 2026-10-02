@@ -314,15 +314,23 @@ export function StoreProvider({ children }: { children: React.ReactNode }) {
     if (supabase && uid) supabase.from("game_scores").insert({ game, points: Math.max(0, Math.min(1000, Math.round(n))) }).then(({ error }) => warn(error));
   }, [uid, markActive]);
 
+  // several settings can change in one tap (language + Bible translation): merge them, then save once
+  const settingsRef = useRef<Partial<Settings>>({});
+  const settingsTimer = useRef<any>(null);
+  useEffect(() => { settingsRef.current = profile?.settings || {}; }, [profile?.id]);
   const setSetting = useCallback(<K extends keyof Settings>(k: K, v: Settings[K]) => {
     setLocalSettings((s) => ({ ...s, [k]: v }));
-    if (supabase && uid && profile) {
-      const next = { ...(profile.settings || {}), [k]: v };
-      setProfile({ ...profile, settings: next });
-      supabase.from("profiles").update({ settings: next }).eq("id", uid).then(({ error }) => warn(error));
+    if (supabase && uid) {
+      settingsRef.current = { ...settingsRef.current, [k]: v };
+      const next = settingsRef.current;
+      setProfile((p) => (p ? { ...p, settings: next } : p));
+      clearTimeout(settingsTimer.current);
+      settingsTimer.current = setTimeout(() => {
+        supabase!.from("profiles").update({ settings: settingsRef.current }).eq("id", uid).then(({ error }) => warn(error));
+      }, 250);
       if (k === "notifications" && !v) forgetPushToken().catch(() => {});
     }
-  }, [uid, profile]);
+  }, [uid]);
 
   const name = profile?.full_name || (isLive ? (session?.user.email?.split("@")[0] ?? "Friend") : demo ? "Sarah Mathews" : "Friend");
   const role = profile?.role ?? (demo && !isLive ? "volunteer" : "member");
