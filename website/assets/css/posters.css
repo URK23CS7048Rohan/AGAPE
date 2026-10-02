@@ -227,3 +227,7 @@
 .pz--grain::after,.pz--flow::after,.pz--rust::after,.pz--lime::after,.pz--stick::after{animation:pzGrain .9s steps(4) infinite}
 @keyframes pzGrain{25%{background-position:12px -8px}50%{background-position:-10px 14px}75%{background-position:6px 10px}}
 @media (prefers-reduced-motion:reduce){.vp__stage *{animation:none!important}}
+
+/* separate Ask Agape from the prayer wall: a plain, slightly lighter sheet */
+.ai.ai--v4{padding-bottom:clamp(70px,8vw,110px)}
+.prayer.prayer--v4{background:#17131b!important;border-radius:clamp(28px,4vw,56px) clamp(28px,4vw,56px) 0 0;margin-top:0;box-shadow:none}
