@@ -23,41 +23,6 @@
 .ai--v4 .ai__sugg button:hover{background:#E9B44C;border-color:#E9B44C;color:#0B0710}
 .ai--v4 .ticks .ic{color:#E9B44C}
 
-/* ---------- VERSE OF THE DAY: an illuminated page ---------- */
-.verse{background:#F4EEE4!important;color:#0B0710}
-.verse__bg,.verse__grain{display:none!important}
-.verse::before,.verse::after{content:"";position:absolute;pointer-events:none;z-index:0;border-radius:6px}
-.verse::before{inset:clamp(14px,2.2vw,30px);border:1.5px solid #C9A24A}
-.verse::after{inset:calc(clamp(14px,2.2vw,30px) + 7px);border:.75px solid rgba(201,162,74,.6)}
-.verse__inner,.verse__rail{position:relative;z-index:1}
-.verse .eyebrow,.verse .eyebrow--light{background:transparent;border-color:rgba(11,7,16,.18);color:#0B0710}
-.verse .eyebrow__dot--gold{background:#C8462B;box-shadow:none}
-.verse__count{color:rgba(11,7,16,.5)}
-.verse__count b{color:#0B0710}
-.verse__count i{background:rgba(11,7,16,.3)}
-.verse__theme{display:inline-flex;align-items:center;gap:14px;background:none!important;-webkit-text-fill-color:#C8462B;color:#C8462B;font-weight:500}
-.verse__theme::before,.verse__theme::after{content:"";width:34px;height:1px;background:#C9A24A}
-.verse .verse__q{color:#0B0710;text-shadow:none}
-.verse__q::before{content:"✠";display:block;width:100%;margin-bottom:.25em;font-style:normal;font-size:.42em;color:#C9A24A;line-height:1}
-.verse__ref b{color:#0B0710}
-.verse__ref small{border-color:rgba(11,7,16,.22);color:rgba(11,7,16,.6)}
-.verse__nav{background:transparent!important;border:1.5px solid rgba(11,7,16,.22)!important;color:#0B0710;backdrop-filter:none;-webkit-backdrop-filter:none}
-.verse__nav:hover{background:#0B0710!important;border-color:#0B0710!important;color:#F4EEE4}
-.verse__play{background:#0B0710!important;border-color:#0B0710!important;color:#F4EEE4}
-.verse .btn--glass{background:#0B0710;color:#F4EEE4;border:0;backdrop-filter:none;-webkit-backdrop-filter:none}
-.verse .btn--glass i{background:#E9B44C;color:#0B0710}
-.verse__rail{-webkit-mask:none;mask:none}
-.vchip{color:rgba(11,7,16,.55);background:transparent;border:1px solid rgba(11,7,16,.14);backdrop-filter:none;-webkit-backdrop-filter:none}
-.vchip:hover{color:#0B0710;background:rgba(201,162,74,.08)}
-.vchip__fill{background:rgba(11,7,16,.12)}
-.vchip.is-on{color:#0B0710;background:#fff;border-color:#C9A24A}
-.vchip.is-on .vchip__fill{background:#C9A24A}
-.vchip.is-on small{color:#C8462B}
-@media (max-width:760px){
-  .verse__inner{padding:96px 18px 18px}
-  .verse__rail{padding-bottom:40px}
-}
-
 /* the week's progress bar shows only while that section is pinned */
 .week__bar{opacity:0;transition:opacity .3s}
 .week__bar.is-on{opacity:1}

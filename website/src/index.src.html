@@ -17,6 +17,7 @@
 <link rel="stylesheet" href="assets/css/arcade.css" />
 <link rel="stylesheet" href="assets/css/story.css" />
 <link rel="stylesheet" href="assets/css/sacred.css" />
+<link rel="stylesheet" href="assets/css/book.css" />
 </head>
 <body class="is-loading" data-page="site">
 <!--SPRITE-->
@@ -705,18 +706,30 @@
 </section>
 
 <!-- ============ VERSE ============ -->
-<section class="verse" id="verse" aria-roledescription="carousel" aria-label="Bible verses" data-page-bg="#F4EEE4" data-tone="light">
+<section class="verse verse--book" id="verse" aria-roledescription="carousel" aria-label="Bible verses" data-page-bg="#0b1530">
       <div class="verse__bg js-vbg"></div>
-      <div class="verse__grain"></div>
+      <div class="vbook__sky" aria-hidden="true"></div>
       <div class="container verse__inner">
         <div class="verse__top">
           <span class="eyebrow eyebrow--light"><span class="eyebrow__dot eyebrow__dot--gold"></span><span class="js-vlabel">Verse of the day</span></span>
           <span class="verse__count"><b class="js-vnum">01</b><i></i><span class="js-vtotal">12</span></span>
         </div>
-        <span class="verse__theme js-vtheme">Rest</span>
-        <blockquote class="verse__q js-verse-q" aria-live="polite">“Come to me, all you who labor and are heavily burdened, and I will give you rest.”</blockquote>
+        <div class="vbook">
+          <div class="vbook__glow" aria-hidden="true"></div>
+          <div class="vbook__book">
+            <div class="vbook__page vbook__page--l">
+              <span class="vbook__orn" aria-hidden="true">✠</span>
+              <span class="verse__theme js-vtheme">Rest</span>
+              <span class="verse__ref"><b class="js-vref">Matthew 11:28</b><small class="js-vtr">WEB</small></span>
+              <span class="vbook__folio" aria-hidden="true">The Holy Bible</span>
+            </div>
+            <div class="vbook__page vbook__page--r">
+              <blockquote class="verse__q js-verse-q" aria-live="polite">“Come to me, all you who labor and are heavily burdened, and I will give you rest.”</blockquote>
+            </div>
+            <div class="vbook__leaf" aria-hidden="true"></div>
+          </div>
+        </div>
         <div class="verse__foot">
-          <span class="verse__ref"><b class="js-vref">Matthew 11:28</b><small class="js-vtr">WEB</small></span>
           <div class="verse__ctrl">
             <button class="verse__nav js-vprev" aria-label="Previous verse"><svg class="ic"><use href="#i-arrow-left"/></svg></button>
             <button class="verse__nav verse__play js-vplay" aria-label="Pause"><svg class="ic ic-pause"><use href="#i-pause"/></svg><svg class="ic ic-play"><use href="#i-play"/></svg></button>
@@ -724,8 +737,8 @@
           </div>
           <button class="btn btn--glass js-share" data-magnetic><span>Share as a card</span><i><svg class="ic"><use href="#i-share-2"/></svg></i></button>
         </div>
+        <div class="verse__rail"><div class="verse__chips js-vchips" role="tablist"></div></div>
       </div>
-      <div class="verse__rail"><div class="verse__chips js-vchips" role="tablist"></div></div>
     </section>
 
 <!-- ============ COMMUNITY ============ -->

@@ -1234,6 +1234,13 @@ void main(){
     const today = doy % V.length;
     let cur = -1, timer = null, inView = false, userPaused = false, hover = false, token = 0;
 
+    // a page of the open Bible turns with every new verse
+    const leaf = $(".vbook__leaf");
+    const turnPage = (dir) => {
+      if (!leaf) return;
+      gsap.killTweensOf(leaf);
+      gsap.fromTo(leaf, { rotateY: dir > 0 ? 0 : -180, opacity: 1 }, { rotateY: dir > 0 ? -180 : 0, duration: 1.1, ease: "power2.inOut", onComplete: () => gsap.set(leaf, { opacity: 0 }) });
+    };
     const sizeClass = (t) => (t.length > 115 ? "is-long" : t.length > 70 ? "is-mid" : "is-short");
     const words = (t) => `“${t}”`.split(/\s+/).map((w) => `<span class="vw"><span>${w.replace(/[&<>]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;" }[c]))}</span></span>`).join(" ");
     const pad = (n) => String(n + 1).padStart(2, "0");
@@ -1257,6 +1264,7 @@ void main(){
       if (i === cur) return;
       const v = V[i], my = ++token;
       const prev = cur; cur = i;
+      if (prev > -1 && !instant && !reduce) turnPage(dir);
       // preload next background
       [i, (i + 1) % V.length].forEach((k) => bgs[k] && bgs[k].setAttribute("loading", "eager"));
       bgs.forEach((im, k) => im.classList.toggle("is-on", k === i));
