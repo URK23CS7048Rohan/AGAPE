@@ -1,7 +1,7 @@
 # Builds an installable Android APK on every push (or on demand from the Actions tab).
-# No Expo account needed. Every build on main is also published to the release "app-latest",
+# No Expo account needed. Every build on main is also published to the release "agape-android",
 # so the website can link to a stable URL:
-#   https://github.com/URK23CS7048Rohan/AGAPE/releases/download/app-latest/agape.apk
+#   https://github.com/URK23CS7048Rohan/AGAPE/releases/download/agape-android/agape.apk
 name: Android APK
 
 on:
@@ -76,8 +76,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           cp app/android/app/build/outputs/apk/release/*.apk agape.apk
-          gh release delete app-latest --yes --cleanup-tag || true
-          gh release create app-latest agape.apk \
+          gh release delete agape-android --yes --cleanup-tag || true
+          gh release create agape-android agape.apk \
             --title "Agape app (latest Android build)" \
             --notes "Built from ${GITHUB_SHA::7}. Download agape.apk on an Android phone, open it and allow installing from this source." \
             --target "$GITHUB_SHA"

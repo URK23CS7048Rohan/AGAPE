@@ -9,7 +9,7 @@ window.AGAPE_DEFAULT = {
     name: "Agape International Ministries",
     short: "Agape",
     // the Android app (built by GitHub Actions on every app change); add the App Store link once the iPhone app is live
-    androidApk: "https://github.com/URK23CS7048Rohan/AGAPE/releases/download/app-latest/agape.apk",
+    androidApk: "https://github.com/URK23CS7048Rohan/AGAPE/releases/download/agape-android/agape.apk",
     iosUrl: "",
     tagline: "A church, a family, a mission. Real people, real faith, real community.",
     address: "Agape International Ministries",
