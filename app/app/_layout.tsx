@@ -18,16 +18,16 @@ export default function RootLayout() {
   if (!loaded) return null;
 
   return (
-    <GestureHandlerRootView style={{ flex: 1, backgroundColor: C.ink }}>
+    <GestureHandlerRootView style={{ flex: 1, backgroundColor: C.bg }}>
       <SafeAreaProvider>
         <StoreProvider>
           <StatusBar style="dark" />
-          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.cream }, animation: "slide_from_right" }}>
+          <Stack screenOptions={{ headerShown: false, contentStyle: { backgroundColor: C.bg }, animation: "slide_from_right" }}>
             <Stack.Screen name="(tabs)" />
-            <Stack.Screen name="welcome" options={{ animation: "fade", contentStyle: { backgroundColor: C.ink } }} />
+            <Stack.Screen name="welcome" options={{ animation: "fade" }} />
             <Stack.Screen name="assistant" options={{ animation: "slide_from_bottom" }} />
             <Stack.Screen name="rides" options={{ contentStyle: { backgroundColor: C.ink } }} />
-            <Stack.Screen name="prayer" options={{ contentStyle: { backgroundColor: C.deepViolet } }} />
+            <Stack.Screen name="prayer" options={{ contentStyle: { backgroundColor: C.roseSoft } }} />
             <Stack.Screen name="games" options={{ contentStyle: { backgroundColor: C.sun } }} />
           </Stack>
         </StoreProvider>

@@ -1,26 +1,19 @@
 import React, { useEffect, useState } from "react";
-import { Dimensions, Platform, StyleSheet, Text, View } from "react-native";
-import Animated, { Easing, FadeIn, FadeInDown, FadeOutUp, SharedValue, interpolate, Extrapolation, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
+import { StyleSheet, Text, View } from "react-native";
+import Animated, { Easing, FadeIn, FadeInDown, FadeOutUp, useAnimatedStyle, useSharedValue, withTiming } from "react-native-reanimated";
 import { Image } from "expo-image";
-import { LinearGradient } from "expo-linear-gradient";
-import { BlurView } from "expo-blur";
 import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, IMG, R } from "@/theme";
-import { Body, Button, Display, Icon, IconButton, Label, LiveDot, Press } from "./ui";
+import { Body, Button, Dashes, DigitTiles, Display, Icon, Label, LiveDot, Sticker, Starburst, Ticket } from "./ui";
 import { HeroContent } from "@/lib/content";
 import { nextService } from "@/lib/time";
-import { USER } from "@/data/mock";
-
-const { width: SW, height: SH } = Dimensions.get("window");
-export const HERO_H = Math.max(620, Math.min(SH * 0.86, 780));
 
 function Slide({ source, active }: { source: any; active: boolean }) {
   const o = useSharedValue(active ? 1 : 0);
-  const s = useSharedValue(1.14);
+  const s = useSharedValue(1.08);
   useEffect(() => {
-    o.value = withTiming(active ? 1 : 0, { duration: 1300, easing: Easing.inOut(Easing.quad) });
-    if (active) { s.value = 1.16; s.value = withTiming(1, { duration: 7200, easing: Easing.out(Easing.quad) }); }
+    o.value = withTiming(active ? 1 : 0, { duration: 900, easing: Easing.inOut(Easing.quad) });
+    if (active) { s.value = 1.08; s.value = withTiming(1, { duration: 6000, easing: Easing.out(Easing.quad) }); }
   }, [active]);
   const st = useAnimatedStyle(() => ({ opacity: o.value, transform: [{ scale: s.value }] }));
   return (
@@ -34,60 +27,21 @@ function CyclingWord({ words }: { words: string[] }) {
   const [i, setI] = useState(0);
   useEffect(() => {
     if (words.length < 2) return;
-    const t = setInterval(() => setI((x) => (x + 1) % words.length), 2800);
+    const t = setInterval(() => setI((x) => (x + 1) % words.length), 2600);
     return () => clearInterval(t);
   }, [words.length]);
   const w = words[i % words.length] || "";
   return (
-    <View style={{ height: 88, overflow: "hidden", marginTop: -6 }}>
-      <Animated.Text key={`${i}-${w}`} entering={FadeInDown.springify().damping(16).stiffness(140)} exiting={FadeOutUp.duration(260)} style={{ fontFamily: F.serifItalic, fontSize: 80, lineHeight: 88, color: C.flame, letterSpacing: -1.5 }} numberOfLines={1} adjustsFontSizeToFit>
+    <View style={{ alignSelf: "flex-start", marginTop: 6, backgroundColor: "#fff", borderRadius: 14, paddingHorizontal: 12, height: 52, justifyContent: "center", overflow: "hidden", transform: [{ rotate: "-2deg" }] }}>
+      <Animated.Text key={`${i}-${w}`} entering={FadeInDown.springify().damping(16).stiffness(150)} exiting={FadeOutUp.duration(220)} numberOfLines={1} style={{ fontFamily: F.display, fontSize: 36, lineHeight: 42, color: C.ink, letterSpacing: -1.2 }}>
         {w}
       </Animated.Text>
     </View>
   );
 }
 
-function NextServiceCard() {
-  const [n, setN] = useState(nextService());
-  useEffect(() => {
-    const t = setInterval(() => setN(nextService()), 1000);
-    return () => clearInterval(t);
-  }, []);
-  const pad = (v: number) => String(v).padStart(2, "0");
-  const inner = (
-    <View style={{ padding: 14, flexDirection: "row", alignItems: "center", gap: 14 }}>
-      <View style={{ flex: 1 }}>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
-          <LiveDot color={n.live ? "#FF2E4D" : C.sun} size={7} />
-          <Label color="rgba(255,255,255,0.75)" size={10}>{n.live ? "Live now" : "Next service"}</Label>
-        </View>
-        <Body size={14.5} weight="semi" color="#fff" style={{ marginTop: 4 }} numberOfLines={1}>{n.live || n.label} · {n.time}</Body>
-      </View>
-      {n.live ? (
-        <Button label="Watch" small icon="play" onPress={() => router.push("/sermon/power-of-grace")} />
-      ) : (
-        <View style={{ flexDirection: "row", gap: 10 }}>
-          {[["d", n.d], ["h", n.h], ["m", n.m], ["s", n.s]].map(([k, v]) => (
-            <View key={k as string} style={{ alignItems: "center", minWidth: 30 }}>
-              <Text style={{ fontFamily: F.display, fontSize: 26, lineHeight: 28, color: "#fff", fontVariant: ["tabular-nums"] }}>{pad(v as number)}</Text>
-              <Label size={8.5} color="rgba(255,255,255,0.55)">{k}</Label>
-            </View>
-          ))}
-        </View>
-      )}
-    </View>
-  );
-  return (
-    <View style={{ borderRadius: 24, overflow: "hidden", borderWidth: 1, borderColor: "rgba(255,255,255,0.16)" }}>
-      {Platform.OS === "ios" ? <BlurView intensity={30} tint="dark" style={StyleSheet.absoluteFill} /> : null}
-      <View style={[StyleSheet.absoluteFill, { backgroundColor: Platform.OS === "ios" ? "rgba(15,11,18,0.25)" : "rgba(15,11,18,0.6)" }]} />
-      {inner}
-    </View>
-  );
-}
-
-export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<number> }) {
-  const insets = useSafeAreaInsets();
+/** Purple hero block: headline, cycling word and the admin-managed photo slideshow. */
+export function HeroStage({ hero }: { hero: HeroContent; y?: any }) {
   const [idx, setIdx] = useState(0);
   const slides = hero.slides.length ? hero.slides : [{ image: IMG.homeWorship, caption: "" }];
   useEffect(() => {
@@ -96,63 +50,72 @@ export function HeroStage({ hero, y }: { hero: HeroContent; y: SharedValue<numbe
     return () => clearInterval(t);
   }, [slides.length]);
 
-  const parallax = useAnimatedStyle(() => ({
-    transform: [
-      { translateY: interpolate(y.value, [-200, 0, HERO_H], [-100, 0, HERO_H * 0.35], Extrapolation.CLAMP) },
-      { scale: interpolate(y.value, [-200, 0], [1.35, 1], Extrapolation.CLAMP) },
-    ],
-  }));
-  const textFade = useAnimatedStyle(() => ({ opacity: interpolate(y.value, [0, HERO_H * 0.5], [1, 0], Extrapolation.CLAMP), transform: [{ translateY: interpolate(y.value, [0, HERO_H], [0, -60], Extrapolation.CLAMP) }] }));
-
   return (
-    <View style={{ height: HERO_H, backgroundColor: C.ink, borderBottomLeftRadius: 36, borderBottomRightRadius: 36, overflow: "hidden" }}>
-      <Animated.View style={[StyleSheet.absoluteFill, parallax]}>
-        {slides.map((s, i) => <Slide key={i} source={s.image} active={i === idx} />)}
-      </Animated.View>
-      <LinearGradient colors={["rgba(10,6,14,0.7)", "rgba(10,6,14,0.05)", "rgba(10,6,14,0.35)", "rgba(10,6,14,0.95)"]} locations={[0, 0.28, 0.55, 1]} style={StyleSheet.absoluteFill} />
-
-      {/* top bar */}
-      <Animated.View entering={FadeIn.duration(700)} style={{ position: "absolute", top: insets.top + 6, left: 16, right: 16, flexDirection: "row", alignItems: "center", gap: 10 }}>
-        <Image source={IMG.logoMarkLight} style={{ width: 34, height: 42 }} contentFit="contain" />
-        <View style={{ flex: 1 }}>
-          <Display size={20} color="#fff">Agape</Display>
-          <Label size={8.5} color="rgba(255,255,255,0.7)">International Ministries</Label>
+    <Animated.View entering={FadeInDown.duration(600)} style={{ marginHorizontal: 16 }}>
+      <View style={{ backgroundColor: C.violet, borderRadius: R.xl, padding: 18 }}>
+        <View style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: "rgba(255,255,255,0.55)", paddingHorizontal: 11, height: 28, borderRadius: R.pill, maxWidth: "70%" }}>
+          <Icon name="star-four-points" size={12} color={C.ink} />
+          <Body size={12} weight="semi" numberOfLines={1}>{hero.kicker}</Body>
         </View>
-        <IconButton name="creation" bg="rgba(255,255,255,0.16)" color={C.sun} onPress={() => router.push("/assistant")} />
-        <IconButton name="bell" badge bg="rgba(255,255,255,0.16)" color="#fff" onPress={() => router.push("/community")} />
-        <Press onPress={() => router.push("/me")}>
-          <LinearGradient colors={[C.flame, C.rose]} style={{ width: 44, height: 44, borderRadius: 22, alignItems: "center", justifyContent: "center", borderWidth: 2, borderColor: "rgba(255,255,255,0.5)" }}>
-            <Body weight="bold" color="#fff" size={16}>{USER.first[0]}</Body>
-          </LinearGradient>
-        </Press>
-      </Animated.View>
+        <Display size={40} style={{ marginTop: 14, maxWidth: "78%" }}>{hero.line1}</Display>
+        <CyclingWord words={hero.words} />
 
-      {/* copy */}
-      <Animated.View style={[{ position: "absolute", left: 20, right: 20, bottom: 26 }, textFade]}>
-        <Animated.View entering={FadeInDown.delay(150).duration(700)} style={{ alignSelf: "flex-start", flexDirection: "row", alignItems: "center", gap: 7, paddingHorizontal: 12, height: 30, borderRadius: R.pill, backgroundColor: "rgba(255,255,255,0.14)", borderWidth: 1, borderColor: "rgba(255,255,255,0.18)" }}>
-          <Icon name="creation" size={13} color={C.sun} />
-          <Body size={12} weight="semi" color="#fff">{hero.kicker}</Body>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(250).duration(800)}>
-          <Display size={76} color="#fff" style={{ lineHeight: 74, marginTop: 12 }}>{hero.line1}</Display>
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(400).duration(800)}>
-          <CyclingWord words={hero.words} />
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(550).duration(800)} style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-          <Button label="Watch live" icon="play" small onPress={() => router.push("/sermon/power-of-grace")} />
-          <Button label="Get a ride" icon="car-side" variant="glass" small onPress={() => router.push("/rides")} />
-        </Animated.View>
-        <Animated.View entering={FadeInDown.delay(700).duration(800)} style={{ marginTop: 14 }}>
-          <NextServiceCard />
-        </Animated.View>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, marginTop: 14 }}>
-          <View style={{ flexDirection: "row", gap: 4 }}>
-            {slides.map((_, i) => <View key={i} style={{ width: i === idx ? 20 : 6, height: 6, borderRadius: 3, backgroundColor: i === idx ? C.flame : "rgba(255,255,255,0.35)" }} />)}
+        <View style={{ marginTop: 16, height: 190, borderRadius: 20, overflow: "hidden", backgroundColor: C.ink }}>
+          {slides.map((s, i) => <Slide key={i} source={s.image} active={i === idx} />)}
+          <View style={{ position: "absolute", left: 10, right: 10, bottom: 10, flexDirection: "row", alignItems: "center", gap: 8 }}>
+            {slides[idx]?.caption ? (
+              <View style={{ flexShrink: 1, backgroundColor: "#fff", borderRadius: 10, paddingHorizontal: 10, height: 28, justifyContent: "center" }}>
+                <Body size={12} weight="semi" numberOfLines={1}>{slides[idx].caption}</Body>
+              </View>
+            ) : <View style={{ flex: 1 }} />}
+            <View style={{ flex: 1 }} />
+            <View style={{ flexDirection: "row", gap: 4, backgroundColor: "rgba(20,20,20,0.55)", paddingHorizontal: 8, height: 20, borderRadius: 10, alignItems: "center" }}>
+              {slides.map((_, i) => <View key={i} style={{ width: i === idx ? 14 : 5, height: 5, borderRadius: 3, backgroundColor: i === idx ? "#fff" : "rgba(255,255,255,0.45)" }} />)}
+            </View>
           </View>
-          <Body size={12} color="rgba(255,255,255,0.75)" numberOfLines={1} style={{ flex: 1 }}>{slides[idx]?.caption}</Body>
         </View>
-      </Animated.View>
-    </View>
+
+        <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
+          <Button label="Watch live" icon="play" trail={null} small onPress={() => router.push("/sermon/power-of-grace")} style={{ flex: 1 }} />
+          <Button label="Get a ride" icon="car-side" trail={null} variant="light" small onPress={() => router.push("/rides")} style={{ flex: 1 }} />
+        </View>
+      </View>
+      <View pointerEvents="none" style={{ position: "absolute", right: -6, top: -14 }}>
+        <Sticker top="Join us" bottom="this week" bg={C.sun} size={92} rotate={12} />
+      </View>
+    </Animated.View>
+  );
+}
+
+/** Green ticket with a split-flap countdown to the next service. */
+export function NextService() {
+  const [n, setN] = useState(nextService());
+  useEffect(() => {
+    const t = setInterval(() => setN(nextService()), 1000);
+    return () => clearInterval(t);
+  }, []);
+  return (
+    <Animated.View entering={FadeIn.delay(150).duration(600)} style={{ marginHorizontal: 16 }}>
+      <Ticket color={C.mint} at={0.62}>
+        <View style={{ padding: 18 }}>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 7 }}>
+            <LiveDot color={n.live ? "#fff" : C.sun} size={7} />
+            <Label color="rgba(255,255,255,0.85)">{n.live ? "Live now" : "Next service"}</Label>
+          </View>
+          <Body size={18} weight="semi" color="#fff" style={{ marginTop: 4, marginRight: 50 }} numberOfLines={1}>{n.live || n.label} · {n.time}</Body>
+          <Dashes color="rgba(255,255,255,0.4)" style={{ marginVertical: 14 }} />
+          {n.live ? (
+            <Button label="Join the stream" icon="play" variant="light" block onPress={() => router.push("/sermon/power-of-grace")} />
+          ) : (
+            <DigitTiles groups={[["Days", n.d], ["Hours", n.h], ["Minutes", n.m], ["Seconds", n.s]]} />
+          )}
+        </View>
+      </Ticket>
+      <View pointerEvents="none" style={{ position: "absolute", right: 8, top: -16 }}>
+        <Starburst size={54} color={C.sun} rotate={10}>
+          <Text style={{ fontFamily: F.poster, fontSize: 26, color: C.ink }}>!</Text>
+        </Starburst>
+      </View>
+    </Animated.View>
   );
 }

@@ -1,25 +1,19 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useRef, useState } from "react";
 import { FlatList, KeyboardAvoidingView, Platform, ScrollView, TextInput, View } from "react-native";
-import Animated, { Easing, FadeInDown, useAnimatedStyle, useSharedValue, withRepeat, withTiming } from "react-native-reanimated";
-import { LinearGradient } from "expo-linear-gradient";
+import Animated, { FadeInDown } from "react-native-reanimated";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R } from "@/theme";
-import { BackHeader, Body, Display, IconButton, Press, Serif, TypingDots } from "@/components/ui";
+import { BackHeader, Body, Display, Icon, IconButton, Press, Starburst, TypingDots } from "@/components/ui";
 import { askAgape, ChatMsg } from "@/lib/api";
 
 const SUGGEST = ["What does Romans 8:28 mean?", "Give me a devotional on anxiety", "Where's the verse about “be still”?", "Summarize Sunday's sermon"];
 
+/** Ask Agape's badge: a slowly turning blue starburst with a sparkle. */
 export function Orb({ size = 46 }: { size?: number }) {
-  const r = useSharedValue(0);
-  useEffect(() => { r.value = withRepeat(withTiming(360, { duration: 6000, easing: Easing.linear }), -1); }, []);
-  const st = useAnimatedStyle(() => ({ transform: [{ rotate: `${r.value}deg` }] }));
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, overflow: "hidden", shadowColor: C.violet, shadowOpacity: 0.5, shadowRadius: 12, elevation: 6 }}>
-      <Animated.View style={[{ width: size, height: size }, st]}>
-        <LinearGradient colors={[C.violet, C.sky, C.rose, C.sun]} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={{ flex: 1 }} />
-      </Animated.View>
-      <View style={{ position: "absolute", top: size * 0.18, left: size * 0.18, right: size * 0.18, bottom: size * 0.18, borderRadius: size, backgroundColor: "rgba(255,255,255,0.55)" }} />
-    </View>
+    <Starburst size={size} color={C.sky} spikes={12} depth={0.78} spin>
+      <Icon name="creation" size={size * 0.42} color={C.ink} />
+    </Starburst>
   );
 }
 
@@ -55,44 +49,47 @@ export default function Assistant() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <LinearGradient colors={[C.skySoft, C.lilac, C.roseSoft]} locations={[0, 0.6, 1]} style={{ flex: 1 }}>
-        <BackHeader title="Ask Agape" right={<Orb size={40} />} />
-        <FlatList
-          ref={list}
-          data={msgs}
-          keyExtractor={(m) => m.id}
-          onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
-          contentContainerStyle={{ padding: 16, gap: 10, flexGrow: 1 }}
-          ListEmptyComponent={
-            <Animated.View entering={FadeInDown.duration(700)} style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 40 }}>
-              <Orb size={96} />
-              <Display size={46} center style={{ marginTop: 22, lineHeight: 44 }}>Ask anything.{"\n"}<Serif size={48} color={C.violet}>At 2 AM too.</Serif></Display>
-              <Body center color={C.muted} style={{ marginTop: 10, maxWidth: 300 }}>Bible questions, verse lookups, devotionals, and anything from this week's sermon.</Body>
-            </Animated.View>
-          }
-          renderItem={({ item: m }) => (
-            <Animated.View entering={FadeInDown.springify().damping(18)} style={{ alignSelf: m.role === "user" ? "flex-end" : "flex-start", maxWidth: "86%" }}>
-              <View style={{ backgroundColor: m.role === "user" ? C.ink : "#fff", paddingHorizontal: 16, paddingVertical: 12, borderRadius: 22, borderBottomRightRadius: m.role === "user" ? 6 : 22, borderBottomLeftRadius: m.role === "user" ? 22 : 6 }}>
-                {m.role === "assistant" && !m.shown ? <TypingDots /> : <Body size={15.5} color={m.role === "user" ? "#fff" : C.ink} style={{ lineHeight: 23 }}>{m.role === "user" ? m.content : m.shown}</Body>}
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <BackHeader title="Ask Agape" right={<Orb size={44} />} />
+      <FlatList
+        ref={list}
+        data={msgs}
+        keyExtractor={(m) => m.id}
+        onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
+        contentContainerStyle={{ padding: 16, gap: 10, flexGrow: 1 }}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <Animated.View entering={FadeInDown.duration(600)} style={{ flex: 1, justifyContent: "center", alignItems: "center", paddingVertical: 30 }}>
+            <Orb size={120} />
+            <Display size={34} center style={{ marginTop: 22 }}>Ask anything.{"\n"}At 2 AM too.</Display>
+            <Body center color={C.muted} style={{ marginTop: 10, maxWidth: 300 }}>Bible questions, verse lookups, devotionals, and anything from this week's sermon.</Body>
+          </Animated.View>
+        }
+        renderItem={({ item: m }) => {
+          const me = m.role === "user";
+          return (
+            <Animated.View entering={FadeInDown.springify().damping(18)} style={{ alignSelf: me ? "flex-end" : "flex-start", maxWidth: "86%" }}>
+              <View style={{ backgroundColor: me ? C.violet : "#fff", borderWidth: me ? 0 : 1.5, borderColor: C.line, paddingHorizontal: 15, paddingVertical: 11, borderRadius: 18, borderBottomRightRadius: me ? 6 : 18, borderBottomLeftRadius: me ? 18 : 6 }}>
+                {!me && !m.shown ? <TypingDots /> : <Body size={15.5} style={{ lineHeight: 23 }}>{me ? m.content : m.shown}</Body>}
               </View>
             </Animated.View>
-          )}
-        />
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 12, gap: 8, paddingBottom: 10 }} style={{ flexGrow: 0 }}>
-          {SUGGEST.map((s) => (
-            <Press key={s} disabled={busy} onPress={() => ask(s)} style={{ paddingHorizontal: 15, height: 40, borderRadius: R.pill, backgroundColor: "rgba(255,255,255,0.8)", justifyContent: "center", opacity: busy ? 0.5 : 1 }}>
-              <Body size={13.5} weight="medium">{s}</Body>
-            </Press>
-          ))}
-        </ScrollView>
-        <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingBottom: insets.bottom + 10 }}>
-          <View style={{ flex: 1, minHeight: 54, borderRadius: R.pill, backgroundColor: "#fff", paddingHorizontal: 20, justifyContent: "center" }}>
-            <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => ask(draft)} returnKeyType="send" placeholder="Type your question…" placeholderTextColor="rgba(15,11,18,0.4)" style={{ fontFamily: F.sans, fontSize: 16, color: C.ink }} />
-          </View>
-          <IconButton name="send" size={54} bg={C.violet} color="#fff" onPress={() => ask(draft)} />
+          );
+        }}
+      />
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} keyboardShouldPersistTaps="handled" contentContainerStyle={{ paddingHorizontal: 12, gap: 8, paddingBottom: 10 }} style={{ flexGrow: 0 }}>
+        {SUGGEST.map((s) => (
+          <Press key={s} disabled={busy} onPress={() => ask(s)} style={{ paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: "#fff", borderWidth: 1.5, borderColor: C.line, justifyContent: "center", opacity: busy ? 0.5 : 1 }}>
+            <Body size={13.5} weight="medium">{s}</Body>
+          </Press>
+        ))}
+      </ScrollView>
+      <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingBottom: insets.bottom + 10 }}>
+        <View style={{ flex: 1, minHeight: 52, borderRadius: R.pill, backgroundColor: "#ECE9E3", paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Icon name="message-square" size={17} color={C.muted} />
+          <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={() => ask(draft)} returnKeyType="send" placeholder="Type something" placeholderTextColor="rgba(20,20,20,0.45)" style={{ flex: 1, fontFamily: F.sans, fontSize: 16, color: C.ink, paddingVertical: 12 }} />
         </View>
-      </LinearGradient>
+        <IconButton name="send" size={52} bg={C.ink} color="#fff" onPress={() => ask(draft)} />
+      </View>
     </KeyboardAvoidingView>
   );
 }

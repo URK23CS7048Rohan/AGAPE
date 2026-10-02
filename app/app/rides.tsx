@@ -8,7 +8,7 @@ import * as Location from "expo-location";
 import { router } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, R } from "@/theme";
-import { Avatar, Body, Button, Chip, Confetti, ConfettiHandle, Display, Icon, IconButton, Label, LiveDot, Press, Segmented, Serif } from "@/components/ui";
+import { Avatar, Body, Button, Chip, Confetti, ConfettiHandle, Display, Icon, IconButton, Label, LiveDot, Press, Segmented } from "@/components/ui";
 import { CHURCH, DARK_MAP_STYLE, RIDE } from "@/data/mock";
 import { pushRideLocation, requestRide } from "@/lib/api";
 
@@ -42,9 +42,9 @@ function Radar() {
   const ring = useAnimatedStyle(() => ({ opacity: 1 - t.value, transform: [{ scale: 0.4 + t.value * 1.6 }] }));
   return (
     <View style={{ width: 120, height: 120, alignItems: "center", justifyContent: "center", alignSelf: "center" }}>
-      <Animated.View style={[{ position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(46,211,160,0.35)" }, ring]} />
+      <Animated.View style={[{ position: "absolute", width: 120, height: 120, borderRadius: 60, backgroundColor: "rgba(60,141,94,0.3)" }, ring]} />
       <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: C.mint, alignItems: "center", justifyContent: "center" }}>
-        <Icon name="car-side" size={26} color={C.ink} />
+        <Icon name="car-side" size={26} color="#fff" />
       </View>
     </View>
   );
@@ -127,10 +127,10 @@ export default function Rides() {
       >
         {mode === 0 ? (
           <>
-            <Polyline coordinates={RIDE.route} strokeColor="rgba(46,211,160,0.25)" strokeWidth={10} />
-            <Polyline coordinates={phase === "enroute" ? [car, ...RIDE.route.slice(car.index + 1)] : RIDE.route} strokeColor={C.mint} strokeWidth={5} />
+            <Polyline coordinates={RIDE.route} strokeColor="rgba(255,210,63,0.3)" strokeWidth={10} />
+            <Polyline coordinates={phase === "enroute" ? [car, ...RIDE.route.slice(car.index + 1)] : RIDE.route} strokeColor={C.sun} strokeWidth={5} />
             <Marker coordinate={RIDE.pickup} anchor={{ x: 0.5, y: 0.5 }}>
-              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.ink, borderWidth: 4, borderColor: C.mint }} />
+              <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: C.ink, borderWidth: 4, borderColor: C.sun }} />
             </Marker>
             <Marker coordinate={CHURCH.coords} anchor={{ x: 0.5, y: 1 }}>
               <View style={{ alignItems: "center" }}>
@@ -140,9 +140,9 @@ export default function Rides() {
             </Marker>
             {phase === "enroute" || phase === "arrived" ? (
               <Marker coordinate={car} anchor={{ x: 0.5, y: 0.5 }} flat rotation={car.heading}>
-                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(46,211,160,0.3)", alignItems: "center", justifyContent: "center" }}>
+                <View style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: "rgba(255,210,63,0.35)", alignItems: "center", justifyContent: "center" }}>
                   <View style={{ width: 24, height: 24, borderRadius: 12, backgroundColor: "#fff", alignItems: "center", justifyContent: "center" }}>
-                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.mint }} />
+                    <View style={{ width: 16, height: 16, borderRadius: 8, backgroundColor: C.ink }} />
                   </View>
                 </View>
               </Marker>
@@ -160,14 +160,16 @@ export default function Rides() {
       {/* top bar */}
       <View style={{ position: "absolute", top: insets.top + 6, left: 16, right: 16, gap: 12 }}>
         <View style={{ flexDirection: "row", alignItems: "center", gap: 12 }}>
-          <IconButton name="chevron-left" onPress={() => router.back()} bg="rgba(255,255,255,0.15)" color="#fff" />
-          <Body size={17} weight="semi" color="#fff" style={{ flex: 1 }}>Ride ministry</Body>
-          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.mint, paddingHorizontal: 12, height: 30, borderRadius: R.pill }}>
+          <IconButton name="arrow-left" onPress={() => router.back()} />
+          <View style={{ flex: 1, alignItems: "center" }}>
+            <View style={{ backgroundColor: "#fff", borderRadius: 12, paddingHorizontal: 12, height: 36, justifyContent: "center" }}><Body size={15} weight="bold">Ride ministry</Body></View>
+          </View>
+          <View style={{ flexDirection: "row", alignItems: "center", gap: 6, backgroundColor: C.sun, paddingHorizontal: 12, height: 36, borderRadius: 12 }}>
             <LiveDot color={C.ink} size={6} />
             <Body size={12} weight="bold">Live</Body>
           </View>
         </View>
-        <Segmented items={["I need a ride", "I'm driving"]} value={mode} onChange={setMode} dark accent={C.mint} />
+        <Segmented items={["I need a ride", "I'm driving"]} value={mode} onChange={setMode} />
         {mode === 0 && phase === "enroute" ? (
           <Animated.View entering={FadeInDown} style={{ alignSelf: "flex-start", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 10 }}>
             <Body size={12} color={C.muted}>Arriving in</Body>
@@ -180,9 +182,9 @@ export default function Rides() {
       <View style={{ position: "absolute", left: 10, right: 10, bottom: insets.bottom + 10 }}>
         {mode === 0 && phase === "request" ? (
           <Animated.View key="req" entering={FadeInUp.springify().damping(18)} style={sheet}>
-            <Display size={34}>Need a <Serif size={36} color="#0E9F74">ride?</Serif></Display>
+            <Display size={28}>Need a ride?</Display>
             <Body size={14} color={C.muted} style={{ marginTop: 4 }}>A volunteer from the family will pick you up, for free.</Body>
-            <View style={{ marginTop: 14, padding: 14, borderRadius: R.md, backgroundColor: "#F4F1EC", gap: 12 }}>
+            <View style={{ marginTop: 14, padding: 14, borderRadius: R.md, backgroundColor: C.bg, gap: 12 }}>
               <View style={{ flexDirection: "row", gap: 12, alignItems: "center" }}>
                 <View style={{ width: 12, height: 12, borderRadius: 6, borderWidth: 3, borderColor: C.mint }} />
                 <View style={{ flex: 1 }}><Label size={10}>Pickup</Label><Body weight="semi">{RIDE.pickup.label} · current location</Body></View>
@@ -198,9 +200,9 @@ export default function Rides() {
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", marginTop: 12 }}>
               <Body weight="semi">Passengers</Body>
               <View style={{ flexDirection: "row", alignItems: "center", gap: 14 }}>
-                <IconButton name="minus" size={38} bg="#F4F1EC" onPress={() => setSeats((s) => Math.max(1, s - 1))} />
+                <IconButton name="minus" size={38} bg={C.bg} onPress={() => setSeats((s) => Math.max(1, s - 1))} />
                 <Display size={26}>{seats}</Display>
-                <IconButton name="plus" size={38} bg="#F4F1EC" onPress={() => setSeats((s) => Math.min(6, s + 1))} />
+                <IconButton name="plus" size={38} bg={C.bg} onPress={() => setSeats((s) => Math.min(6, s + 1))} />
               </View>
             </View>
             <Button label="Request ride" icon="car-side" variant="ink" block onPress={request} style={{ marginTop: 16 }} />
@@ -210,7 +212,7 @@ export default function Rides() {
         {mode === 0 && phase === "searching" ? (
           <Animated.View key="search" entering={FadeInUp.springify()} style={sheet}>
             <Radar />
-            <Display size={30} center style={{ marginTop: 10 }}>Finding a <Serif size={32} color="#0E9F74">volunteer…</Serif></Display>
+            <Display size={26} center style={{ marginTop: 10 }}>Finding a volunteer…</Display>
             <Body center color={C.muted} style={{ marginTop: 4 }}>64 drivers are serving this Sunday</Body>
           </Animated.View>
         ) : null}
@@ -219,7 +221,7 @@ export default function Rides() {
           <Animated.View key="enroute" entering={FadeInUp.springify().damping(18)} style={sheet}>
             {phase === "arrived" ? (
               <Animated.View entering={FadeIn}>
-                <Display size={34}>You've <Serif size={36} color={C.flame}>arrived.</Serif></Display>
+                <Display size={28}>You've arrived 🎉</Display>
                 <Body color={C.muted} style={{ marginTop: 4, marginBottom: 12 }}>Welcome home! Service starts at 10:00 AM.</Body>
               </Animated.View>
             ) : null}
@@ -229,21 +231,21 @@ export default function Rides() {
                 <Body weight="bold" size={17}>{RIDE.driver.name}</Body>
                 <Body size={13} color={C.muted}>{RIDE.driver.car} · {RIDE.driver.plate}</Body>
               </View>
-              <View style={{ backgroundColor: C.sunSoft, paddingHorizontal: 10, height: 30, borderRadius: R.pill, justifyContent: "center" }}><Body size={13} weight="bold">★ {RIDE.driver.rating}</Body></View>
+              <View style={{ backgroundColor: C.sunSoft, paddingHorizontal: 10, height: 30, borderRadius: 14, justifyContent: "center" }}><Body size={13} weight="bold">★ {RIDE.driver.rating}</Body></View>
             </View>
             {phase === "enroute" ? (
               <View style={{ marginTop: 14, flexDirection: "row", alignItems: "center", gap: 10 }}>
-                <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: "#EEE9E2", overflow: "hidden" }}>
+                <View style={{ flex: 1, height: 8, borderRadius: 4, backgroundColor: C.bg, overflow: "hidden" }}>
                   <View style={{ width: `${t * 100}%`, height: 8, backgroundColor: C.mint, borderRadius: 4 }} />
                 </View>
                 <Body size={13} weight="semi">{eta} min</Body>
               </View>
             ) : null}
             <View style={{ flexDirection: "row", gap: 10, marginTop: 14 }}>
-              <Press onPress={() => Linking.openURL(`tel:${RIDE.driver.phone}`)} style={{ flex: 1, height: 50, borderRadius: R.pill, backgroundColor: "#F4F1EC", flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Press onPress={() => Linking.openURL(`tel:${RIDE.driver.phone}`)} style={{ flex: 1, height: 50, borderRadius: 14, backgroundColor: C.bg, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <Icon name="phone" size={17} /><Body weight="semi">Call</Body>
               </Press>
-              <Press onPress={() => router.push("/chat/david")} style={{ flex: 1, height: 50, borderRadius: R.pill, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
+              <Press onPress={() => router.push("/chat/david")} style={{ flex: 1, height: 50, borderRadius: 14, backgroundColor: C.ink, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 }}>
                 <Icon name="message-circle" size={17} color="#fff" /><Body weight="semi" color="#fff">Message</Body>
               </Press>
             </View>
@@ -254,27 +256,27 @@ export default function Rides() {
         {mode === 1 ? (
           <Animated.View key="drive" entering={FadeInUp.springify().damping(18)} style={sheet}>
             <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
-              <Display size={30}>Ride <Serif size={32} color="#0E9F74">requests</Serif></Display>
-              <Press onPress={toggleSharing} style={{ paddingHorizontal: 12, height: 34, borderRadius: R.pill, backgroundColor: sharing ? C.mint : "#F4F1EC", flexDirection: "row", alignItems: "center", gap: 6 }}>
-                {sharing ? <LiveDot color={C.ink} size={6} /> : <Icon name="navigation" size={13} />}
-                <Body size={12.5} weight="bold">{sharing ? "Sharing" : "Share location"}</Body>
+              <Display size={24}>Ride requests</Display>
+              <Press onPress={toggleSharing} style={{ paddingHorizontal: 12, height: 34, borderRadius: 14, backgroundColor: sharing ? C.mint : C.bg, flexDirection: "row", alignItems: "center", gap: 6 }}>
+                {sharing ? <LiveDot color="#fff" size={6} /> : <Icon name="navigation" size={13} />}
+                <Body size={12.5} weight="bold" color={sharing ? "#fff" : C.ink}>{sharing ? "Sharing" : "Share location"}</Body>
               </Press>
             </View>
             <View style={{ gap: 8, marginTop: 12 }}>
               {RIDE.requests.map((r, i) => {
                 const on = accepted.has(r.id);
                 return (
-                  <Animated.View key={r.id} entering={FadeInDown.delay(i * 70)} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: R.md, backgroundColor: "#F4F1EC" }}>
+                  <Animated.View key={r.id} entering={FadeInDown.delay(i * 70)} style={{ flexDirection: "row", alignItems: "center", gap: 10, padding: 10, borderRadius: R.md, backgroundColor: C.bg }}>
                     <Avatar name={r.name} color={r.color} size={42} />
                     <View style={{ flex: 1 }}>
                       <Body weight="semi">{r.name}</Body>
                       <Body size={12.5} color={C.muted}>{r.pickup} · {r.time} · {r.seats} seat{r.seats > 1 ? "s" : ""}</Body>
                     </View>
                     {on ? (
-                      <IconButton name="navigation" size={40} bg={C.ink} color={C.mint} onPress={() => openNavigation(r.lat, r.lng)} />
+                      <IconButton name="navigation" size={40} bg={C.ink} color={C.sun} onPress={() => openNavigation(r.lat, r.lng)} />
                     ) : (
-                      <Press onPress={() => { setAccepted((s) => new Set(s).add(r.id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }} style={{ paddingHorizontal: 14, height: 38, borderRadius: R.pill, backgroundColor: C.mint, justifyContent: "center" }}>
-                        <Body size={13} weight="bold">Accept</Body>
+                      <Press onPress={() => { setAccepted((s) => new Set(s).add(r.id)); Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {}); }} style={{ paddingHorizontal: 14, height: 38, borderRadius: 14, backgroundColor: C.mint, justifyContent: "center" }}>
+                        <Body size={13} weight="bold" color="#fff">Accept</Body>
                       </Press>
                     )}
                   </Animated.View>
@@ -289,4 +291,4 @@ export default function Rides() {
   );
 }
 
-const sheet = { backgroundColor: "#fff", borderRadius: 30, padding: 18, shadowColor: "#000", shadowOpacity: 0.35, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 12 } as const;
+const sheet = { backgroundColor: "#fff", borderRadius: 28, padding: 18, borderWidth: 2, borderColor: C.ink } as const;

@@ -1,34 +1,58 @@
 // Agape design tokens — shared with the website.
+// Agape design tokens. Flat colour blocks, bold type and playful stickers.
+// The brand flame matches the website; the rest is a bright, friendly palette.
 export const C = {
-  ink: "#0F0B12",
-  ink2: "#17111D",
-  ink3: "#221A2A",
-  cream: "#F4EEE4",
-  paper: "#FBF8F3",
+  // neutrals
+  ink: "#141414",
+  ink2: "#1E1E20",
+  ink3: "#2B2B2E",
+  bg: "#F6F4EF",
+  card: "#FFFFFF",
+  line: "#E6E2DA",
   white: "#FFFFFF",
+  muted: "rgba(20,20,20,0.55)",
+  faint: "rgba(20,20,20,0.08)",
+  // legacy aliases (kept so older data keeps working)
+  cream: "#F6F4EF",
+  paper: "#FFFFFF",
+  creamMuted: "rgba(255,255,255,0.7)",
+  // brights
   flame: "#FF5A1F",
   brand: "#FF5A1F",
   brandDeep: "#D9430F",
-  sun: "#FFC23D",
-  gold: "#FFC23D",
-  rose: "#FF3D7F",
-  violet: "#6E4BFF",
-  mint: "#2ED3A0",
-  sky: "#4CC3FF",
-  muted: "rgba(15,11,18,0.58)",
-  faint: "rgba(15,11,18,0.08)",
-  creamMuted: "rgba(244,238,228,0.62)",
-  lilac: "#EFE9FF",
-  peach: "#FFE3D6",
-  mintSoft: "#D5F5E8",
-  sunSoft: "#FFF0B8",
-  skySoft: "#DDF1FF",
-  roseSoft: "#FFE0EC",
-  deepViolet: "#1D1233",
+  sun: "#FFD23F",
+  gold: "#FFD23F",
+  rose: "#FF7AB6",
+  violet: "#9B7BFF",
+  mint: "#3C8D5E",
+  sky: "#8FA4FF",
+  orange: "#FFB547",
+  red: "#F2493A",
+  // soft tints
+  lilac: "#ECE5FF",
+  peach: "#FFE4D8",
+  mintSoft: "#DCEFE2",
+  sunSoft: "#FFF2C2",
+  skySoft: "#E3E8FF",
+  roseSoft: "#FFE3F0",
+  orangeSoft: "#FFEBCB",
+  deepViolet: "#2A1E55",
 };
 
+/** Picks ink or white text for a solid background, by contrast. */
+export function onColor(hex: string) {
+  const h = (hex || "#000").replace("#", "");
+  if (h.length !== 6 && h.length !== 3) return C.ink;
+  const full = h.length === 3 ? h.split("").map((c) => c + c).join("") : h;
+  const v = parseInt(full, 16);
+  const lin = (c: number) => { const x = c / 255; return x <= 0.03928 ? x / 12.92 : Math.pow((x + 0.055) / 1.055, 2.4); };
+  const L = 0.2126 * lin((v >> 16) & 255) + 0.7152 * lin((v >> 8) & 255) + 0.0722 * lin(v & 255);
+  return (L + 0.05) / 0.056 >= 1.05 / (L + 0.05) ? C.ink : "#FFFFFF";
+}
+
 export const F = {
-  display: "Bricolage-ExtraBoldCondensed",
+  display: "Bricolage-Bold",
+  poster: "Bricolage-ExtraBoldCondensed",
   displayBold: "Bricolage-Bold",
   displaySemi: "Bricolage-SemiBold",
   serif: "InstrumentSerif-Regular",
@@ -40,10 +64,10 @@ export const F = {
   mono: "GeistMono-Medium",
 };
 
-export const R = { sm: 14, md: 22, lg: 28, xl: 36, pill: 999 };
+export const R = { sm: 12, md: 18, lg: 24, xl: 28, pill: 999 };
 
 export const fontMap = {
-  [F.display]: require("../assets/fonts/Bricolage-ExtraBoldCondensed.ttf"),
+  [F.poster]: require("../assets/fonts/Bricolage-ExtraBoldCondensed.ttf"),
   [F.displayBold]: require("../assets/fonts/Bricolage-Bold.ttf"),
   [F.displaySemi]: require("../assets/fonts/Bricolage-SemiBold.ttf"),
   [F.serif]: require("../assets/fonts/InstrumentSerif-Regular.ttf"),

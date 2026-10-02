@@ -3,7 +3,7 @@ import { ScrollView, Text, View } from "react-native";
 import Animated, { FadeIn, FadeInDown, LinearTransition, ZoomIn, useAnimatedStyle, useSharedValue, withSequence, withTiming } from "react-native-reanimated";
 import * as Haptics from "expo-haptics";
 import { C, F, R } from "@/theme";
-import { Avatar, BackHeader, Bar, Body, Confetti, ConfettiHandle, Display, Label, Press, Segmented, Serif } from "@/components/ui";
+import { Avatar, BackHeader, Bar, Body, Confetti, ConfettiHandle, Display, Label, Press, Segmented, Sticker } from "@/components/ui";
 import { LEADERBOARD, TRIVIA, VERSE_MATCH } from "@/data/mock";
 import { useStore } from "@/lib/store";
 import { submitScore } from "@/lib/api";
@@ -18,8 +18,8 @@ function WordButton({ w, used, onPress }: { w: string; used: boolean; onPress: (
   if (used) return null;
   return (
     <Animated.View style={st} exiting={undefined} layout={LinearTransition.springify()}>
-      <Press onPress={() => onPress(shake)} style={{ paddingHorizontal: 20, height: 50, borderRadius: R.pill, borderWidth: 1.5, borderColor: "rgba(244,238,228,0.25)", justifyContent: "center" }}>
-        <Body size={16} weight="semi" color={C.cream}>{w}</Body>
+      <Press onPress={() => onPress(shake)} style={{ paddingHorizontal: 18, height: 48, borderRadius: 14, borderWidth: 1.5, borderColor: C.ink, backgroundColor: "#fff", justifyContent: "center" }}>
+        <Body size={16} weight="semi">{w}</Body>
       </Press>
     </Animated.View>
   );
@@ -59,28 +59,28 @@ function VerseMatch({ onPoints, burst }: { onPoints: (n: number) => void; burst:
   };
 
   return (
-    <View style={{ backgroundColor: C.ink, borderRadius: R.xl, padding: 22, minHeight: 420 }}>
+    <View style={card}>
       <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
-        <View style={{ backgroundColor: C.sun, paddingHorizontal: 12, height: 28, borderRadius: R.pill, justifyContent: "center" }}><Body size={12.5} weight="bold">Verse Match · {vi + 1}/{VERSE_MATCH.length}</Body></View>
-        <Label color={C.creamMuted}>Streak {streak}</Label>
+        <View style={{ backgroundColor: C.violet, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Verse Match · {vi + 1}/{VERSE_MATCH.length}</Body></View>
+        <Body size={13} weight="semi">🔥 Streak {streak}</Body>
       </View>
-      <View style={{ marginTop: 18 }}><Bar progress={(vi + filled / v.a.length) / VERSE_MATCH.length} color={C.sun} track="rgba(255,255,255,0.1)" height={6} delay={0} /></View>
+      <View style={{ marginTop: 16 }}><Bar progress={(vi + filled / v.a.length) / VERSE_MATCH.length} color={C.mint} height={8} delay={0} /></View>
       <Animated.View key={vi} entering={FadeIn.duration(500)}>
-        <Text style={{ fontFamily: F.serif, fontSize: 30, lineHeight: 40, color: C.cream, marginTop: 24 }}>
+        <Text style={{ fontFamily: F.display, fontSize: 26, lineHeight: 38, letterSpacing: -0.6, color: C.ink, marginTop: 20 }}>
           {parts.map((p, i) => (
             <Text key={i}>
               {p}
               {i < parts.length - 1 ? (
                 i < filled ? (
-                  <Text style={{ fontFamily: F.serifItalic, color: C.ink, backgroundColor: C.sun }}> {v.a[i]} </Text>
+                  <Text style={{ color: C.ink, backgroundColor: C.sun }}> {v.a[i]} </Text>
                 ) : (
-                  <Text style={{ color: i === filled ? C.sun : "rgba(255,194,61,0.5)" }}>{" ________ "}</Text>
+                  <Text style={{ color: i === filled ? C.flame : "rgba(20,20,20,0.25)" }}>{" ________ "}</Text>
                 )
               ) : null}
             </Text>
           ))}
         </Text>
-        <Label color={C.creamMuted} style={{ marginTop: 14 }}>{v.r}</Label>
+        <Label style={{ marginTop: 12 }}>{v.r}</Label>
       </Animated.View>
       <View style={{ flexDirection: "row", flexWrap: "wrap", gap: 10, marginTop: 22 }}>
         {opts.map((w) => {
@@ -88,7 +88,7 @@ function VerseMatch({ onPoints, burst }: { onPoints: (n: number) => void; burst:
           return <WordButton key={`${vi}-${w}`} w={w} used={idx > -1 && idx < filled} onPress={(shake) => tap(w, shake)} />;
         })}
       </View>
-      <Body size={14} color={msg.includes("Next") ? C.sun : C.creamMuted} weight={msg.includes("Next") ? "semi" : "regular"} style={{ marginTop: 18 }}>{msg}</Body>
+      <Body size={14} color={msg.includes("Next") ? C.mint : C.muted} weight={msg.includes("Next") ? "bold" : "regular"} style={{ marginTop: 18 }}>{msg}</Body>
     </View>
   );
 }
@@ -106,21 +106,23 @@ function Trivia({ onPoints, burst }: { onPoints: (n: number) => void; burst: (y:
     setTimeout(() => { setPicked(null); setQi((x) => (x + 1) % TRIVIA.length); }, 1300);
   };
   return (
-    <View style={{ backgroundColor: C.ink, borderRadius: R.xl, padding: 22, minHeight: 420 }}>
-      <View style={{ flexDirection: "row", justifyContent: "space-between" }}>
-        <View style={{ backgroundColor: C.violet, paddingHorizontal: 12, height: 28, borderRadius: R.pill, justifyContent: "center" }}><Body size={12.5} weight="bold" color="#fff">Trivia · Pack 1</Body></View>
-        <Label color={C.creamMuted}>{right} correct</Label>
+    <View style={card}>
+      <View style={{ flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
+        <View style={{ backgroundColor: C.sky, paddingHorizontal: 10, height: 28, borderRadius: 9, justifyContent: "center" }}><Body size={12.5} weight="bold">Trivia · Pack 1</Body></View>
+        <Body size={13} weight="semi">✓ {right} correct</Body>
       </View>
       <Animated.View key={qi} entering={FadeInDown.springify().damping(16)}>
-        <Display size={34} color={C.cream} style={{ marginTop: 22 }}>{q.q}</Display>
+        <Display size={26} style={{ marginTop: 20 }}>{q.q}</Display>
         <View style={{ gap: 10, marginTop: 20 }}>
           {q.o.map((o, i) => {
             const state = picked === null ? "idle" : i === q.a ? "right" : i === picked ? "wrong" : "dim";
-            const bg = state === "right" ? C.mint : state === "wrong" ? C.rose : "rgba(255,255,255,0.07)";
+            const bg = state === "right" ? C.mint : state === "wrong" ? C.red : "#fff";
             return (
-              <Press key={o} onPress={() => pick(i)} style={{ height: 56, borderRadius: R.pill, backgroundColor: bg, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between", opacity: state === "dim" ? 0.4 : 1 }}>
-                <Body size={16} weight="semi" color={state === "right" ? C.ink : C.cream}>{o}</Body>
-                <Label color={state === "right" ? C.ink : C.creamMuted}>{"ABCD"[i]}</Label>
+              <Press key={o} onPress={() => pick(i)} style={{ height: 56, borderRadius: 16, backgroundColor: bg, borderWidth: 1.5, borderColor: state === "idle" || state === "dim" ? C.ink : bg, paddingHorizontal: 8, flexDirection: "row", alignItems: "center", gap: 12, opacity: state === "dim" ? 0.4 : 1 }}>
+                <View style={{ width: 38, height: 38, borderRadius: 11, backgroundColor: state === "idle" || state === "dim" ? C.sun : "#fff", alignItems: "center", justifyContent: "center" }}>
+                  <Body size={14} weight="bold">{"ABCD"[i]}</Body>
+                </View>
+                <Body size={16} weight="semi" color={state === "right" || state === "wrong" ? "#fff" : C.ink}>{o}</Body>
               </Press>
             );
           })}
@@ -141,25 +143,28 @@ export default function Games() {
 
   return (
     <View style={{ flex: 1, backgroundColor: C.sun }}>
-      <BackHeader title="Bible games" right={<View style={{ backgroundColor: C.ink, paddingHorizontal: 14, height: 36, borderRadius: R.pill, justifyContent: "center" }}><Body size={13} weight="bold" color={C.sun}>{fmt(1180 + score)} pts</Body></View>} />
+      <BackHeader title="Bible games" right={<View style={{ backgroundColor: C.ink, paddingHorizontal: 12, height: 44, borderRadius: 14, justifyContent: "center" }}><Body size={13} weight="bold" color={C.sun}>{fmt(1180 + score)} pts</Body></View>} />
       <ScrollView contentContainerStyle={{ paddingBottom: 60 }} showsVerticalScrollIndicator={false}>
         <View style={{ paddingHorizontal: 20, marginTop: 6 }}>
-          <Display size={54} style={{ lineHeight: 52 }}>Play. Learn.{"\n"}<Serif size={58} color={C.ink} style={{ textDecorationLine: "underline" }}>Remember.</Serif></Display>
+          <Display size={34}>Play. Learn.{"\n"}Remember.</Display>
+          <View pointerEvents="none" style={{ position: "absolute", right: 16, top: -6 }}>
+            <Sticker top="Win" bottom="points" bg={C.flame} size={82} />
+          </View>
         </View>
         <View style={{ marginHorizontal: 16, marginTop: 18 }}>
-          <Segmented items={["Verse Match", "Trivia"]} value={mode} onChange={setMode} accent={C.ink} />
+          <Segmented items={["Verse Match", "Trivia"]} value={mode} onChange={setMode} />
         </View>
         <Animated.View key={mode} entering={FadeInDown.springify().damping(18)} style={{ marginHorizontal: 16, marginTop: 14 }}>
           {mode === 0 ? <VerseMatch onPoints={onPoints} burst={burst} /> : <Trivia onPoints={onPoints} burst={burst} />}
         </Animated.View>
 
-        <View style={{ marginHorizontal: 16, marginTop: 18, backgroundColor: "rgba(255,255,255,0.6)", borderRadius: R.xl, padding: 18 }}>
+        <View style={[card, { marginHorizontal: 16, marginTop: 14, minHeight: 0, padding: 16 }]}>
           <View style={{ flexDirection: "row", justifyContent: "space-between", marginBottom: 8 }}>
-            <Body weight="bold" size={17}>Leaderboard</Body>
-            <Body size={13} color={C.muted}>This week · church-wide</Body>
+            <Display size={20}>Leaderboard</Display>
+            <Label>This week · church-wide</Label>
           </View>
           {board.map((p, i) => (
-            <Animated.View key={p.name} layout={LinearTransition.springify().damping(16)} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, paddingHorizontal: p.name === "You" ? 10 : 0, marginHorizontal: p.name === "You" ? -10 : 0, backgroundColor: p.name === "You" ? "rgba(15,11,18,0.07)" : "transparent", borderRadius: 16 }}>
+            <Animated.View key={p.name} layout={LinearTransition.springify().damping(16)} style={{ flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8, paddingHorizontal: p.name === "You" ? 10 : 0, marginHorizontal: p.name === "You" ? -10 : 0, backgroundColor: p.name === "You" ? C.sunSoft : "transparent", borderRadius: 14 }}>
               <Body weight="bold" color={i < 3 ? C.ink : C.muted} style={{ width: 20 }}>{i + 1}</Body>
               <Avatar name={p.name} color={p.color} size={36} />
               <View style={{ flex: 1 }}>
@@ -175,3 +180,5 @@ export default function Games() {
     </View>
   );
 }
+
+const card = { backgroundColor: "#fff", borderRadius: R.xl, padding: 20, minHeight: 420, borderWidth: 2, borderColor: C.ink } as const;

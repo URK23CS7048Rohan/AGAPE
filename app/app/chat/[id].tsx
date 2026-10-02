@@ -4,7 +4,7 @@ import Animated, { FadeInDown } from "react-native-reanimated";
 import { useLocalSearchParams } from "expo-router";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import { C, F, R } from "@/theme";
-import { Avatar, BackHeader, Body, IconButton, TypingDots } from "@/components/ui";
+import { Avatar, BackHeader, Body, Icon, IconButton, Label, TypingDots } from "@/components/ui";
 import { CHATS } from "@/data/mock";
 
 type Msg = { id: string; me?: boolean; who?: string; color?: string; text: string; time: string };
@@ -43,33 +43,34 @@ export default function ChatScreen() {
   };
 
   return (
-    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.cream }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
-      <BackHeader title={chat.name} right={<Avatar name={chat.name} color={chat.color} size={38} />} />
-      <Body size={12} color={C.muted} center>{chat.group ? `${chat.members} members` : "Direct message"}</Body>
+    <KeyboardAvoidingView style={{ flex: 1, backgroundColor: C.bg }} behavior={Platform.OS === "ios" ? "padding" : undefined}>
+      <BackHeader title={chat.name} right={<Avatar name={chat.name} color={chat.color} size={44} />} />
+      <Label style={{ textAlign: "center" }}>{chat.group ? `${chat.members} members` : "Direct message"}</Label>
       <FlatList
         ref={list}
         data={msgs}
         keyExtractor={(m) => m.id}
         contentContainerStyle={{ padding: 16, gap: 10 }}
         onContentSizeChange={() => list.current?.scrollToEnd({ animated: true })}
-        ListFooterComponent={typing ? <View style={{ alignSelf: "flex-start", backgroundColor: "#fff", borderRadius: 20, paddingHorizontal: 16, paddingVertical: 6, marginTop: 10 }}><TypingDots color={C.rose} /></View> : null}
+        ListFooterComponent={typing ? <View style={{ alignSelf: "flex-start", backgroundColor: C.violet, borderRadius: 16, paddingHorizontal: 16, paddingVertical: 6, marginTop: 10 }}><TypingDots /></View> : null}
         renderItem={({ item: m }) => (
           <Animated.View entering={FadeInDown.springify().damping(18)} style={{ flexDirection: "row", justifyContent: m.me ? "flex-end" : "flex-start", gap: 8, alignItems: "flex-end" }}>
             {!m.me ? <Avatar name={m.who ?? "?"} color={m.color} size={30} /> : null}
-            <View style={{ maxWidth: "76%", backgroundColor: m.me ? C.ink : "#fff", borderRadius: 22, borderBottomRightRadius: m.me ? 6 : 22, borderBottomLeftRadius: m.me ? 22 : 6, paddingHorizontal: 15, paddingVertical: 10 }}>
-              {!m.me ? <Body size={12} weight="semi" color={m.color}>{m.who}</Body> : null}
-              <Body size={15} color={m.me ? "#fff" : C.ink}>{m.text}</Body>
-              <Body size={10.5} color={m.me ? "rgba(255,255,255,0.5)" : C.muted} style={{ alignSelf: "flex-end", marginTop: 2 }}>{m.time}</Body>
+            <View style={{ maxWidth: "76%", backgroundColor: m.me ? C.sun : C.violet, borderRadius: 16, borderBottomRightRadius: m.me ? 4 : 16, borderBottomLeftRadius: m.me ? 16 : 4, paddingHorizontal: 14, paddingVertical: 9 }}>
+              {!m.me ? <Body size={12} weight="bold">{m.who}</Body> : null}
+              <Body size={15}>{m.text}</Body>
+              <Body size={10.5} color="rgba(20,20,20,0.55)" style={{ alignSelf: "flex-end", marginTop: 2 }}>{m.time}</Body>
             </View>
           </Animated.View>
         )}
       />
       <View style={{ flexDirection: "row", alignItems: "center", gap: 8, paddingHorizontal: 12, paddingTop: 8, paddingBottom: insets.bottom + 10 }}>
-        <IconButton name="plus" size={46} />
-        <View style={{ flex: 1, height: 50, borderRadius: R.pill, backgroundColor: "#fff", paddingHorizontal: 18, justifyContent: "center" }}>
-          <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={send} returnKeyType="send" placeholder="Message" placeholderTextColor="rgba(15,11,18,0.4)" style={{ fontFamily: F.sans, fontSize: 16, color: C.ink }} />
+        <IconButton name="plus" size={48} border={C.line} />
+        <View style={{ flex: 1, height: 50, borderRadius: R.pill, backgroundColor: "#ECE9E3", paddingHorizontal: 16, flexDirection: "row", alignItems: "center", gap: 10 }}>
+          <Icon name="message-square" size={16} color={C.muted} />
+          <TextInput value={draft} onChangeText={setDraft} onSubmitEditing={send} returnKeyType="send" placeholder="Type something" placeholderTextColor="rgba(20,20,20,0.45)" style={{ flex: 1, fontFamily: F.sans, fontSize: 16, color: C.ink }} />
         </View>
-        <IconButton name="send" size={50} bg={C.flame} color="#fff" onPress={send} />
+        <IconButton name="send" size={50} bg={C.mint} color="#fff" onPress={send} />
       </View>
     </KeyboardAvoidingView>
   );

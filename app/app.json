@@ -8,7 +8,7 @@
     "icon": "./assets/images/icon.png",
     "userInterfaceStyle": "light",
     "newArchEnabled": true,
-    "backgroundColor": "#F4EEE4",
+    "backgroundColor": "#F6F4EF",
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "church.agape.app",
